@@ -1,10 +1,30 @@
 #!/bin/env python3
 
 from player import Player
+from trivia import Trivia
+import random
 
 class WOJ:
     def __init__(self):
         self.players = []
+        self.totalRounds = 2 # TODO: Review self.totalRounds
+        self.round = -1
+        self.spins = 0
+
+        #game config
+        # TODO: Alter Geometry
+        self.geometry_width = 3
+        self.geometry_height = 2
+
+        # initialize trivia
+        self.triviadb = Trivia(min_questions=self.geometry_height)
+
+        if len(self.triviadb) < (self.totalRounds * self.geometry_width):
+            raise Exception("Insufficient trivia exists to complete a game with", self.totalRounds, "rounds and",
+                            " a geometry of width = ", self.geometry_width)
+
+        self.current_trivia = []
+        self.utilized_categories = []
 
         # Determine
         #   Potentially difficulty?
@@ -15,11 +35,13 @@ class WOJ:
         # Once players are registered, agree upon game terms
         self.configureGame()
 
-        # TODO: Randomly pick player order
-        self.currentPlayerIndex = 0
+        self.currentPlayerIndex = self.selectRandomFirstPlayer()
 
         # Once all setup is completed, start the show
         self.startGame()
+
+    def selectRandomFirstPlayer(self):
+        return random.randrange(0,len(self.players))
 
     def getCurrentPlayer(self):
         return Player(self.players[self.currentPlayerIndex])
@@ -41,16 +63,28 @@ class WOJ:
             self.players.append(Player())
 
     def configureGame(self):
-        # TODO: Adjustable Number of Rounds in Game
+        # TODO: Adjustable Number of Rounds in Game (self.totalRounds)
         # TODO: Adjustable Difficulty
         # TODO: Adjustable Timeout for User Decisions
         # TODO: Adjustable Bankruptsy Behavior
         pass
 
+    def changeRound(self):
+        for player in self.players:
+                player.archivePoints()
+        self.round += 1
+
+        #document the categories utilized so they aren't reused later
+        for each in [x.category for x in self.current_trivia]:
+            if each not in self.utilized_categories:
+                self.utilized_categories.append(each)
+
+        #record current board state
+        self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
+                                             n_questions_per_category=self.geometry_height,
+                                             exclude=self.utilized_categories)
 
     def startGame(self):
-        #ready player 1
-        spinResult = self.doSpin()
         spinMap = {
 
             # borrowed idea for switch from
@@ -70,13 +104,24 @@ class WOJ:
             11: self.pickDoublePlayerRoundScore
 
         }
-        postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
-        postSpinAction()
 
+        for round in range(0, self.totalRounds):
+            self.changeRound()
+            # ready player 1
+            while self.spins < 50: # TODO: detect if any Q/A remain on board
+                if self.round == (self.totalRounds - 1):
+                    # TODO: Set point totals on all Q/A to double what they were in the first round
+                    pass
+                spinResult = self.doSpin()
+                postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
+                postSpinAction()
+
+        # TODO: Compare Points, Declare Victor
 
     def doSpin(self):
         # TODO: Generate random int as random_int
         random_int = 1
+        self.spins += 1
         return random_int
 
     def pickCategoryHelper(self, category):
@@ -95,12 +140,12 @@ class WOJ:
         pass
 
     def pickRandomCategory(self):
-        # TODO: Facilitate Random Selection of Category from those available as 'category'
+        # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
+        category = self.current_trivia[random.randrange(0, len(self.current_trivia))]['category']
         # if (
         # TODO: Check number of remaining questions for category
         # ) == 0:
         #           select a different available category (by Random)
-        category = "chicken&waffles"
         self.pickCategoryHelper(category)
         self.changeTurn()
         pass
@@ -130,7 +175,7 @@ class WOJ:
         pass
 
     def pickOpponentsChoice(self):
-        # TODO: Facilitate Explicity Selection (by Opponents) of Category from those available as 'category'
+        # TODO: Facilitate Explicitly Selection (by Opponents) of Category from those available as 'category'
         # if (
         # TODO: Check number of remaining questions for category
         # ) == 0:
@@ -140,7 +185,7 @@ class WOJ:
         pass
 
     def pickDoublePlayerRoundScore(self):
-        self.getCurrentPlayer().setScore(self.getCurrentPlayer().getScore() * 2)
+        self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
         pass
 

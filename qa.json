@@ -1,0 +1,39 @@
+[
+  {
+    "category": "algebra",
+    "answer": "4",
+    "question": "2+2"},
+  {
+    "category": "algebra",
+    "answer": "16",
+    "question": "4*4"},
+  {
+    "category": "trigonometry",
+    "answer": "0",
+    "question": "sin(pi)"},
+  {
+    "category": "trigonometry",
+    "answer": "-1",
+    "question": "cos(pi)"},
+  {
+    "category": "trigonometry",
+    "answer": "1",
+    "question": "cos(2pi)"},
+  {
+    "category": "calculus",
+    "answer": "8x",
+    "question": "4(x^2)"},
+  {
+    "category": "calculus",
+    "answer": "1/x",
+    "question": "ln(x)"},
+  {
+    "category": "portmath",
+    "answer": "105",
+    "question": "http+smtp"},
+  {
+    "category": "portmath",
+    "answer": "1",
+    "question": "telnet-ssh"}
+]
+
