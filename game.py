@@ -11,9 +11,9 @@ class WOJ:
         self.round = -1
         self.spins = 0
 
-        #game config
+        # game config
         # TODO: Alter Geometry
-        self.geometry_width = 3
+        self.geometry_width = 2
         self.geometry_height = 2
 
         # initialize trivia
@@ -41,12 +41,14 @@ class WOJ:
         self.startGame()
 
     def selectRandomFirstPlayer(self):
-        return random.randrange(0,len(self.players))
+        """Return an index representing the position which will take the first turn"""
+        return random.randrange(0, len(self.players))
 
     def getCurrentPlayer(self):
         return Player(self.players[self.currentPlayerIndex])
 
     def changeTurn(self):
+        """Alter player state """
         numPlayers = len(self.players)
         if self.currentPlayerIndex == numPlayers - 1:
                 self.currentPlayerIndex = 0
@@ -54,6 +56,7 @@ class WOJ:
                 self.currentPlayerIndex += 1
 
     def enrollPlayers(self):
+        """Determine number of users playing"""
         # TODO: find num_players
         num_players = 3
         if num_players < 2:
@@ -70,8 +73,9 @@ class WOJ:
         pass
 
     def changeRound(self):
+        """Progress GameState to the Next Round"""
         for player in self.players:
-                player.archivePoints()
+            player.archivePoints()
         self.round += 1
 
         #document the categories utilized so they aren't reused later
@@ -119,6 +123,7 @@ class WOJ:
         # TODO: Compare Points, Declare Victor
 
     def doSpin(self):
+        """Emulate 'Spin' and select a random number between 0-11"""
         # TODO: Generate random int as random_int
         random_int = 1
         self.spins += 1
@@ -175,7 +180,7 @@ class WOJ:
         pass
 
     def pickOpponentsChoice(self):
-        # TODO: Facilitate Explicitly Selection (by Opponents) of Category from those available as 'category'
+        # TODO: Facilitate Explicit Selection (by Opponents) of Category from those available as 'category'
         # if (
         # TODO: Check number of remaining questions for category
         # ) == 0:

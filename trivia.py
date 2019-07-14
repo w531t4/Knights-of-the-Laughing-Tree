@@ -4,6 +4,7 @@
 import json
 import random
 
+
 class Trivia:
 
     def __init__(self, question_file='qa.json', min_questions=0):
@@ -13,12 +14,12 @@ class Trivia:
         self.db = self.assemble_db()
         pass
 
-
     def readQuestionFile(self, question_file):
         with open(question_file) as fr:
             return list(json.loads(fr.readlines()))
 
     def assemble_db(self, removeDisqualifyingCategories=True):
+        """Consolidate JSON-oriented Quester/Answer File into a Dictionary"""
         # rather than read the file multiple times, we convert to a dictionary first
         db = {}
         for item in self.raw:
@@ -33,6 +34,7 @@ class Trivia:
         return db
 
     def selectRandomCategories(self, n, exclude=[], n_questions_per_category=-1):
+        """Return n Topic Categories"""
         categories = [x for x in self.db.keys() if x not in exclude]
         if len(categories) < n:
             raise Exception("Cannot gather sufficient categories to cover request of", n)
