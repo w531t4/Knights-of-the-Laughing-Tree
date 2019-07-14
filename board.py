@@ -1,30 +1,48 @@
 #!/bin/env python3
 
 import socket
+import commsettings
+import time
+import threading
 
 class Board:
     def __init__(self):
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.receiver.bind(("127.0.0.1", 10001))
+        self.receiver.bind(("127.0.0.1", commsettings.BOARD_LISTEN))
         self.receiver.listen(2)
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
-                self.sender = socket.connect("127.0.0.1", 10011)
+                self.sender = socket.create_connection(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
                 break
-            except:
+            except Exception as e:
+                print(e)
                 continue
-        getCommand()
+        while True:
+            client, src = self.receiver.accept()
+            clienthandle = threading.Thread(target=self.handleInboundConnection, args=(client,))
+            clienthandle.start()
+
+    def handleInboundConnection(self, sock):
+        command = sock.recv(1024)
+        if command == 1:
+            self.flipQuestion()
+            self.sender.send("ACK")
 
     def flipQuestion(self, category):
         # Flip over the correct category card
         pass
 
-    def getCommand():
+    def getCommand(self):
         while True:
-            command = self.receiver.recv()
+            try:
+                time.sleep(0.1)
+                command = self.receiver.recv(1024)
                 if (command == 1):
-                    flipQuestion()
+                    self.flipQuestion()
                     self.sender.send("ACK")
                 else:
                     continue
+            except Exception as e:
+                print("board:", e)
+

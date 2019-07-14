@@ -2,11 +2,19 @@
 
 from player import Player
 from trivia import Trivia
+from wheel import Wheel
+from board import Board
+
+from hmi import HMI
+import threading
+import commsettings
+
 import random
 import socket
 
 class WOJ:
     def __init__(self):
+        self.debug = True
         self.players = []
         self.totalRounds = 2 # TODO: Review self.totalRounds
         self.round = -1
@@ -24,7 +32,7 @@ class WOJ:
             raise Exception("Insufficient trivia exists to complete a game with", self.totalRounds, "rounds and",
                             " a geometry of width = ", self.geometry_width)
 
-        self.current_trivia = []
+        self.current_trivia = list()
         self.utilized_categories = []
 
         # Determine
@@ -39,35 +47,45 @@ class WOJ:
         self.currentPlayerIndex = self.selectRandomFirstPlayer()
 
         self.wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.wheel_receiver.bind(("127.0.0.1", 10010))
+        self.wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
         self.wheel_receiver.listen(2)
+        self.wheel = threading.Thread(target=Wheel)
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.board_receiver.bind(("127.0.0.1", 10011))
+        self.board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
         self.board_receiver.listen(2)
+        self.board = threading.Thread(target=Board)
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.hmi_receiver.bind(("127.0.0.1", 10012))
+        self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)
+        self.hmi = threading.Thread(target=HMI)
+
+        self.wheel.start()
+        self.board.start()
+        self.hmi.start()
 
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
-                self.wheel_sender = socket.connect("127.0.0.1", 10000)
+                if self.debug: print("game: creating connection to wheel")
+                self.wheel_sender = socket.create_connection(("127.0.0.1", commsettings.WHEEL_LISTEN))
                 break
             except:
                 continue
 
         while True:
             try:
-                self.board_sender = socket.connect("127.0.0.1", 10001)
+                if self.debug: print("game: creating connection to board")
+                self.board_sender = socket.create_connection(("127.0.0.1", commsettings.BOARD_LISTEN))
                 break
             except:
                 continue
 
         while True:
             try:
-                self.hmi_sender = socket.connect("127.0.0.1", 10002)
+                if self.debug: print("game: creating connection to hmi")
+                self.hmi_sender = socket.create_connection(("127.0.0.1", commsettings.HMI_LISTEN))
                 break
             except:
                 continue
@@ -109,21 +127,30 @@ class WOJ:
 
     def changeRound(self):
         """Progress GameState to the Next Round"""
+        print("changeRound(): Start")
         for player in self.players:
             player.archivePoints()
         self.round += 1
 
         #document the categories utilized so they aren't reused later
-        for each in [x.category for x in self.current_trivia]:
-            if each not in self.utilized_categories:
-                self.utilized_categories.append(each)
+        if type(self.current_trivia) != type([]):
+            raise Exception("The type of self.current_trivia is not list")
+        if len(self.current_trivia) <= 0 and self.round != 0:
+            raise Exception("The length of the current trivia db is not sufficient")
+        if self.debug: print(self.current_trivia)
+        for each in [x for x in self.current_trivia]:
+            if self.debug: print("each:", each)
+            if each['category'] not in self.utilized_categories:
+                self.utilized_categories.append(each['category'])
 
         #record current board state
+        if self.debug: print("changeRound(): type(self.currentTrivia)", type(self.current_trivia))
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
-
+        if self.debug: print("changeRound(): type(self.currentTrivia)", type(self.current_trivia))
     def startGame(self):
+        if self.debug: print("startGame(): start")
         spinMap = {
 
             # borrowed idea for switch from
@@ -152,6 +179,7 @@ class WOJ:
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
                 spinResult = self.doSpin()
+                print("spin value:",spinResult)
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
                 postSpinAction()
 
@@ -181,6 +209,9 @@ class WOJ:
 
     def pickRandomCategory(self):
         # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
+        print("type self.current_trivia=", type(self.current_trivia))
+        random_number = random.randrange(0, len(self.current_trivia))
+        print("random_number", random_number)
         category = self.current_trivia[random.randrange(0, len(self.current_trivia))]['category']
         # if (
         # TODO: Check number of remaining questions for category
