@@ -3,6 +3,7 @@
 from player import Player
 from trivia import Trivia
 import random
+import socket
 
 class WOJ:
     def __init__(self):
@@ -36,6 +37,40 @@ class WOJ:
         self.configureGame()
 
         self.currentPlayerIndex = self.selectRandomFirstPlayer()
+
+        self.wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.wheel_receiver.bind(("127.0.0.1", 10010))
+        self.wheel_receiver.listen(2)
+
+        self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.board_receiver.bind(("127.0.0.1", 10001))
+        self.board_receiver.listen(2)
+
+        self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hmi_receiver.bind(("127.0.0.1", 10002))
+        self.hmi_receiver.listen(2)
+
+        # Keep trying to create the sender until the correct receiver has been created
+        while True:
+            try:
+                self.wheel_sender = socket.connect("127.0.0.1", 10000)
+                break
+            except:
+                continue
+
+        while True:
+            try:
+                self.board_sender = socket.connect("127.0.0.1", 10001)
+                break
+            except:
+                continue
+
+        while True:
+            try:
+                self.hmi_sender = socket.connect("127.0.0.1", 10002)
+                break
+            except:
+                continue
 
         # Once all setup is completed, start the show
         self.startGame()
@@ -193,7 +228,3 @@ class WOJ:
         self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
         pass
-
-
-
-

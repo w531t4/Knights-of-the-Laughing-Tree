@@ -1,5 +1,7 @@
 #!/bin/env python3
 
+import socket
+
 class Player:
     def __init__(self, name=""):
         self.roundScore = 0
@@ -31,6 +33,3 @@ class Player:
             self.freeTurnToken -= 1
         else:
             raise Exception("Player cannot spend freeTurnToken they do not have")
-
-
-
