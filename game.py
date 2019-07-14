@@ -43,11 +43,11 @@ class WOJ:
         self.wheel_receiver.listen(2)
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.board_receiver.bind(("127.0.0.1", 10001))
+        self.board_receiver.bind(("127.0.0.1", 10011))
         self.board_receiver.listen(2)
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.hmi_receiver.bind(("127.0.0.1", 10002))
+        self.hmi_receiver.bind(("127.0.0.1", 10012))
         self.hmi_receiver.listen(2)
 
         # Keep trying to create the sender until the correct receiver has been created
