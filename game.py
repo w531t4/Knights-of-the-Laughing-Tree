@@ -50,6 +50,8 @@ class WOJ:
         self.wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
+        # by ForceBru
         self.wheel_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
         self.wheel_receiver.listen(2)
@@ -58,6 +60,8 @@ class WOJ:
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
+        # by ForceBru
         self.board_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
         self.board_receiver.listen(2)
@@ -66,6 +70,8 @@ class WOJ:
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
+        # by ForceBru
         self.hmi_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)

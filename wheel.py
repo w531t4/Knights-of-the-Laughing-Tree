@@ -11,6 +11,8 @@ class Wheel:
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
+        # by ForceBru
         self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.receiver.bind(("127.0.0.1", commsettings.WHEEL_LISTEN))
         self.receiver.listen(2)
