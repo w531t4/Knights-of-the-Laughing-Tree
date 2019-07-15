@@ -18,6 +18,8 @@ class HMI:
                 break
             except Exception as e:
                 print("hmi:", e)
+                time.sleep(1)
+
                 continue
         while True:
             client, src = self.receiver.accept()

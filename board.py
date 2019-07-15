@@ -18,6 +18,7 @@ class Board:
                 break
             except Exception as e:
                 print(e)
+                time.sleep(1)
                 continue
         while True:
             client, src = self.receiver.accept()
