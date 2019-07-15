@@ -13,6 +13,7 @@ import messaging
 import random
 import socket
 import queue
+import time
 
 class WOJ:
     def __init__(self):
@@ -242,12 +243,16 @@ class WOJ:
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
                 #if self.debug: print("Game: Sending message to wheel")
-                self.wheel_msg_controller.send_string(self.wheel_sender, str(0x00))
+                spinResult = self.doSpin()
+                self.wheel_msg_controller.send_string(self.wheel_sender, str(spinResult))
                 #if self.debug: print("Game: Sent message to wheel")
                 self.spins += 1
                 while self.wheel_msg_controller.q.empty():
                     pass
-                spinResult = self.wheel_msg_controller.q.get()
+                    time.sleep(.1)
+                spinAck = self.wheel_msg_controller.q.get()
+                if spinAck != "ACK":
+                    raise Exception("didn't get correct response")
 
                 if self.debug: print("startGame(): Spin Result=", spinResult)
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")

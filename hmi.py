@@ -4,6 +4,8 @@ import socket
 import commsettings
 import threading
 import time
+import messaging
+import queue
 
 class HMI:
     def __init__(self):
@@ -34,11 +36,11 @@ class HMI:
 
     def logic_controller(self):
         while True:
-            if self.clientqueue.empty():
-                pass
-            else:
+            if not self.clientqueue.empty():
                 message = self.clientqueue.get()
                 self.msg_controller.send_string(self.sender, "ACK")
+            else:
+                time.sleep(.1)
 
     def issuePrompt(self):
         pass

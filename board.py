@@ -34,11 +34,11 @@ class Board:
 
     def logic_controller(self):
         while True:
-            if self.clientqueue.empty():
-                pass
-            else:
+            if not self.clientqueue.empty():
                 message = self.clientqueue.get()
                 self.msg_controller.send_string(self.sender, "ACK")
+            else:
+                time.sleep(.1)
 
     def flipQuestion(self, category):
         # Flip over the correct category card
