@@ -5,7 +5,6 @@ import commsettings
 import threading
 import random
 import time
-import pickle
 
 class Wheel:
     def __init__(self):
@@ -35,22 +34,23 @@ class Wheel:
             clienthandle.start()
             if self.debug: print("Wheel: after clienthandle.start()")
         self.receiver.close()
-    def handleInboundConnection(self, sock):
-        message = ""
-        while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
-            command = sock.recv(1)
-            print("Wheel: Received=", str(bytearray(command).decode()))
-            message += bytearray(command).decode()
-        message = message.split(commsettings.MESSAGE_BREAKER)[0]
-        if self.debug: print("Wheel: received message (" + str(message) +")")
-        #if command == 0x00:
-        if self.debug: print("Wheel: sending message")
-        self.sender.send("".join([str(self.doSpin()),commsettings.MESSAGE_BREAKER]).encode())
-        if self.debug: print("Wheel: message sent")
-        else:
-            raise Exception("Client Disconnected")
-        sock.close()
 
+    def handleInboundConnection(self, sock):
+        while True:
+            message = ""
+            while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
+                command = sock.recv(1)
+                if command:
+                    message += bytearray(command).decode()
+                else:
+                    raise Exception("Client Disconnected")
+            message = message.split(commsettings.MESSAGE_BREAKER)[0]
+            print("Wheel: received message (" + str(message) +")")
+            if message == "0":
+                if self.debug: print("Wheel: sending message")
+                self.sender.send("".join([str(self.doSpin()),commsettings.MESSAGE_BREAKER]).encode())
+                if self.debug: print("Wheel: message sent")
+        sock.close()
 
 
     def doSpin(self):
@@ -58,5 +58,3 @@ class Wheel:
         # TODO: Generate random int as random_int
         random_int = random.randrange(0, 12)
         return random_int
-
-  #  def getCommand(self):

@@ -11,7 +11,7 @@ import commsettings
 
 import random
 import socket
-import pickle
+import queue
 
 class WOJ:
     def __init__(self):
@@ -56,6 +56,12 @@ class WOJ:
         self.wheel_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
         self.wheel_receiver.listen(2)
+        self.wheel_receiver_queue = queue.Queue()
+        self.wheel_receiver_thread = threading.Thread(target=self.receive_message
+                                                            , args=(self.wheel_receiver
+                                                            , self.wheel_receiver_queue
+                                                            , "game:wheel_receiver",))
+        self.wheel_receiver_thread.start()
         self.wheel = threading.Thread(target=Wheel)
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -66,6 +72,12 @@ class WOJ:
         self.board_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
         self.board_receiver.listen(2)
+        self.board_receiver_queue = queue.Queue()
+        self.board_receiver_thread = threading.Thread(target=self.receive_message
+                                                            , args=(self.board_receiver
+                                                            , self.board_receiver_queue
+                                                            , "game:board_receiver",))
+        self.board_receiver_thread.start()
         self.board = threading.Thread(target=Board)
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -76,6 +88,12 @@ class WOJ:
         self.hmi_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)
+        self.hmi_receiver_queue = queue.Queue()
+        self.hmi_receiver_thread = threading.Thread(target=self.receive_message
+                                                      , args=(self.hmi_receiver
+                                                              , self.hmi_receiver_queue
+                                                              , "game:hmi_receiver",))
+        self.hmi_receiver_thread.start()
         self.hmi = threading.Thread(target=HMI)
 
         self.wheel.start()
@@ -111,8 +129,21 @@ class WOJ:
         self.startGame()
 
         self.board_receiver.close()
-        self.game_receiver.close()
+        self.wheel_receiver.close()
         self.hmi_receiver.close()
+
+    def receive_message(self, sock, target_queue, name):
+
+        print("receive_message(): before accepts")
+        client, src = sock.accept()
+        while True:
+            message = ""
+            while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
+                command = client.recv(1)
+                message += bytearray(command).decode()
+            message = message.split(commsettings.MESSAGE_BREAKER)[0]
+            if self.debug: print(name + "(): receive_message(): received message (" + str(message) + ")")
+            target_queue.put(message)
 
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
@@ -203,28 +234,25 @@ class WOJ:
                 if self.round == (self.totalRounds - 1):
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
-                if self.debug: print("Game: Sending message to wheel")
-                #self.wheel_sender = socket.create_connection(("127.0.0.1", commsettings.WHEEL_LISTEN))
-                self.wheel_sender.sendall("".join([str(0x00),commsettings.MESSAGE_BREAKER]).encode())
-                if self.debug: print("Game: Sent message to wheel")
+                #if self.debug: print("Game: Sending message to wheel")
+                self.async_send_message(self.wheel_sender, str(0x00))
+                #if self.debug: print("Game: Sent message to wheel")
                 # wait for result
                 #spinResult =1
                 self.spins += 1
-                client, src = self.wheel_receiver.accept()
-                spinResult = self.receive_message(client)
-                #client.close()
+                while self.wheel_receiver_queue.empty():
+                    pass
+                spinResult = self.wheel_receiver_queue.get()
+
                 if self.debug: print("startGame(): Spin Result=", spinResult)
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
                 postSpinAction()
 
-    def receive_message(self, sock):
-        message = ""
-        while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
-            command = sock.recv(1)
-            message += bytearray(command).decode()
-        message = message.split(commsettings.MESSAGE_BREAKER)[0]
-        return message
         # TODO: Compare Points, Declare Victor
+    def async_send_message(self, sock, message):
+        sock.sendall("".join([message, commsettings.MESSAGE_BREAKER]).encode())
+
+
 
     def pickCategoryHelper(self, category):
         # TODO: Resolve Question/Answer from dictionary
