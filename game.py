@@ -47,16 +47,25 @@ class WOJ:
         self.currentPlayerIndex = self.selectRandomFirstPlayer()
 
         self.wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        self.wheel_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
         self.wheel_receiver.listen(2)
         self.wheel = threading.Thread(target=Wheel)
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        self.board_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
         self.board_receiver.listen(2)
         self.board = threading.Thread(target=Board)
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        self.hmi_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)
         self.hmi = threading.Thread(target=HMI)

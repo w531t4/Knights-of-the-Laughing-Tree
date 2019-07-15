@@ -8,6 +8,9 @@ import time
 class HMI:
     def __init__(self):
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
+        self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.receiver.bind(("127.0.0.1", commsettings.HMI_LISTEN))
         self.receiver.listen(2)
         print("HMI: successfully opened", str(commsettings.HMI_LISTEN))
