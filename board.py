@@ -30,7 +30,7 @@ class Board:
                 time.sleep(1)
                 continue
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="Board")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=False, name="Board")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
@@ -66,5 +66,3 @@ class Board:
     def flipQuestion(self, category):
         # Flip over the correct category card
         pass
-
-

@@ -20,7 +20,7 @@ class Messaging:
         client, src = self.sock.accept()
         while True:
             message = self.recv_string(client)
-            print(self.logprefix, "received message (" + str(message) + ")")
+            if (self.debug): print(self.logprefix, "received message (" + str(message) + ")")
             self.q.put(message)
 
     def recv_string(self, sock):
@@ -31,7 +31,7 @@ class Messaging:
             if command:
                 message += bytearray(command).decode()
             else:
-                print(self.logprefix, "Client Disconnected")
+                if (self.debug): print(self.logprefix, "Client Disconnected")
                 sys.exit(1)
         return message.split(self.breaker)[0]
 

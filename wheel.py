@@ -32,7 +32,7 @@ class Wheel:
                 time.sleep(1)
                 continue
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="Wheel")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=False, name="Wheel")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 

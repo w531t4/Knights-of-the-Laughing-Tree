@@ -33,7 +33,7 @@ class HMI:
                 continue
 
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="HMI")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=False, name="HMI")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
