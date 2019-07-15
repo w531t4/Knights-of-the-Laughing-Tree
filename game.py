@@ -20,6 +20,7 @@ class WOJ:
         self.round = -1
         self.spins = 0
 
+        self.maxSpins = 5 # TODO: Change back to 50
         # game config
         # TODO: Alter Geometry
         self.geometry_width = 2
@@ -139,7 +140,6 @@ class WOJ:
         if self.debug: print("changeRound(): Start")
         for player in self.players:
             player.archivePoints()
-        self.round += 1
 
         #document the categories utilized so they aren't reused later
         if type(self.current_trivia) != type([]):
@@ -183,7 +183,9 @@ class WOJ:
             if self.debug: print("startGame(): performing Housekeeping")
             self.changeRound()
             # ready player 1
-            while self.spins < 50: # TODO: detect if any Q/A remain on board
+            if self.debug: print("startGame(): Start Round", str(self.round))
+            while self.spins < self.maxSpins: # TODO: detect if any Q/A remain on board
+                print("startGame(): totalSpins=" + str(self.spins))
                 if self.round == (self.totalRounds - 1):
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
