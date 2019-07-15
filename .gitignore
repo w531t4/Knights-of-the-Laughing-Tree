@@ -2,6 +2,7 @@
 *.pyc
 
 # Ignore logs and test data
+test/*
 logs/*
 test_data/*
 test_logs/*
