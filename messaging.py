@@ -1,6 +1,8 @@
 #!/bin/env python3
 
 import threading
+import sys
+
 
 class Messaging:
     def __init__(self, breaker, sock, q,  debug=False, name="empty"):
@@ -29,7 +31,8 @@ class Messaging:
             if command:
                 message += bytearray(command).decode()
             else:
-                raise Exception("Client Disconnected")
+                print(self.logprefix, "Client Disconnected")
+                sys.exit(1)
         return message.split(self.breaker)[0]
 
     def send_string(self, sock, message):

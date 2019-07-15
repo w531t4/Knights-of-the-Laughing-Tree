@@ -6,6 +6,9 @@ import threading
 import time
 import messaging
 import queue
+import json
+import random
+
 
 class HMI:
     def __init__(self):
@@ -37,10 +40,61 @@ class HMI:
     def logic_controller(self):
         while True:
             if not self.clientqueue.empty():
-                message = self.clientqueue.get()
-                self.msg_controller.send_string(self.sender, "ACK")
+                try:
+                    message = json.loads(self.clientqueue.get())
+                except json.JSONDecodeError:
+                    print ("HMI: Failed to decode Message")
+
+                # Check for Sane Message
+                if not isinstance(message, dict):
+                    raise Exception("JSON Blob didn't resolve to a dictionary")
+                if "action" not in message.keys():
+                    raise Exception("Message does not possess action key")
+                if "arguments" not in message.keys():
+                    raise Exception("Message does not possess arguments key")
+
+                #Proceed with performing actioning a message
+                if message['action'] == "promptCategorySelectByUser":
+                    response = dict()
+                    response['action'] = "responseCategorySelect"
+                    response['arguments'] = self.selectCategory(message['arguments'])
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
+                elif message['action'] == "promptIncorrectCorrectResponse":
+                    response = dict()
+                    response['action'] = "responseQuestion"
+                    response['arguments'] = self.selectOutcome()
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
+                elif message['action'] == "displayQuestion":
+                    response = dict()
+                    self.displayQuestion(message['arguments'])
+                    response['action'] = "displayQuestion"
+                    response['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
+                else:
+                    response = dict()
+                    response['action'] = message['action']
+                    response['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
             else:
                 time.sleep(.1)
 
     def issuePrompt(self):
         pass
+    def selectCategory(self, categories):
+        """Prompt user or opponents to select a category"""
+        if isinstance(categories, list):
+            if len(categories) <= 0:
+                raise Exception("Category List does not include a sane value")
+            else:
+                # TODO: Implement UI for selecting from list of categories
+                return categories[random.randrange(0, len(categories))]
+    def selectOutcome(self):
+        """Prompt players to indicate whether a reponse was correct or incorrect"""
+        response = random.randrange(0,2)
+        if (response == 1):
+            return "Correct"
+        else:
+            return "Incorrect"
+
+    def displayQuestion(self, question):
+        """Render provided question to display"""

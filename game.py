@@ -14,6 +14,7 @@ import random
 import socket
 import queue
 import time
+import json
 
 class WOJ:
     def __init__(self):
@@ -209,6 +210,7 @@ class WOJ:
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
         print("changeRound(): End")
+
     def startGame(self):
         if self.debug: print("startGame(): start")
         spinMap = {
@@ -244,15 +246,7 @@ class WOJ:
                     pass
                 #if self.debug: print("Game: Sending message to wheel")
                 spinResult = self.doSpin()
-                self.wheel_msg_controller.send_string(self.wheel_sender, str(spinResult))
-                #if self.debug: print("Game: Sent message to wheel")
-                self.spins += 1
-                while self.wheel_msg_controller.q.empty():
-                    pass
-                    time.sleep(.1)
-                spinAck = self.wheel_msg_controller.q.get()
-                if spinAck != "ACK":
-                    raise Exception("didn't get correct response")
+
 
                 if self.debug: print("startGame(): Spin Result=", spinResult)
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
@@ -260,12 +254,23 @@ class WOJ:
 
         # TODO: Compare Points, Declare Victor
 
-
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""
         random_int = random.randrange(0, 12)
-        return random_int
+        message = dict()
+        message['action'] = "spinWheel"
+        message['arguments'] = random_int
+        self.wheel_msg_controller.send_string(self.wheel_sender, json.dumps(message))
+        # if self.debug: print("Game: Sent message to wheel")
+        self.spins += 1
+        while self.wheel_msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.wheel_msg_controller.q.get()
 
+        if json.loads(response)['arguments'] != "ACK":
+            raise Exception("didn't get correct response")
+        return random_int
 
     def pickCategoryHelper(self, category):
         # TODO: Resolve Question/Answer from dictionary
@@ -320,9 +325,22 @@ class WOJ:
         # ) == 0:
         #           request selection of new category (by Current Player)
         if self.debug: print("pickPlayersChoice(): Start")
-        category = "chicken&waffles"
-        self.pickCategoryHelper(category)
-        pass
+
+        # TODO: Resolve Categories
+        categorylist = ["chicken&waffles","abc", "123" ]
+
+        message = dict()
+        message['action'] = "promptCategorySelectByUser"
+        message['arguments'] = categorylist
+        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.hmi_msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.hmi_msg_controller.q.get()
+        if json.loads(response)['arguments'] in message['arguments']:
+            self.pickCategoryHelper(json.loads(response)['arguments'])
+        else:
+            raise Exception("Response Category not from the allowed list")
 
     def pickOpponentsChoice(self):
         # TODO: Facilitate Explicit Selection (by Opponents) of Category from those available as 'category'

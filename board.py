@@ -6,6 +6,8 @@ import time
 import threading
 import messaging
 import queue
+import json
+
 
 class Board:
     def __init__(self):
@@ -35,8 +37,29 @@ class Board:
     def logic_controller(self):
         while True:
             if not self.clientqueue.empty():
-                message = self.clientqueue.get()
-                self.msg_controller.send_string(self.sender, "ACK")
+                try:
+                    message = json.loads(self.clientqueue.get())
+                except json.JSONDecodeError:
+                    print("HMI: Failed to decode Message")
+
+                # Check for Sane Message
+                if not isinstance(message, dict):
+                    raise Exception("JSON Blob didn't resolve to a dictionary")
+                if "action" not in message.keys():
+                    raise Exception("Message does not possess action key")
+                if "arguments" not in message.keys():
+                    raise Exception("Message does not possess arguments key")
+                # Proceed with performing actioning a message
+                if message['action'] == "promptCategorySelectByUser":
+                    response = dict()
+                    response['action'] = "responseCategorySelect"
+                    response['arguments'] = self.selectCategory(message['arguments'])
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
+                else:
+                    response = dict()
+                    response['action'] = message['action']
+                    response['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
             else:
                 time.sleep(.1)
 
