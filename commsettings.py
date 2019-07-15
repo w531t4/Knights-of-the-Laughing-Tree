@@ -7,6 +7,7 @@ GAME_WHEEL_LISTEN = 10010
 GAME_BOARD_LISTEN = 10011
 GAME_HMI_LISTEN = 10012
 
+MESSAGE_BREAKER="@#$@#$@#$!!!@sdkd!"
 #wheel
 #    binds on 10000
 #    connects to 10010

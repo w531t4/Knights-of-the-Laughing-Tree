@@ -29,6 +29,7 @@ class Board:
             client, src = self.receiver.accept()
             clienthandle = threading.Thread(target=self.handleInboundConnection, args=(client,))
             clienthandle.start()
+        self.receiver.close()
 
     def handleInboundConnection(self, sock):
         command = sock.recv(1024)

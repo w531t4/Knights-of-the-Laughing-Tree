@@ -11,13 +11,14 @@ import commsettings
 
 import random
 import socket
+import pickle
 
 class WOJ:
     def __init__(self):
         self.debug = True
         self.players = []
         self.totalRounds = 2 # TODO: Review self.totalRounds
-        self.round = -1
+        self.round = 0
         self.spins = 0
 
         self.maxSpins = 5 # TODO: Change back to 50
@@ -109,6 +110,10 @@ class WOJ:
         # Once all setup is completed, start the show
         self.startGame()
 
+        self.board_receiver.close()
+        self.game_receiver.close()
+        self.hmi_receiver.close()
+
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
         return random.randrange(0, len(self.players))
@@ -150,9 +155,12 @@ class WOJ:
         #document the categories utilized so they aren't reused later
         if type(self.current_trivia) != type([]):
             raise Exception("The type of self.current_trivia is not list")
-        if len(self.current_trivia) <= 0 and self.round != 0:
+        if len(self.current_trivia) <= 0 and self.round >= 1:
             raise Exception("The length of the current trivia db is not sufficient")
-        if self.debug: print(self.current_trivia)
+        if self.debug: print("self.current_trivia=", self.current_trivia)
+
+        self.round += 1
+        self.spins = 0
         for each in [x for x in self.current_trivia]:
             if self.debug: print("each:", each)
             if each['category'] not in self.utilized_categories:
@@ -191,15 +199,31 @@ class WOJ:
             # ready player 1
             if self.debug: print("startGame(): Start Round", str(self.round))
             while self.spins < self.maxSpins: # TODO: detect if any Q/A remain on board
-                print("startGame(): totalSpins=" + str(self.spins))
+                if self.debug: print("startGame(): totalSpins=" + str(self.spins))
                 if self.round == (self.totalRounds - 1):
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
-                spinResult = self.doSpin()
-                print("spin value:",spinResult)
+                if self.debug: print("Game: Sending message to wheel")
+                #self.wheel_sender = socket.create_connection(("127.0.0.1", commsettings.WHEEL_LISTEN))
+                self.wheel_sender.sendall("".join([str(0x00),commsettings.MESSAGE_BREAKER]).encode())
+                if self.debug: print("Game: Sent message to wheel")
+                # wait for result
+                #spinResult =1
+                self.spins += 1
+                client, src = self.wheel_receiver.accept()
+                spinResult = self.receive_message(client)
+                #client.close()
+                if self.debug: print("startGame(): Spin Result=", spinResult)
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
                 postSpinAction()
 
+    def receive_message(self, sock):
+        message = ""
+        while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
+            command = sock.recv(1)
+            message += bytearray(command).decode()
+        message = message.split(commsettings.MESSAGE_BREAKER)[0]
+        return message
         # TODO: Compare Points, Declare Victor
 
     def pickCategoryHelper(self, category):
@@ -221,9 +245,7 @@ class WOJ:
     def pickRandomCategory(self):
         if self.debug: print("pickRandomCategory(): Start")
         # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
-        print("type self.current_trivia=", type(self.current_trivia))
         random_number = random.randrange(0, len(self.current_trivia))
-        print("random_number", random_number)
         category = self.current_trivia[random.randrange(0, len(self.current_trivia))]['category']
         # if (
         # TODO: Check number of remaining questions for category
