@@ -26,15 +26,19 @@ class HMI:
                 time.sleep(1)
 
                 continue
-        while True:
-            client, src = self.receiver.accept()
-            clienthandle = threading.Thread(target=self.handleInboundConnection, args=(client,))
-            clienthandle.start()
 
-    def handleInboundConnection(self, sock):
-        command = sock.recv(1024)
-        if command == 1:
-            self.sender.send(self.doSpin())
+        self.clientqueue = queue.Queue()
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="HMI")
+        self.logic_controller = threading.Thread(target=self.logic_controller)
+        self.logic_controller.start()
+
+    def logic_controller(self):
+        while True:
+            if self.clientqueue.empty():
+                pass
+            else:
+                message = self.clientqueue.get()
+                self.msg_controller.send_string(self.sender, "ACK")
 
     def issuePrompt(self):
         pass

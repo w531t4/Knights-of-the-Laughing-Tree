@@ -8,6 +8,7 @@ from board import Board
 from hmi import HMI
 import threading
 import commsettings
+import messaging
 
 import random
 import socket
@@ -57,11 +58,11 @@ class WOJ:
         self.wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
         self.wheel_receiver.listen(2)
         self.wheel_receiver_queue = queue.Queue()
-        self.wheel_receiver_thread = threading.Thread(target=self.receive_message
-                                                            , args=(self.wheel_receiver
-                                                            , self.wheel_receiver_queue
-                                                            , "game:wheel_receiver",))
-        self.wheel_receiver_thread.start()
+        self.wheel_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
+                                                        self.wheel_receiver,
+                                                        self.wheel_receiver_queue,
+                                                        debug=True,
+                                                        name="Game:wheel_receiver")
         self.wheel = threading.Thread(target=Wheel)
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -73,11 +74,11 @@ class WOJ:
         self.board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
         self.board_receiver.listen(2)
         self.board_receiver_queue = queue.Queue()
-        self.board_receiver_thread = threading.Thread(target=self.receive_message
-                                                            , args=(self.board_receiver
-                                                            , self.board_receiver_queue
-                                                            , "game:board_receiver",))
-        self.board_receiver_thread.start()
+        self.board_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
+                                                        self.board_receiver,
+                                                        self.board_receiver_queue,
+                                                        debug=True,
+                                                        name="Game:board_receiver")
         self.board = threading.Thread(target=Board)
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,11 +90,11 @@ class WOJ:
         self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)
         self.hmi_receiver_queue = queue.Queue()
-        self.hmi_receiver_thread = threading.Thread(target=self.receive_message
-                                                      , args=(self.hmi_receiver
-                                                              , self.hmi_receiver_queue
-                                                              , "game:hmi_receiver",))
-        self.hmi_receiver_thread.start()
+        self.hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
+                                                        self.hmi_receiver,
+                                                        self.hmi_receiver_queue,
+                                                        debug=True,
+                                                        name="Game:hmi_receiver")
         self.hmi = threading.Thread(target=HMI)
 
         self.wheel.start()
@@ -133,15 +134,19 @@ class WOJ:
         self.hmi_receiver.close()
 
     def receive_message(self, sock, target_queue, name):
-
         print("receive_message(): before accepts")
         client, src = sock.accept()
         while True:
             message = ""
             while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
-                command = client.recv(1)
-                message += bytearray(command).decode()
+                command = sock.recv(1)
+                if command:
+                    message += bytearray(command).decode()
+                else:
+                    raise Exception("Client Disconnected")
             message = message.split(commsettings.MESSAGE_BREAKER)[0]
+
+               # messagingrecv_string(sock, commsettings.MESSAGE_BREAKER)
             if self.debug: print(name + "(): receive_message(): received message (" + str(message) + ")")
             target_queue.put(message)
 
@@ -188,12 +193,13 @@ class WOJ:
             raise Exception("The type of self.current_trivia is not list")
         if len(self.current_trivia) <= 0 and self.round >= 1:
             raise Exception("The length of the current trivia db is not sufficient")
-        if self.debug: print("self.current_trivia=", self.current_trivia)
+        #if self.debug: print("self.current_trivia=", self.current_trivia)
 
         self.round += 1
+        if self.debug: print("changeRound(): Changing round from", self.round-1, "to", self.round)
         self.spins = 0
         for each in [x for x in self.current_trivia]:
-            if self.debug: print("each:", each)
+            if self.debug: print("changeRound(): new category:", each)
             if each['category'] not in self.utilized_categories:
                 self.utilized_categories.append(each['category'])
 
@@ -230,28 +236,30 @@ class WOJ:
             # ready player 1
             if self.debug: print("startGame(): Start Round", str(self.round))
             while self.spins < self.maxSpins: # TODO: detect if any Q/A remain on board
-                if self.debug: print("startGame(): totalSpins=" + str(self.spins))
+                if self.debug: print("startGame(): gameStats: totalSpins=" + str(self.spins),
+                                                    "round=" + str(self.round))
                 if self.round == (self.totalRounds - 1):
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
                 #if self.debug: print("Game: Sending message to wheel")
-                self.async_send_message(self.wheel_sender, str(0x00))
+                self.wheel_msg_controller.send_string(self.wheel_sender, str(0x00))
                 #if self.debug: print("Game: Sent message to wheel")
-                # wait for result
-                #spinResult =1
                 self.spins += 1
-                while self.wheel_receiver_queue.empty():
+                while self.wheel_msg_controller.q.empty():
                     pass
-                spinResult = self.wheel_receiver_queue.get()
+                spinResult = self.wheel_msg_controller.q.get()
 
                 if self.debug: print("startGame(): Spin Result=", spinResult)
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
                 postSpinAction()
 
         # TODO: Compare Points, Declare Victor
-    def async_send_message(self, sock, message):
-        sock.sendall("".join([message, commsettings.MESSAGE_BREAKER]).encode())
 
+
+    def doSpin(self):
+        """Emulate 'Spin' and select a random number between 0-11"""
+        random_int = random.randrange(0, 12)
+        return random_int
 
 
     def pickCategoryHelper(self, category):

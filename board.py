@@ -4,6 +4,8 @@ import socket
 import commsettings
 import time
 import threading
+import messaging
+import queue
 
 class Board:
     def __init__(self):
@@ -25,32 +27,21 @@ class Board:
                 print(e)
                 time.sleep(1)
                 continue
-        while True:
-            client, src = self.receiver.accept()
-            clienthandle = threading.Thread(target=self.handleInboundConnection, args=(client,))
-            clienthandle.start()
-        self.receiver.close()
+        self.clientqueue = queue.Queue()
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="Board")
+        self.logic_controller = threading.Thread(target=self.logic_controller)
+        self.logic_controller.start()
 
-    def handleInboundConnection(self, sock):
-        command = sock.recv(1024)
-        if command == 1:
-            self.flipQuestion()
-            self.sender.send("ACK")
+    def logic_controller(self):
+        while True:
+            if self.clientqueue.empty():
+                pass
+            else:
+                message = self.clientqueue.get()
+                self.msg_controller.send_string(self.sender, "ACK")
 
     def flipQuestion(self, category):
         # Flip over the correct category card
         pass
 
-    def getCommand(self):
-        while True:
-            try:
-                time.sleep(0.1)
-                command = self.receiver.recv(1024)
-                if (command == 1):
-                    self.flipQuestion()
-                    self.sender.send("ACK")
-                else:
-                    continue
-            except Exception as e:
-                print("board:", e)
 

@@ -5,6 +5,8 @@ import commsettings
 import threading
 import random
 import time
+import messaging
+import queue
 
 class Wheel:
     def __init__(self):
@@ -27,34 +29,15 @@ class Wheel:
                 print(e)
                 time.sleep(1)
                 continue
+        self.clientqueue = queue.Queue()
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="Wheel")
+        self.logic_controller = threading.Thread(target=self.logic_controller)
+        self.logic_controller.start()
+
+    def logic_controller(self):
         while True:
-            if self.debug: print("Wheel: starting accept")
-            client, src = self.receiver.accept()
-            clienthandle = threading.Thread(target=self.handleInboundConnection, args=(client,))
-            clienthandle.start()
-            if self.debug: print("Wheel: after clienthandle.start()")
-        self.receiver.close()
-
-    def handleInboundConnection(self, sock):
-        while True:
-            message = ""
-            while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
-                command = sock.recv(1)
-                if command:
-                    message += bytearray(command).decode()
-                else:
-                    raise Exception("Client Disconnected")
-            message = message.split(commsettings.MESSAGE_BREAKER)[0]
-            print("Wheel: received message (" + str(message) +")")
-            if message == "0":
-                if self.debug: print("Wheel: sending message")
-                self.sender.send("".join([str(self.doSpin()),commsettings.MESSAGE_BREAKER]).encode())
-                if self.debug: print("Wheel: message sent")
-        sock.close()
-
-
-    def doSpin(self):
-        """Emulate 'Spin' and select a random number between 0-11"""
-        # TODO: Generate random int as random_int
-        random_int = random.randrange(0, 12)
-        return random_int
+            if self.clientqueue.empty():
+                pass
+            else:
+                message = self.clientqueue.get()
+                self.msg_controller.send_string(self.sender, "ACK")
