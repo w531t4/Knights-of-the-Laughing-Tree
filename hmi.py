@@ -70,6 +70,11 @@ class HMI:
                     response['action'] = "displayQuestion"
                     response['arguments'] = "ACK"
                     self.msg_controller.send_string(self.sender, json.dumps(response))
+                elif message['action'] == "promptPlayerRegistration":
+                    response = dict()
+                    response['action'] = "responsePlayerRegistration"
+                    response['arguments'] = self.registerPlayer()
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
                 else:
                     response = dict()
                     response['action'] = message['action']
@@ -98,3 +103,10 @@ class HMI:
 
     def displayQuestion(self, question):
         """Render provided question to display"""
+
+    def registerPlayer(self):
+        """Ask Player what their name is"""
+        # TODO: Prompt Players for their Names at the start of a game
+        test_names = ["Aaron", "James", "Glenn", "Lorraine", "Markham"]
+        r = random.randrange(0, len(test_names))
+        return test_names[r]

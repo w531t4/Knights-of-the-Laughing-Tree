@@ -2,6 +2,7 @@
 
 import socket
 
+
 class Player:
     def __init__(self, name=""):
         self.roundScore = 0
@@ -14,6 +15,9 @@ class Player:
 
     def setScore(self, score):
         self.roundScore = score
+
+    def getName(self):
+        return self.name
 
     def getRoundScore(self):
         return self.roundScore
@@ -33,3 +37,11 @@ class Player:
             self.freeTurnToken -= 1
         else:
             raise Exception("Player cannot spend freeTurnToken they do not have")
+
+    def renderStatus(self):
+        output = dict()
+        output['name'] = self.name
+        output['gameScore'] = self.getGameScore()
+        output['roundScore'] = self.getRoundScore()
+        output['freeTurnTokens'] = self.freeTurnTokens
+        return dict(output)

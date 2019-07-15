@@ -44,12 +44,7 @@ class WOJ:
         #   Potentially difficulty?
         #   How many players are playing?
         #   Gather information about each player?
-        self.enrollPlayers()
 
-        # Once players are registered, agree upon game terms
-        self.configureGame()
-
-        self.currentPlayerIndex = self.selectRandomFirstPlayer()
 
         self.wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -103,6 +98,7 @@ class WOJ:
         self.board.start()
         self.hmi.start()
 
+
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
@@ -128,6 +124,15 @@ class WOJ:
             except:
                 continue
 
+
+        self.currentPlayerIndex = None
+        self.enrollPlayers()
+        self.currentPlayerIndex = self.selectRandomFirstPlayer()
+        # Once players are registered, agree upon game terms
+        self.configureGame()
+
+
+
         # Once all setup is completed, start the show
         self.startGame()
 
@@ -135,29 +140,15 @@ class WOJ:
         self.wheel_receiver.close()
         self.hmi_receiver.close()
 
-    def receive_message(self, sock, target_queue, name):
-        print("receive_message(): before accepts")
-        client, src = sock.accept()
-        while True:
-            message = ""
-            while len(message.split(commsettings.MESSAGE_BREAKER)) < 2:
-                command = sock.recv(1)
-                if command:
-                    message += bytearray(command).decode()
-                else:
-                    raise Exception("Client Disconnected")
-            message = message.split(commsettings.MESSAGE_BREAKER)[0]
-
-               # messagingrecv_string(sock, commsettings.MESSAGE_BREAKER)
-            if self.debug: print(name + "(): receive_message(): received message (" + str(message) + ")")
-            target_queue.put(message)
-
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
         return random.randrange(0, len(self.players))
 
     def getCurrentPlayer(self):
-        return Player(self.players[self.currentPlayerIndex])
+        if len(self.players) > 0 and self.currentPlayerIndex is not None:
+            return Player(self.players[self.currentPlayerIndex])
+        else:
+            return None
 
     def changeTurn(self):
         """Alter player state """
@@ -170,12 +161,29 @@ class WOJ:
     def enrollPlayers(self):
         """Determine number of users playing"""
         # TODO: find num_players
-        num_players = 3
+        num_players = 0
+        done = False
+        while num_players < 3 and done is False:
+            message = dict()
+            current_player_names = [x.getName() for x in self.players]
+            message['action'] = "promptPlayerRegistration"
+            message['arguments'] = current_player_names
+            self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            while self.hmi_msg_controller.q.empty():
+                pass
+                time.sleep(.1)
+            response = json.loads(self.hmi_msg_controller.q.get())
+            if response['action'] == "responsePlayerRegistration":
+                if response['arguments'] not in current_player_names:
+                    self.players.append(Player(name=response['arguments']))
+                    num_players += 1
+                    self.pushUpdateGameState()
+            elif response['action'] == "responseFinishedPlayerRegistration":
+                done = True
+            else:
+                raise Exception("Received event with unexpected action")
         if num_players < 2:
             raise Exception("Game must be played with more than one person")
-
-        for each in range(1, num_players):
-            self.players.append(Player())
 
     def configureGame(self):
         # TODO: Adjustable Number of Rounds in Game (self.totalRounds)
@@ -304,19 +312,20 @@ class WOJ:
     def pickLoseTurn(self):
         if self.debug: print("pickLoseTurn(): Start")
         self.changeTurn()
+        self.pushUpdateGameState()
         pass
 
     def pickAccumulateFreeTurnToken(self):
         if self.debug: print("pickAccumulateFreeTurnToken(): Start")
         self.getCurrentPlayer().addFreeTurnToken()
         self.changeTurn()
-        pass
+        self.pushUpdateGameState()
 
     def pickBecomeBankrupt(self):
         if self.debug: print("pickBecomeBankrupt(): Start")
         self.getCurrentPlayer().setScore(0)
         self.changeTurn()
-        pass
+        self.pushUpdateGameState()
 
     def pickPlayersChoice(self):
         # TODO: Facilitate Explicit Selection (by Current Player) of Category from those available as 'category'
@@ -327,7 +336,7 @@ class WOJ:
         if self.debug: print("pickPlayersChoice(): Start")
 
         # TODO: Resolve Categories
-        categorylist = ["chicken&waffles","abc", "123" ]
+        categorylist = [x['category'] for x in self.current_trivia]
 
         message = dict()
         message['action'] = "promptCategorySelectByUser"
@@ -353,8 +362,31 @@ class WOJ:
         self.pickCategoryHelper(category)
         pass
 
+    def buildGameState(self):
+        gameState = dict()
+        gameState['round'] = self.round
+        gameState['totalRounds'] = self.totalRounds
+        gameState['players'] = [dict(x.renderStatus()) for x in self.players]
+        gameState['spinsExecuted'] = self.spins
+        gameState['maxSpins'] = self.maxSpins
+        if len(self.players) > 0 and self.currentPlayerIndex is not None:
+            gameState['currentPlayer'] = str(self.getCurrentPlayer().getName())
+        return gameState
+
     def pickDoublePlayerRoundScore(self):
         if self.debug: print("pickDoublePlayersRoundScore(): Start")
         self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
-        pass
+        self.pushUpdateGameState()
+
+    def pushUpdateGameState(self):
+        message = dict()
+        message['action'] = "updateGameState"
+        message['arguments'] = self.buildGameState()
+        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.hmi_msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.hmi_msg_controller.q.get()
+        if json.loads(response)['arguments'] != "ACK":
+            raise Exception("Did not receive ACK from HMI")
