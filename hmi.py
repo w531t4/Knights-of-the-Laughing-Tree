@@ -3,12 +3,14 @@
 import socket
 import commsettings
 import threading
+import time
 
 class HMI:
     def __init__(self):
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.receiver.bind(("127.0.0.1", commsettings.HMI_LISTEN))
         self.receiver.listen(2)
+        print("HMI: successfully opened", str(commsettings.HMI_LISTEN))
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:

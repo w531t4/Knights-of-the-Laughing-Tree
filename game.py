@@ -127,7 +127,7 @@ class WOJ:
 
     def changeRound(self):
         """Progress GameState to the Next Round"""
-        print("changeRound(): Start")
+        if self.debug: print("changeRound(): Start")
         for player in self.players:
             player.archivePoints()
         self.round += 1
@@ -144,11 +144,10 @@ class WOJ:
                 self.utilized_categories.append(each['category'])
 
         #record current board state
-        if self.debug: print("changeRound(): type(self.currentTrivia)", type(self.current_trivia))
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
-        if self.debug: print("changeRound(): type(self.currentTrivia)", type(self.current_trivia))
+        print("changeRound(): End")
     def startGame(self):
         if self.debug: print("startGame(): start")
         spinMap = {
@@ -172,6 +171,7 @@ class WOJ:
         }
 
         for round in range(0, self.totalRounds):
+            if self.debug: print("startGame(): performing Housekeeping")
             self.changeRound()
             # ready player 1
             while self.spins < 50: # TODO: detect if any Q/A remain on board
@@ -185,13 +185,6 @@ class WOJ:
 
         # TODO: Compare Points, Declare Victor
 
-    def doSpin(self):
-        """Emulate 'Spin' and select a random number between 0-11"""
-        # TODO: Generate random int as random_int
-        random_int = 1
-        self.spins += 1
-        return random_int
-
     def pickCategoryHelper(self, category):
         # TODO: Resolve Question/Answer from dictionary
         # TODO: Display Question to Player
@@ -199,6 +192,7 @@ class WOJ:
         # TODO: Display answer when prompted.
         # TODO: After displaying answer, display mechanism to indicate if the question was answered successfully
         # TODO: Alter Player Score according to whether the question was answered successfully or not
+        if self.debug: print("pickCategoryHelper(): Start")
         # if (question answered successfully):
         #   increase player score
         #   pass
@@ -208,6 +202,7 @@ class WOJ:
         pass
 
     def pickRandomCategory(self):
+        if self.debug: print("pickRandomCategory(): Start")
         # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
         print("type self.current_trivia=", type(self.current_trivia))
         random_number = random.randrange(0, len(self.current_trivia))
@@ -222,15 +217,18 @@ class WOJ:
         pass
 
     def pickLoseTurn(self):
+        if self.debug: print("pickLoseTurn(): Start")
         self.changeTurn()
         pass
 
     def pickAccumulateFreeTurnToken(self):
+        if self.debug: print("pickAccumulateFreeTurnToken(): Start")
         self.getCurrentPlayer().addFreeTurnToken()
         self.changeTurn()
         pass
 
     def pickBecomeBankrupt(self):
+        if self.debug: print("pickBecomeBankrupt(): Start")
         self.getCurrentPlayer().setScore(0)
         self.changeTurn()
         pass
@@ -241,6 +239,7 @@ class WOJ:
         # TODO: Check number of remaining questions for category
         # ) == 0:
         #           request selection of new category (by Current Player)
+        if self.debug: print("pickPlayersChoice(): Start")
         category = "chicken&waffles"
         self.pickCategoryHelper(category)
         pass
@@ -251,11 +250,13 @@ class WOJ:
         # TODO: Check number of remaining questions for category
         # ) == 0:
         #           request selection of new category (by Opponents)
+        if self.debug: print("pickOpponentsChoice(): Start")
         category = "chicken&waffles"
         self.pickCategoryHelper(category)
         pass
 
     def pickDoublePlayerRoundScore(self):
+        if self.debug: print("pickDoublePlayersRoundScore(): Start")
         self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
         pass

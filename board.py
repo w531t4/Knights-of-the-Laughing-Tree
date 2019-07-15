@@ -10,6 +10,7 @@ class Board:
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.receiver.bind(("127.0.0.1", commsettings.BOARD_LISTEN))
         self.receiver.listen(2)
+        print("Board: successfully opened", str(commsettings.BOARD_LISTEN))
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
