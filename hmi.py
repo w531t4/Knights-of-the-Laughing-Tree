@@ -11,7 +11,8 @@ import random
 
 
 class HMI:
-    def __init__(self):
+    def __init__(self, hmi_debug):
+        self.debug = hmi_debug
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -33,7 +34,7 @@ class HMI:
                 continue
 
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="HMI")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=self.debug, name="HMI")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
