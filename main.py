@@ -1,10 +1,11 @@
 #!/bin/env python3
 
+import sys
 from game import WOJ
 
 
-def main():
-    WOJ()
+def main(debug_status):
+    WOJ(debug_status)
 
 def banner():
 
@@ -24,4 +25,10 @@ def banner():
 
 if __name__ == "__main__":
     banner()
-    main()
+    try:
+        if "debug" in sys.argv[1]:
+            main(True)
+        else:
+            main(False)
+    except:
+        main(False)
