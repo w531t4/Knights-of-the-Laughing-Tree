@@ -16,9 +16,10 @@ import queue
 import time
 import json
 
+
 class WOJ:
-    def __init__(self):
-        self.debug = True
+    def __init__(self, debug_status):
+        self.debug = debug_status
         self.players = []
         self.totalRounds = 2 # TODO: Review self.totalRounds
         self.round = 0
@@ -58,9 +59,9 @@ class WOJ:
         self.wheel_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.wheel_receiver,
                                                         self.wheel_receiver_queue,
-                                                        debug=True,
+                                                        debug=debug_status,
                                                         name="Game:wheel_receiver")
-        self.wheel = threading.Thread(target=Wheel)
+        self.wheel = threading.Thread(target=Wheel, args=([debug_status]))
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -74,9 +75,9 @@ class WOJ:
         self.board_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.board_receiver,
                                                         self.board_receiver_queue,
-                                                        debug=True,
+                                                        debug=debug_status,
                                                         name="Game:board_receiver")
-        self.board = threading.Thread(target=Board)
+        self.board = threading.Thread(target=Board, args=([debug_status]))
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -90,9 +91,9 @@ class WOJ:
         self.hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.hmi_receiver,
                                                         self.hmi_receiver_queue,
-                                                        debug=True,
+                                                        debug=debug_status,
                                                         name="Game:hmi_receiver")
-        self.hmi = threading.Thread(target=HMI)
+        self.hmi = threading.Thread(target=HMI, args=([debug_status]))
 
         self.wheel.start()
         self.board.start()

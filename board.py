@@ -10,7 +10,8 @@ import json
 
 
 class Board:
-    def __init__(self):
+    def __init__(self, board_debug):
+        self.debug = board_debug
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -30,7 +31,7 @@ class Board:
                 time.sleep(1)
                 continue
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=True, name="Board")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=self.debug, name="Board")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
