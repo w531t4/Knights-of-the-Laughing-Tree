@@ -66,5 +66,3 @@ class Board:
     def flipQuestion(self, category):
         # Flip over the correct category card
         pass
-
-

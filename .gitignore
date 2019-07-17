@@ -1,0 +1,16 @@
+# Ignore build artifacts
+*.pyc
+
+# Ignore logs and test data
+test/*
+logs/*
+test_data/*
+test_logs/*
+*.xml
+*.txt
+
+# Ignore formal documentation
+docs/*
+
+# Ignore tmpFile
+tmpFile
