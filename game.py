@@ -15,11 +15,19 @@ import socket
 import queue
 import time
 import json
-
+import logging
+import sys
+import logs
 
 class WOJ:
-    def __init__(self, debug_status):
-        self.debug = debug_status
+    def __init__(self, loglevel=logging.INFO):
+        self.logger = logs.build_logger(__name__, logging.INFO)
+        #self.logger.debug('debug message')
+        #self.logger.info('info message')
+      #  #logger.warning('warn message')
+      #  #logger.error('error message')
+      #  #logger.critical('critical message')
+
         self.players = []
         self.totalRounds = 2 # TODO: Review self.totalRounds
         self.round = 0
@@ -59,9 +67,9 @@ class WOJ:
         self.wheel_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.wheel_receiver,
                                                         self.wheel_receiver_queue,
-                                                        debug=debug_status,
-                                                        name="Game:wheel_receiver")
-        self.wheel = threading.Thread(target=Wheel, args=([debug_status]))
+                                                        loglevel=loglevel,
+                                                        name="Wheel_rcv")
+        self.wheel = threading.Thread(target=Wheel, kwargs={'loglevel': loglevel,})
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -75,9 +83,9 @@ class WOJ:
         self.board_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.board_receiver,
                                                         self.board_receiver_queue,
-                                                        debug=debug_status,
-                                                        name="Game:board_receiver")
-        self.board = threading.Thread(target=Board, args=([debug_status]))
+                                                        loglevel=loglevel,
+                                                        name="Board_rcv")
+        self.board = threading.Thread(target=Board, kwargs={'loglevel': loglevel,})
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -91,9 +99,9 @@ class WOJ:
         self.hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.hmi_receiver,
                                                         self.hmi_receiver_queue,
-                                                        debug=debug_status,
-                                                        name="Game:hmi_receiver")
-        self.hmi = threading.Thread(target=HMI, args=([debug_status]))
+                                                        loglevel=loglevel,
+                                                        name="HMI_rcv")
+        self.hmi = threading.Thread(target=HMI, kwargs={'loglevel': loglevel,})
 
         self.wheel.start()
         self.board.start()
@@ -103,26 +111,32 @@ class WOJ:
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
-                if self.debug: print("game: creating connection to wheel")
+                self.logger.info("Building connection to Wheel on port " + str(commsettings.WHEEL_LISTEN))
                 self.wheel_sender = socket.create_connection(("127.0.0.1", commsettings.WHEEL_LISTEN))
                 break
             except:
+                self.logger.warning("Failed to open connection to Wheel, retrying")
+                time.sleep(.1)
                 continue
 
         while True:
             try:
-                if self.debug: print("game: creating connection to board")
+                self.logger.info("Building connection to Board on port " + str(commsettings.BOARD_LISTEN))
                 self.board_sender = socket.create_connection(("127.0.0.1", commsettings.BOARD_LISTEN))
                 break
             except:
+                self.logger.warning("Failed to open connection to Board, retrying")
+                time.sleep(.1)
                 continue
 
         while True:
             try:
-                if self.debug: print("game: creating connection to hmi")
+                self.logger.info("Building connection to HMI on port " + str(commsettings.HMI_LISTEN))
                 self.hmi_sender = socket.create_connection(("127.0.0.1", commsettings.HMI_LISTEN))
                 break
             except:
+                self.logger.warning("Failed to open connection to HMI, retrying")
+                time.sleep(.1)
                 continue
 
 
@@ -135,7 +149,7 @@ class WOJ:
 
 
         # Once all setup is completed, start the show
-        self.startGame()
+        self.gameLoop()
 
         self.board_receiver.close()
         self.wheel_receiver.close()
@@ -143,9 +157,11 @@ class WOJ:
 
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
+        self.logger.debug("Enter Function")
         return random.randrange(0, len(self.players))
 
     def getCurrentPlayer(self):
+        self.logger.debug("Enter Function")
         if len(self.players) > 0 and self.currentPlayerIndex is not None:
             return Player(self.players[self.currentPlayerIndex])
         else:
@@ -195,7 +211,7 @@ class WOJ:
 
     def changeRound(self):
         """Progress GameState to the Next Round"""
-        if self.debug: print("changeRound(): Start")
+        self.logger.info("Begin Round Change")
         for player in self.players:
             player.archivePoints()
 
@@ -207,10 +223,10 @@ class WOJ:
         #if self.debug: print("self.current_trivia=", self.current_trivia)
 
         self.round += 1
-        if self.debug: print("changeRound(): Changing round from", self.round-1, "to", self.round)
+        self.logger.info("Changing round from " + str(self.round-1) + " to " +  str(self.round))
         self.spins = 0
         for each in [x for x in self.current_trivia]:
-            if self.debug: print("changeRound(): new category:", each)
+            self.logger.debug("new category:", each)
             if each['category'] not in self.utilized_categories:
                 self.utilized_categories.append(each['category'])
 
@@ -218,10 +234,10 @@ class WOJ:
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
-        print("changeRound(): End")
+        self.logger.debug("Round Change Complete")
 
-    def startGame(self):
-        if self.debug: print("startGame(): start")
+    def gameLoop(self):
+        self.logger.info("Start Game Loop")
         spinMap = {
 
             # borrowed idea for switch from
@@ -243,13 +259,12 @@ class WOJ:
         }
 
         for round in range(0, self.totalRounds):
-            if self.debug: print("startGame(): performing Housekeeping")
             self.changeRound()
             # ready player 1
-            if self.debug: print("startGame(): Start Round", str(self.round))
+            self.logger.info("Begin Round" + str(self.round))
             while self.spins < self.maxSpins: # TODO: detect if any Q/A remain on board
-                if self.debug: print("startGame(): gameStats: totalSpins=" + str(self.spins),
-                                                    "round=" + str(self.round))
+                self.logger.debug("stats: totalSpins=" + str(self.spins) +
+                                                    " round=" + str(self.round))
                 if self.round == (self.totalRounds - 1):
                     # TODO: Set point totals on all Q/A to double what they were in the first round
                     pass
@@ -257,7 +272,7 @@ class WOJ:
                 spinResult = self.doSpin()
 
 
-                if self.debug: print("startGame(): Spin Result=", spinResult)
+                self.logger.debug("Spin Result=" + str(spinResult))
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
                 postSpinAction()
 
@@ -288,7 +303,7 @@ class WOJ:
         # TODO: Display answer when prompted.
         # TODO: After displaying answer, display mechanism to indicate if the question was answered successfully
         # TODO: Alter Player Score according to whether the question was answered successfully or not
-        if self.debug: print("pickCategoryHelper(): Start")
+        self.logger.debug("Start")
         # if (question answered successfully):
         #   increase player score
         #   pass
@@ -298,7 +313,7 @@ class WOJ:
         pass
 
     def pickRandomCategory(self):
-        if self.debug: print("pickRandomCategory(): Start")
+        self.logger.debug("Start")
         # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
         random_number = random.randrange(0, len(self.current_trivia))
         category = self.current_trivia[random.randrange(0, len(self.current_trivia))]['category']
@@ -311,19 +326,19 @@ class WOJ:
         pass
 
     def pickLoseTurn(self):
-        if self.debug: print("pickLoseTurn(): Start")
+        self.logger.debug("Start")
         self.changeTurn()
         self.pushUpdateGameState()
         pass
 
     def pickAccumulateFreeTurnToken(self):
-        if self.debug: print("pickAccumulateFreeTurnToken(): Start")
+        self.logger.debug("Start")
         self.getCurrentPlayer().addFreeTurnToken()
         self.changeTurn()
         self.pushUpdateGameState()
 
     def pickBecomeBankrupt(self):
-        if self.debug: print("pickBecomeBankrupt(): Start")
+        self.logger.debug("Start")
         self.getCurrentPlayer().setScore(0)
         self.changeTurn()
         self.pushUpdateGameState()
@@ -334,7 +349,7 @@ class WOJ:
         # TODO: Check number of remaining questions for category
         # ) == 0:
         #           request selection of new category (by Current Player)
-        if self.debug: print("pickPlayersChoice(): Start")
+        self.logger.debug("Start")
 
         # TODO: Resolve Categories
         categorylist = [x['category'] for x in self.current_trivia]
@@ -358,7 +373,7 @@ class WOJ:
         # TODO: Check number of remaining questions for category
         # ) == 0:
         #           request selection of new category (by Opponents)
-        if self.debug: print("pickOpponentsChoice(): Start")
+        self.logger.debug("Start")
         category = "chicken&waffles"
         self.pickCategoryHelper(category)
         pass
@@ -375,7 +390,7 @@ class WOJ:
         return gameState
 
     def pickDoublePlayerRoundScore(self):
-        if self.debug: print("pickDoublePlayersRoundScore(): Start")
+        self.logger.debug("Start")
         self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
         self.pushUpdateGameState()

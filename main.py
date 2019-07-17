@@ -2,10 +2,12 @@
 
 import sys
 from game import WOJ
+import logging
 
 
-def main(debug_status):
-    WOJ(debug_status)
+def main(loglevel=logging.INFO):
+
+    WOJ(loglevel=loglevel)
 
 def banner():
 
@@ -25,10 +27,9 @@ def banner():
 
 if __name__ == "__main__":
     banner()
-    try:
-        if "debug" in sys.argv[1]:
-            main(True)
-        else:
-            main(False)
-    except:
-        main(False)
+    if len(sys.argv) > 1 and "debug" in sys.argv[1:]:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+    main(loglevel=level)
+

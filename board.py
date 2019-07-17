@@ -7,11 +7,13 @@ import threading
 import messaging
 import queue
 import json
+import logging
+import logs
 
 
 class Board:
-    def __init__(self, board_debug):
-        self.debug = board_debug
+    def __init__(self, loglevel=logging.INFO):
+        self.logger = logs.build_logger(__name__, loglevel)
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -20,7 +22,7 @@ class Board:
         self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.receiver.bind(("127.0.0.1", commsettings.BOARD_LISTEN))
         self.receiver.listen(2)
-        print("Board: successfully opened", str(commsettings.BOARD_LISTEN))
+        self.logger.info("Successfully opened port " + str(commsettings.BOARD_LISTEN))
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
@@ -31,7 +33,7 @@ class Board:
                 time.sleep(1)
                 continue
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=self.debug, name="Board")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, loglevel=loglevel, name="Board")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
