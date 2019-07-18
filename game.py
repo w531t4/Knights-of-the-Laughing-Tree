@@ -2,11 +2,7 @@
 
 from player import Player
 from trivia import Trivia
-from wheel import Wheel
-from board import Board
 
-from hmi import HMI
-import threading
 import commsettings
 import messaging
 
@@ -18,15 +14,16 @@ import json
 import logging
 import sys
 import logs
+from PyQt5.QtCore import QThread, pyqtSignal
 
-class WOJ:
+
+class Game(QThread):
+    signal = pyqtSignal('PyQt_PyObject')
+
     def __init__(self, loglevel=logging.INFO):
+        QThread.__init__(self)
         self.logger = logs.build_logger(__name__, logging.INFO)
-        #self.logger.debug('debug message')
-        #self.logger.info('info message')
-      #  #logger.warning('warn message')
-      #  #logger.error('error message')
-      #  #logger.critical('critical message')
+        self.loglevel = loglevel
 
         self.players = []
         self.totalRounds = 2 # TODO: Review self.totalRounds
@@ -38,7 +35,7 @@ class WOJ:
         # TODO: Alter Geometry
         self.geometry_width = 2
         self.geometry_height = 2
-
+    def run(self):
         # initialize trivia
         self.triviadb = Trivia(min_questions=self.geometry_height)
 
@@ -67,9 +64,9 @@ class WOJ:
         self.wheel_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.wheel_receiver,
                                                         self.wheel_receiver_queue,
-                                                        loglevel=loglevel,
+                                                        loglevel=self.loglevel,
                                                         name="Wheel_rcv")
-        self.wheel = threading.Thread(target=Wheel, kwargs={'loglevel': loglevel,})
+
 
         self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -83,9 +80,9 @@ class WOJ:
         self.board_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.board_receiver,
                                                         self.board_receiver_queue,
-                                                        loglevel=loglevel,
+                                                        loglevel=self.loglevel,
                                                         name="Board_rcv")
-        self.board = threading.Thread(target=Board, kwargs={'loglevel': loglevel,})
+
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -99,13 +96,9 @@ class WOJ:
         self.hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.hmi_receiver,
                                                         self.hmi_receiver_queue,
-                                                        loglevel=loglevel,
+                                                        loglevel=self.loglevel,
                                                         name="HMI_rcv")
-        self.hmi = threading.Thread(target=HMI, kwargs={'loglevel': loglevel,})
 
-        self.wheel.start()
-        self.board.start()
-        self.hmi.start()
 
 
         # Keep trying to create the sender until the correct receiver has been created

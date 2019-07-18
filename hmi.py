@@ -10,11 +10,19 @@ import json
 import random
 import logging
 import logs
+from PyQt5.QtCore import QThread, pyqtSignal
 
 
-class HMI:
+class HMI(QThread):
+    signal = pyqtSignal('PyQt_PyObject')
+
     def __init__(self, loglevel=logging.INFO):
+        QThread.__init__(self)
         self.logger = logs.build_logger(__name__, loglevel)
+        #self.textBrowser.setText("blahblah")
+        self.loglevel=loglevel
+
+    def run(self):
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -30,14 +38,13 @@ class HMI:
                 self.sender = socket.create_connection(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
                 break
             except Exception as e:
-                print("hmi:", e)
+                self.logger.error(e)
                 time.sleep(1)
 
                 continue
-
         self.clientqueue = queue.Queue()
         self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue,
-                                                                                loglevel=loglevel, name="HMI")
+                                                                                loglevel=self.loglevel, name="HMI")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 

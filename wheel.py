@@ -3,19 +3,25 @@
 import socket
 import commsettings
 import threading
-import random
 import time
 import messaging
 import queue
 import json
 import logging
 import logs
+from PyQt5.QtCore import QThread, pyqtSignal
 
-class Wheel:
+
+class Wheel(QThread):
+    signal = pyqtSignal('PyQt_PyObject')
+
     def __init__(self, loglevel=logging.INFO):
+        QThread.__init__(self)
         self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    def run(self):
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
         # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
         # by ForceBru
@@ -29,11 +35,11 @@ class Wheel:
                 self.sender = socket.create_connection(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
                 break
             except Exception as e:
-                print(e)
+                self.logger.error(e)
                 time.sleep(1)
                 continue
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, loglevel=loglevel, name="Wheel")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, loglevel=self.loglevel, name="Wheel")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
