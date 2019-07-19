@@ -34,6 +34,14 @@
   {
     "category": "portmath",
     "answer": "1",
-    "question": "telnet-ssh"}
+    "question": "telnet-ssh"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "lion",
+    "question": "House Lannister Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "direwolf",
+    "question": "House Stark Sigil"}
 ]
 
