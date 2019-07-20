@@ -42,6 +42,38 @@
   {
     "category": "Game of Thrones Sigils",
     "answer": "direwolf",
-    "question": "House Stark Sigil"}
+    "question": "House Stark Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "rose",
+    "question": "House Tyrell Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "trout",
+    "question": "House Tully Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "stag",
+    "question": "House Baratheon Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "flayed man",
+    "question": "House Bolton Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "kraken",
+    "question": "House Greyjoy Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "falcon",
+    "question": "House Arryn Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "sun and spear",
+    "question": "House Martell Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "bear",
+    "question": "House Mormont Sigil"}
 ]
 
