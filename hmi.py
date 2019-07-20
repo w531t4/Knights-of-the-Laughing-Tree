@@ -79,6 +79,12 @@ class HMI:
                     response['action'] = "responsePlayerRegistration"
                     response['arguments'] = self.registerPlayer()
                     self.msg_controller.send_string(self.sender, json.dumps(response))
+                elif message['action'] == "spinWheel":
+                    self.spinWheel(json.dumps(message['arguments']))
+                    response = dict()
+                    response['action'] = "responsePlayerRegistration"
+                    response['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
                 else:
                     response = dict()
                     response['action'] = message['action']
@@ -114,3 +120,7 @@ class HMI:
         test_names = ["Aaron", "James", "Glenn", "Lorraine", "Markham"]
         r = random.randrange(0, len(test_names))
         return test_names[r]
+
+    def spinWheel(self, destination):
+        """ Make the Wheel Spin. Ensure it lands on Destination"""
+        pass
