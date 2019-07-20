@@ -15,6 +15,7 @@ import json
 import queue
 import socket
 import time
+import logging
 
 def test():
         hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,7 +30,7 @@ def test():
         hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         hmi_receiver,
                                                         hmi_receiver_queue,
-                                                        debug=False,
+                                                        loglevel=logging.INFO,
                                                         name="Game:hmi_receiver")
         hmi = threading.Thread(target=HMI)
 
