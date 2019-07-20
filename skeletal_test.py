@@ -15,40 +15,9 @@ import json
 import queue
 import socket
 import time
+import logging
 
 def test():
-        wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        wheel_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
-        wheel_receiver.listen(2)
-        wheel_receiver_queue = queue.Queue()
-        wheel_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
-                                                        wheel_receiver,
-                                                        wheel_receiver_queue,
-                                                        debug=False,
-                                                        name="Game:wheel_receiver")
-        wheel = threading.Thread(target=Wheel)
-
-        board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        board_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
-        board_receiver.listen(2)
-        board_receiver_queue = queue.Queue()
-        board_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
-                                                        board_receiver,
-                                                        board_receiver_queue,
-                                                        debug=False,
-                                                        name="Game:board_receiver")
-        board = threading.Thread(target=Board)
-
         hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -61,31 +30,16 @@ def test():
         hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         hmi_receiver,
                                                         hmi_receiver_queue,
-                                                        debug=False,
+                                                        loglevel=logging.INFO,
                                                         name="Game:hmi_receiver")
         hmi = threading.Thread(target=HMI)
 
-        wheel.start()
-        board.start()
         hmi.start()
 
         # Allow subsystems to spawn
         time.sleep(1)
 
         # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                wheel_sender = socket.create_connection(("127.0.0.1", commsettings.WHEEL_LISTEN))
-                break
-            except:
-                continue
-
-        while True:
-            try:
-                board_sender = socket.create_connection(("127.0.0.1", commsettings.BOARD_LISTEN))
-                break
-            except:
-                continue
 
         while True:
             try:
@@ -140,7 +94,6 @@ def test():
                 total_tests += 1
                 failures += 1
 
-        print("\nTesting comm interface between Game Logic and Wheel")
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = 5
@@ -148,11 +101,11 @@ def test():
 
         while test_number < 5:
             test_number += 1
-            wheel_msg_controller.send_string(wheel_sender, json.dumps(message))
-            while wheel_msg_controller.q.empty():
+            hmi_msg_controller.send_string(hmi_sender, json.dumps(message))
+            while hmi_msg_controller.q.empty():
                 pass
                 time.sleep(.1)
-            response = wheel_msg_controller.q.get()
+            response = hmi_msg_controller.q.get()
 
             if json.loads(response)['arguments'] != "ACK":
                 print("\tTest Number: " + str(test_number) + "\tSent: " + message['action'] + "\tReceived: " + json.loads(response)['arguments'] + "\tP/F: FAIL")

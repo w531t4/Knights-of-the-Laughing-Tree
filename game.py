@@ -52,37 +52,6 @@ class Game(QThread):
         #   Gather information about each player?
 
 
-        self.wheel_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.wheel_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.wheel_receiver.bind(("127.0.0.1", commsettings.GAME_WHEEL_LISTEN))
-        self.wheel_receiver.listen(2)
-        self.wheel_receiver_queue = queue.Queue()
-        self.wheel_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
-                                                        self.wheel_receiver,
-                                                        self.wheel_receiver_queue,
-                                                        loglevel=self.loglevel,
-                                                        name="Wheel_rcv")
-
-
-        self.board_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.board_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.board_receiver.bind(("127.0.0.1", commsettings.GAME_BOARD_LISTEN))
-        self.board_receiver.listen(2)
-        self.board_receiver_queue = queue.Queue()
-        self.board_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
-                                                        self.board_receiver,
-                                                        self.board_receiver_queue,
-                                                        loglevel=self.loglevel,
-                                                        name="Board_rcv")
-
 
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -102,26 +71,6 @@ class Game(QThread):
 
 
         # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                self.logger.info("Building connection to Wheel on port " + str(commsettings.WHEEL_LISTEN))
-                self.wheel_sender = socket.create_connection(("127.0.0.1", commsettings.WHEEL_LISTEN))
-                break
-            except:
-                self.logger.warning("Failed to open connection to Wheel, retrying")
-                time.sleep(.1)
-                continue
-
-        while True:
-            try:
-                self.logger.info("Building connection to Board on port " + str(commsettings.BOARD_LISTEN))
-                self.board_sender = socket.create_connection(("127.0.0.1", commsettings.BOARD_LISTEN))
-                break
-            except:
-                self.logger.warning("Failed to open connection to Board, retrying")
-                time.sleep(.1)
-                continue
-
         while True:
             try:
                 self.logger.info("Building connection to HMI on port " + str(commsettings.HMI_LISTEN))
@@ -144,8 +93,6 @@ class Game(QThread):
         # Once all setup is completed, start the show
         self.gameLoop()
 
-        self.board_receiver.close()
-        self.wheel_receiver.close()
         self.hmi_receiver.close()
 
     def selectRandomFirstPlayer(self):
@@ -277,13 +224,13 @@ class Game(QThread):
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = random_int
-        self.wheel_msg_controller.send_string(self.wheel_sender, json.dumps(message))
+        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
         # if self.debug: print("Game: Sent message to wheel")
         self.spins += 1
-        while self.wheel_msg_controller.q.empty():
+        while self.hmi_msg_controller.q.empty():
             pass
             time.sleep(.1)
-        response = self.wheel_msg_controller.q.get()
+        response = self.hmi_msg_controller.q.get()
 
         if json.loads(response)['arguments'] != "ACK":
             raise Exception("didn't get correct response")
