@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>788</width>
+    <height>406</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,15 +23,18 @@
       <x>0</x>
       <y>260</y>
       <width>301</width>
-      <height>231</height>
+      <height>61</height>
      </rect>
     </property>
    </widget>
    <widget class="QPushButton" name="doSpin">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>210</x>
-      <y>510</y>
+      <x>200</x>
+      <y>340</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -44,7 +47,7 @@
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>510</y>
+      <y>340</y>
       <width>64</width>
       <height>23</height>
      </rect>
@@ -62,17 +65,7 @@
       <x>310</x>
       <y>30</y>
       <width>471</width>
-      <height>451</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QDial" name="dial">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>250</y>
-      <width>211</width>
-      <height>221</height>
+      <height>281</height>
      </rect>
     </property>
    </widget>
@@ -82,7 +75,7 @@
       <x>0</x>
       <y>50</y>
       <width>301</width>
-      <height>211</height>
+      <height>121</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -95,56 +88,56 @@
      <item row="1" column="0">
       <widget class="QLabel" name="player0Name">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="2" column="2">
       <widget class="QLabel" name="player1FT">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="3" column="1">
       <widget class="QLabel" name="player2Score">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="player1Name">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="2">
       <widget class="QLabel" name="player0FT">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="3" column="2">
       <widget class="QLabel" name="player2FT">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
       <widget class="QLabel" name="player0Score">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="player2Name">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -172,7 +165,7 @@
      <item row="2" column="1">
       <widget class="QLabel" name="player1Score">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -236,8 +229,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>420</x>
-      <y>500</y>
+      <x>350</x>
+      <y>350</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -249,9 +242,9 @@
    <widget class="QLabel" name="winnerName">
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>500</y>
-      <width>101</width>
+      <x>450</x>
+      <y>350</y>
+      <width>111</width>
       <height>16</height>
      </rect>
     </property>
@@ -265,7 +258,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>788</width>
      <height>19</height>
     </rect>
    </property>

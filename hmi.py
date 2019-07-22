@@ -10,7 +10,7 @@ import random
 import logging
 import logs
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtGui
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -69,8 +69,10 @@ class HMIMessageController(QThread):
 class HMILogicController(QObject):
 
     signal_send_message = pyqtSignal(str)
-    signal_update_game_stats = pyqtSignal(dict)
+    signal_update_game_stats = pyqtSignal(str, str, str, str)
+    signal_update_player_data = pyqtSignal(str, str, str, str, str)
     signal_spin_wheel = pyqtSignal(int)
+    signal_display_winner = pyqtSignal(str)
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -121,18 +123,27 @@ class HMILogicController(QObject):
             response['arguments'] = "ACK"
             self.signal_send_message.emit(json.dumps(response))
         elif message['action'] == "displayWinner":
-            self.displayWinner(message['arguments'])
+            self.signal_display_winner.emit(message['arguments'])
         elif message['action'] == "updateGameState":
-            self.signal_update_game_stats.emit(message['arguments'])
-            response = dict()
-            response['action'] = message['action']
-            response['arguments'] = "ACK"
-            self.signal_send_message.emit(json.dumps(response))
-        else:
-            response = dict()
-            response['action'] = message['action']
-            response['arguments'] = "ACK"
-            self.signal_send_message.emit(json.dumps(response))
+            # Update Player Data
+            if "players" not in message['arguments'].keys():
+                raise Exception("Missing player information in update data")
+            if len(message['arguments']['players']) == 0:
+                raise Exception("Player entry in update data is empty")
+
+            for person in message['arguments']['players']:
+                self.signal_update_player_data.emit(str(person['id']),
+                                                    str(person['name']),
+                                                    str((person['gameScore'] + person['roundScore'])),
+                                                    str(person['freeTurnTokens']),
+                                                    str(message['arguments']['currentPlayer'])
+                                  )
+            self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
+                                               str(message['arguments']['maxSpins']),
+                                               str(message['arguments']['round']),
+                                               str(message['arguments']['totalRounds']))
+        if perform_ack_at_end is True:
+            self.issueAck(message['action'])
 
     @pyqtSlot()
     def askToSpin(self):
@@ -179,11 +190,16 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_send_message.connect(self.MSG_controller.send_message)
 
         # Pass requests from the logic controller to update game stats to the HMI engine
-        self.logic_controller.signal_update_game_stats.connect(self.updateStats)
+        self.logic_controller.signal_update_game_stats.connect(self.updateGameStats)
+
+        # Pass requests from the logic controller to update player stats to the HMI engine
+        self.logic_controller.signal_update_player_data.connect(self.updatePlayer)
 
         # Pass requests from the logic controller to spin the wheel to the HMI engine
         self.logic_controller.signal_spin_wheel.connect(self.spinWheel)
 
+        # Pass requests from the logic controller to alter UI to indicate the name of winner
+        self.logic_controller.signal_display_winner.connect(self.displayWinner)
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
         self.logic_controller_thread.start()
@@ -212,32 +228,36 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def displayQuestion(self, question):
         """Render provided question to display"""
 
-
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.spinOutcomeLCD.display(destination)
         pass
 
-    @pyqtSlot(dict)
-    def updateStats(self, data):
-        # Update Player Data
-        if "players" not in data.keys():
-            raise Exception("Missing player information in update data")
-        if len(data['players']) == 0:
-            raise Exception("Player entry in update data is empty")
-        for person in data['players']:
-            self.updatePlayer(person)
+    @pyqtSlot(str, str, str, str)
+    def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
+        spinString = spinsExecuted + "/" + maxSpins
+        roundString = currentRound + "/" + totalRounds
+        self.numSpins.setText(spinString)
+        self.roundNumber.setText(roundString)
 
-        # Update Spins, etc
-        self.numSpins.setText(str(data['spinsExecuted']) + "/" + str(data['maxSpins']))
-        self.roundNumber.setText(str(data['round']) + "/" + str(data['totalRounds']))
+    @pyqtSlot(str, str, str, str, str)
+    def updatePlayer(self, playerid, name, score, tokens, currentPlayer):
+        # help with font: https://stackoverflow.com/questions/34398797/bold-font-in-label-with-setbold-method
 
-    def updatePlayer(self, playerargs):
-        getattr(self, "player" + str(playerargs['id']) + "Name").setText(playerargs['name'])
-        getattr(self, "player" + str(playerargs['id']) + "Score").setText(str(playerargs['gameScore']
-                                                                          + playerargs['roundScore']))
-        getattr(self, "player" + str(playerargs['id']) + "FT").setText(str(playerargs['freeTurnTokens']))
+        getattr(self, "player" + playerid + "Name").setText(name)
+        highlight_font = QtGui.QFont()
+        if currentPlayer == name:
 
+            highlight_font.setBold(True)
+            getattr(self, "player" + playerid + "Name").setFont(highlight_font)
+        else:
+            highlight_font.setBold(False)
+            getattr(self, "player" + playerid + "Name").setFont(highlight_font)
+        getattr(self, "player" + playerid + "Score").setText(score)
+        getattr(self, "player" + playerid + "FT").setText(tokens)
+
+    @pyqtSlot(str)
     def displayWinner(self, playername):
         self.labelWinner.setEnabled(True)
         self.winnerName.setText(playername)
+        self.doSpin.setDisabled(True)

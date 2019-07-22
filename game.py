@@ -94,8 +94,8 @@ class Game:
 
     def getCurrentPlayer(self):
         self.logger.debug("Enter Function")
-        if len(self.players) > 0 and self.currentPlayerIndex is not None:
-            return Player(self.players[self.currentPlayerIndex])
+        if len(self.players) > 0:
+            return self.players[self.currentPlayerIndex]
         else:
             return None
 
@@ -208,8 +208,28 @@ class Game:
                 self.logger.debug("Spin Result=" + str(spinResult))
                 postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
                 postSpinAction()
+                self.pushUpdateGameState()
 
         # TODO: Compare Points, Declare Victor
+        for play in self.players:
+            play.archivePoints()
+        message = dict()
+        message['action'] = "displayWinner"
+        message['arguments'] = self.calculateWinner()
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+
+
+    def calculateWinner(self):
+        winner = self.players[0].getName()
+        winnerScore = 0
+        for each in self.players:
+            self.logger.debug("each.getGameScore()=" + str(each.getGameScore()))
+            if each.getGameScore() > winnerScore:
+
+                winner = each.getName()
+                winnerScore = each.getGameScore()
+        return winner
 
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""
@@ -325,7 +345,9 @@ class Game:
         gameState['spinsExecuted'] = self.spins
         gameState['maxSpins'] = self.maxSpins
         if len(self.players) > 0 and self.currentPlayerIndex is not None:
-            gameState['currentPlayer'] = str(self.getCurrentPlayer().getName())
+            gameState['currentPlayer'] = self.getCurrentPlayer().getName()
+        else:
+            gameState['currentPlayer'] = ""
         return gameState
 
     def pickDoublePlayerRoundScore(self):
