@@ -1,6 +1,6 @@
 #!/bin/env python3
 
-from game import WOJ
+from game import Game
 from player import Player
 from trivia import Trivia
 from wheel import Wheel
