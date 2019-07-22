@@ -167,6 +167,7 @@ class Game:
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
+        self.pushUpdateGameState()
         self.logger.debug("Round Change Complete")
 
     def gameLoop(self):
@@ -321,6 +322,7 @@ class Game:
             pass
             time.sleep(.1)
         response = self.msg_controller.q.get()
+        # TODO: Needs message['action'] sanity check
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:

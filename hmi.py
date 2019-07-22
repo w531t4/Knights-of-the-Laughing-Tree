@@ -14,7 +14,7 @@ from PyQt5 import QtWidgets, uic, QtGui
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
-IMPORT_UI_ONTHEFLY = True
+IMPORT_UI_ONTHEFLY = False
 # END
 
 if not IMPORT_UI_ONTHEFLY:
@@ -72,6 +72,7 @@ class HMILogicController(QObject):
     signal_update_game_stats = pyqtSignal(str, str, str, str)
     signal_update_player_data = pyqtSignal(str, str, str, str, str)
     signal_spin_wheel = pyqtSignal(int)
+    signal_select_category = pyqtSignal(list)
     signal_display_winner = pyqtSignal(str)
 
     def __init__(self, loglevel=logging.INFO):
@@ -94,34 +95,29 @@ class HMILogicController(QObject):
         if "arguments" not in message.keys():
             raise Exception("Message does not possess arguments key")
 
+        perform_ack_at_end = True
         # Proceed with performing actioning a message
         if message['action'] == "promptCategorySelectByUser":
-            response = dict()
-            response['action'] = "responseCategorySelect"
-            response['arguments'] = self.selectCategory(message['arguments'])
-            self.signal_send_message.emit(json.dumps(response))
+            perform_ack_at_end = False
+            self.signal_select_category.emit(message['arguments'])
         elif message['action'] == "promptIncorrectCorrectResponse":
+            # TODO: Needs conversion to UI model
+            perform_ack_at_end = False
             response = dict()
             response['action'] = "responseQuestion"
             response['arguments'] = self.selectOutcome()
             self.signal_send_message.emit(json.dumps(response))
         elif message['action'] == "displayQuestion":
-            response = dict()
             self.displayQuestion(message['arguments'])
-            response['action'] = "displayQuestion"
-            response['arguments'] = "ACK"
-            self.signal_send_message.emit(json.dumps(response))
         elif message['action'] == "promptPlayerRegistration":
+            # TODO: Needs conversion to UI model
+            perform_ack_at_end = False
             response = dict()
             response['action'] = "responsePlayerRegistration"
             response['arguments'] = self.registerPlayer()
             self.signal_send_message.emit(json.dumps(response))
         elif message['action'] == "spinWheel":
             self.signal_spin_wheel.emit(message['arguments'])
-            response = dict()
-            response['action'] = message['action']
-            response['arguments'] = "ACK"
-            self.signal_send_message.emit(json.dumps(response))
         elif message['action'] == "displayWinner":
             self.signal_display_winner.emit(message['arguments'])
         elif message['action'] == "updateGameState":
@@ -152,6 +148,13 @@ class HMILogicController(QObject):
         response['arguments'] = None
         self.signal_send_message.emit(json.dumps(response))
 
+    @pyqtSlot(str)
+    def returnCategory(self, string):
+        response = dict()
+        response['action'] = "responseCategorySelect"
+        response['arguments'] = string
+        self.signal_send_message.emit(json.dumps(response))
+
     def registerPlayer(self):
         """Ask Player what their name is"""
         # TODO: Prompt Players for their Names at the start of a game
@@ -159,10 +162,16 @@ class HMILogicController(QObject):
         r = random.randrange(0, len(test_names))
         return test_names[r]
 
+    def issueAck(self, action):
+        response = dict()
+        response['action'] = action
+        response['arguments'] = "ACK"
+        self.signal_send_message.emit(json.dumps(response))
 
 class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     signal_send_message = pyqtSignal(str)
+    signal_temp_select_category = pyqtSignal(str)
 
     def __init__(self, ui_file=None, loglevel=logging.INFO):
         QtWidgets.QMainWindow.__init__(self)
@@ -175,8 +184,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             uic.loadUi(ui_file, self)
 
         self.logger = logs.build_logger(__name__, loglevel)
-        #self.textBrowser.setText("blahblah")
-        self.loglevel=loglevel
+        self.loglevel = loglevel
 
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
 
@@ -186,8 +194,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         # Pass messages received to the logic controller
         self.MSG_controller.signal_recieve_message.connect(self.logic_controller.processMessage)
 
-        # Pass responses from the logic controller into the output of the message conroller
+        # Pass responses from the logic controller into the output of the message controller
         self.logic_controller.signal_send_message.connect(self.MSG_controller.send_message)
+        self.signal_send_message.connect(self.MSG_controller.send_message)
 
         # Pass requests from the logic controller to update game stats to the HMI engine
         self.logic_controller.signal_update_game_stats.connect(self.updateGameStats)
@@ -200,6 +209,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Pass requests from the logic controller to alter UI to indicate the name of winner
         self.logic_controller.signal_display_winner.connect(self.displayWinner)
+
+        # Pass requests from the logic controller to prompt a user to select a category
+        self.logic_controller.signal_select_category.connect(self.selectCategory)
+
+        # temporarily, connect category stuff up
+        self.signal_temp_select_category.connect(self.logic_controller.returnCategory)
+
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
         self.logic_controller_thread.start()
@@ -209,6 +225,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def issuePrompt(self):
         pass
+
+    @pyqtSlot(list)
     def selectCategory(self, categories):
         """Prompt user or opponents to select a category"""
         if isinstance(categories, list):
@@ -216,10 +234,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 raise Exception("Category List does not include a sane value")
             else:
                 # TODO: Implement UI for selecting from list of categories
-                return categories[random.randrange(0, len(categories))]
+                #prompt user with categories to select --
+                self.signal_temp_select_category.emit(categories[random.randrange(0, len(categories))])
+
+    @pyqtSlot()
     def selectOutcome(self):
-        """Prompt players to indicate whether a reponse was correct or incorrect"""
-        response = random.randrange(0,2)
+        """Prompt players to indicate whether a response was correct or incorrect"""
+        response = random.randrange(0, 2)
         if (response == 1):
             return "Correct"
         else:
