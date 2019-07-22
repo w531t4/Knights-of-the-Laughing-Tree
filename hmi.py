@@ -44,6 +44,7 @@ class HMI(QThread):
                 continue
         self.clientqueue = queue.Queue()
         self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue,
+        self.msg_controller.start()
                                                                                 loglevel=self.loglevel, name="HMI")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()

@@ -1,22 +1,24 @@
 #!/bin/env python3
 
-import threading
 import sys
 import logging
 import logs
+from PyQt5.QtCore import QThread, pyqtSignal
 
-class Messaging:
+
+class Messaging(QThread):
+    signal = pyqtSignal(str)
+
     def __init__(self, breaker, sock, q, loglevel=logging.INFO, name="empty"):
+        QThread.__init__(self)
         self.logger = logs.build_logger(name +".msg", loglevel)
         self.name = name
         self.breaker = breaker
         self.logprefix = self.name + ":"
         self.q = q
         self.sock = sock
-        self.thread = threading.Thread(target=self.handleInboundConnection)
-        self.thread.start()
 
-    def handleInboundConnection(self):
+    def run(self):
         """Responsible for handling new TCP connections and facilitating the reception of messages"""
         client, src = self.sock.accept()
         while True:

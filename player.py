@@ -4,11 +4,15 @@ import socket
 
 
 class Player:
-    def __init__(self, name=""):
+    def __init__(self, id=None, name=""):
         self.roundScore = 0
         self.gameScore = 0
         self.freeTurnTokens = 0
         self.name = name
+        if id is None:
+            raise Exception("Did not include ID while creating Player object. An ID must be provided.")
+        else:
+            self.id = id
 
     def addToScore(self, score):
         self.setScore(self.roundScore + score)
@@ -44,4 +48,5 @@ class Player:
         output['gameScore'] = self.getGameScore()
         output['roundScore'] = self.getRoundScore()
         output['freeTurnTokens'] = self.freeTurnTokens
+        output['id'] = self.id
         return dict(output)

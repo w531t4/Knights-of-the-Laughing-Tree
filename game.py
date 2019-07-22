@@ -62,13 +62,12 @@ class Game(QThread):
         self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)
         self.hmi_receiver_queue = queue.Queue()
-        self.hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.hmi_receiver,
                                                         self.hmi_receiver_queue,
                                                         loglevel=self.loglevel,
                                                         name="HMI_rcv")
-
-
+        self.msg_controller.start()
 
         # Keep trying to create the sender until the correct receiver has been created
         while True:
@@ -125,14 +124,15 @@ class Game(QThread):
             current_player_names = [x.getName() for x in self.players]
             message['action'] = "promptPlayerRegistration"
             message['arguments'] = current_player_names
-            self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-            while self.hmi_msg_controller.q.empty():
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            while self.msg_controller.q.empty():
                 pass
                 time.sleep(.1)
-            response = json.loads(self.hmi_msg_controller.q.get())
+            response = json.loads(self.msg_controller.q.get())
             if response['action'] == "responsePlayerRegistration":
                 if response['arguments'] not in current_player_names:
-                    self.players.append(Player(name=response['arguments']))
+                    playerIndex=len(self.players)
+                    self.players.append(Player(id=playerIndex, name=response['arguments']))
                     num_players += 1
                     self.pushUpdateGameState()
             elif response['action'] == "responseFinishedPlayerRegistration":
@@ -224,13 +224,13 @@ class Game(QThread):
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = random_int
-        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
         # if self.debug: print("Game: Sent message to wheel")
         self.spins += 1
-        while self.hmi_msg_controller.q.empty():
+        while self.msg_controller.q.empty():
             pass
             time.sleep(.1)
-        response = self.hmi_msg_controller.q.get()
+        response = self.msg_controller.q.get()
 
         if json.loads(response)['arguments'] != "ACK":
             raise Exception("didn't get correct response")
@@ -297,11 +297,11 @@ class Game(QThread):
         message = dict()
         message['action'] = "promptCategorySelectByUser"
         message['arguments'] = categorylist
-        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.hmi_msg_controller.q.empty():
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.msg_controller.q.empty():
             pass
             time.sleep(.1)
-        response = self.hmi_msg_controller.q.get()
+        response = self.msg_controller.q.get()
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:
@@ -339,10 +339,10 @@ class Game(QThread):
         message = dict()
         message['action'] = "updateGameState"
         message['arguments'] = self.buildGameState()
-        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.hmi_msg_controller.q.empty():
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.msg_controller.q.empty():
             pass
             time.sleep(.1)
-        response = self.hmi_msg_controller.q.get()
+        response = self.msg_controller.q.get()
         if json.loads(response)['arguments'] != "ACK":
             raise Exception("Did not receive ACK from HMI")
