@@ -12,17 +12,12 @@ import queue
 import time
 import json
 import logging
-import sys
 import logs
-from PyQt5.QtCore import QThread, pyqtSignal
 
 
-class Game(QThread):
-    signal = pyqtSignal('PyQt_PyObject')
-
+class Game:
     def __init__(self, loglevel=logging.INFO):
-        QThread.__init__(self)
-        self.logger = logs.build_logger(__name__, logging.INFO)
+        self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
 
         self.players = []
@@ -35,8 +30,6 @@ class Game(QThread):
         # TODO: Alter Geometry
         self.geometry_width = 2
         self.geometry_height = 2
-    def run(self):
-        # initialize trivia
         self.triviadb = Trivia(min_questions=self.geometry_height)
 
         if len(self.triviadb) < (self.totalRounds * self.geometry_width):
@@ -220,6 +213,12 @@ class Game(QThread):
 
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""
+        while self.msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.msg_controller.q.get()
+        if json.loads(response)['action'] != 'userInitiatedSpin':
+            raise Exception("Was expecting user initiated spin, received something else")
         random_int = random.randrange(0, 12)
         message = dict()
         message['action'] = "spinWheel"

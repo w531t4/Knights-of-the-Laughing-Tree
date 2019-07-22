@@ -2,32 +2,23 @@
 
 import sys
 import logging
-from game import Game
+import threading
 from hmi import HMI
-from board import Board
-from wheel import Wheel
-from PyQt5 import QtWidgets, uic
+from game import Game
+from PyQt5 import QtWidgets
 
 
-class WOJ(QtWidgets.QMainWindow):
-    def __init__(self, ui_file, parent=None, loglevel=logging.INFO):
-        super(WOJ, self).__init__(parent)
-        uic.loadUi(ui_file, self)
-        self.hmi_thread = HMI(loglevel=loglevel)
-        self.hmi_thread.start()
-        self.game_thread = Game(loglevel=loglevel)
-        self.game_thread.start()
-        self.board_thread = Board(loglevel=loglevel)
-        self.board_thread.start()
-        self.wheel_thread = Wheel(loglevel=loglevel)
-        self.wheel_thread.start()
 
 def main(loglevel=logging.INFO):
+
+    game_thread = threading.Thread(target=Game, kwargs={"loglevel": loglevel, })
+    game_thread.start()
     #Inspired by:
     #https://kushaldas.in/posts/pyqt5-thread-example.html
     app = QtWidgets.QApplication(sys.argv)
     # Using QT-Designer 5.12.4
-    form = WOJ("ui.ui", loglevel=loglevel)
+
+    form = HMI(ui_file="ui.ui", loglevel=loglevel)
     form.show()
     app.exec_()
 
