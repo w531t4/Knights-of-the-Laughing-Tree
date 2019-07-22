@@ -17,6 +17,7 @@ import socket
 import time
 import logging
 
+
 def test():
         hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

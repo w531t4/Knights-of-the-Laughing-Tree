@@ -44,8 +44,6 @@ class Game:
         #   How many players are playing?
         #   Gather information about each player?
 
-
-
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -77,15 +75,15 @@ class Game:
         self.currentPlayerIndex = None
         self.enrollPlayers()
         self.currentPlayerIndex = self.selectRandomFirstPlayer()
+
         # Once players are registered, agree upon game terms
         self.configureGame()
-
-
 
         # Once all setup is completed, start the show
         self.gameLoop()
 
         self.hmi_receiver.close()
+
 
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
