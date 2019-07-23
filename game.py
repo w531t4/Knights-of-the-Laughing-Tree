@@ -71,8 +71,8 @@ class Game:
                 time.sleep(.1)
                 continue
 
-
         self.currentPlayerIndex = None
+        self.wheel_map = None
         self.enrollPlayers()
         self.currentPlayerIndex = self.selectRandomFirstPlayer()
 
@@ -83,7 +83,6 @@ class Game:
         self.gameLoop()
 
         self.hmi_receiver.close()
-
 
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
@@ -165,6 +164,9 @@ class Game:
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
+        self.wheel_map = self.build_map()
+        self.logger.debug(str(self.wheel_map))
+
         self.pushUpdateGameState()
         self.logger.debug("Round Change Complete")
 
@@ -175,19 +177,19 @@ class Game:
             # borrowed idea for switch from
             # https://jaxenter.com/implement-switch-case-statement-python-138315.html
 
-            0: self.pickRandomCategory,
-            1: self.pickRandomCategory,
-            2: self.pickRandomCategory,
-            3: self.pickRandomCategory,
-            4: self.pickRandomCategory,
-            5: self.pickRandomCategory,
-            6: self.pickLoseTurn,
-            7: self.pickAccumulateFreeTurnToken,
-            8: self.pickBecomeBankrupt,
-            9: self.pickPlayersChoice,
-            10: self.pickOpponentsChoice,
-            11: self.pickDoublePlayerRoundScore
 
+            0: self.pickLoseTurn,
+            1: self.pickAccumulateFreeTurnToken,
+            2: self.pickBecomeBankrupt,
+            3: self.pickPlayersChoice,
+            4: self.pickOpponentsChoice,
+            5: self.pickDoublePlayerRoundScore,
+            6: self.pickRandomCategory,
+            7: self.pickRandomCategory,
+            8: self.pickRandomCategory,
+            9: self.pickRandomCategory,
+            10: self.pickRandomCategory,
+            11: self.pickRandomCategory
         }
 
         for round in range(0, self.totalRounds):
@@ -203,9 +205,8 @@ class Game:
                 #if self.debug: print("Game: Sending message to wheel")
                 spinResult = self.doSpin()
 
-
                 self.logger.debug("Spin Result=" + str(spinResult))
-                postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
+                postSpinAction = spinMap.get(self.wheel_map.index(spinResult), lambda: "Out of Scope")
                 postSpinAction()
                 self.pushUpdateGameState()
 
@@ -217,15 +218,12 @@ class Game:
         message['arguments'] = self.calculateWinner()
         self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
 
-
-
     def calculateWinner(self):
         winner = self.players[0].getName()
         winnerScore = 0
         for each in self.players:
             self.logger.debug("each.getGameScore()=" + str(each.getGameScore()))
             if each.getGameScore() > winnerScore:
-
                 winner = each.getName()
                 winnerScore = each.getGameScore()
         return winner
@@ -238,13 +236,13 @@ class Game:
         response = self.msg_controller.q.get()
         if json.loads(response)['action'] != 'userInitiatedSpin':
             raise Exception("Was expecting user initiated spin, received something else")
-        random_int = random.randrange(0, 12)
+        random_int = random.randrange(0, self.geometry_width + 6)
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = random_int
         self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        # if self.debug: print("Game: Sent message to wheel")
         self.spins += 1
+
         while self.msg_controller.q.empty():
             pass
             time.sleep(.1)
@@ -253,6 +251,47 @@ class Game:
         if json.loads(response)['arguments'] != "ACK":
             raise Exception("didn't get correct response")
         return random_int
+
+    def build_map(self):
+        random_list = list()
+        while len(random_list) < (self.geometry_width + 6):
+            randomint = random.randrange(0, (self.geometry_width + 6))
+            if randomint not in random_list:
+                random_list.append(randomint)
+        return random_list
+
+    def build_wheelboard(self):
+        # 1 - 6 always represent static sectors, 7-n represent categorical columns
+        # current_trivia = [a,b,c.. n]
+        #           where a = {'category': 'blah', 'questions': [{q1: a1, q2: a2, .. qn, an}] }
+        r = list()
+        for each in range(0, 6):
+            t = dict()
+            t['index'] = self.wheel_map[each]
+            t['type'] = "noncategory"
+            if each == 0:
+                t['name'] = "loseturn"
+            elif each == 1:
+                t['name'] = "accumulatefreeturn"
+            elif each == 2:
+                t['name'] = "bankrupt"
+            elif each == 3:
+                t['name'] = 'playerschoice'
+            elif each == 4:
+                t['name'] = "opponentschoice"
+            else:
+                t['name'] = "doublescore"
+            r.append(t)
+        for index, catobject in enumerate(self.current_trivia):
+            t = dict()
+            t['index'] = self.wheel_map[index+6]
+            t['name'] = catobject['category']
+            t['type'] = "category"
+            r.append(t)
+
+        return sorted(r, key = lambda i: i['index'])
+
+
 
     def pickCategoryHelper(self, category):
         # TODO: Resolve Question/Answer from dictionary
@@ -348,6 +387,8 @@ class Game:
             gameState['currentPlayer'] = self.getCurrentPlayer().getName()
         else:
             gameState['currentPlayer'] = ""
+        if self.wheel_map is not None:
+            gameState['wheelboard'] = self.build_wheelboard()
         return gameState
 
     def pickDoublePlayerRoundScore(self):

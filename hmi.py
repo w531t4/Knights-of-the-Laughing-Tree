@@ -9,11 +9,13 @@ import json
 import random
 import logging
 import logs
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5 import QtWidgets, uic, QtGui
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5 import QtWidgets, uic, QtGui, QtTest
+
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
+# If this is set to False, ui.py must be manually updated by issuing pyuic5
 IMPORT_UI_ONTHEFLY = False
 # END
 
@@ -74,6 +76,7 @@ class HMILogicController(QObject):
     signal_spin_wheel = pyqtSignal(int)
     signal_select_category = pyqtSignal(list)
     signal_display_winner = pyqtSignal(str)
+    signal_update_wheel = pyqtSignal(list)
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -138,6 +141,9 @@ class HMILogicController(QObject):
                                                str(message['arguments']['maxSpins']),
                                                str(message['arguments']['round']),
                                                str(message['arguments']['totalRounds']))
+            if "wheelboard" in message['arguments'].keys():
+                self.signal_update_wheel.emit([x['name'] for x in message['arguments']['wheelboard']])
+
         if perform_ack_at_end is True:
             self.issueAck(message['action'])
 
@@ -167,6 +173,7 @@ class HMILogicController(QObject):
         response['action'] = action
         response['arguments'] = "ACK"
         self.signal_send_message.emit(json.dumps(response))
+
 
 class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
@@ -216,12 +223,16 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         # temporarily, connect category stuff up
         self.signal_temp_select_category.connect(self.logic_controller.returnCategory)
 
+        # Pass requests from the logic controller to ask HMI to update the wheel
+        self.logic_controller.signal_update_wheel.connect(self.updateWheel)
+
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
 
         self.doSpin.clicked.connect(self.logic_controller.askToSpin)
+        self.wheel_resting_place = None
 
     def issuePrompt(self):
         pass
@@ -251,8 +262,47 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
+
+        self.doSpin.setDisabled(True)
+
+        num_sectors = 0
+        for each in range(0, 12):
+            if getattr(self, "label_wheel_" + str(each)).isEnabled():
+                num_sectors += 1
+
+        if self.wheel_resting_place is None:
+            self.wheel_resting_place = 0
+        last = self.wheel_resting_place
+
+        def cycle(start_number, delay_ms, num_switches, num_sectors, target=None):
+            number = start_number
+            if start_number > 0:
+                last = start_number - 1
+            else:
+                last = num_sectors - 1
+            for each in range(number, num_switches):
+                each = each % num_sectors
+                if last is not None:
+                    getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
+                getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                number = each
+                last = each
+                if number == target and target is not None:
+                    return number
+                QtTest.QTest.qWait(delay_ms)
+            return number
+
+        #num_sectors = 8
+        self.wheel_resting_place = cycle(last, 15, num_sectors*10, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 30, num_sectors*5, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 45, num_sectors*3, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 70, num_sectors*2, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors, target=int(destination))
+
         self.spinOutcomeLCD.display(destination)
-        pass
+
+        self.doSpin.setEnabled(True)
 
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
@@ -260,6 +310,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         roundString = currentRound + "/" + totalRounds
         self.numSpins.setText(spinString)
         self.roundNumber.setText(roundString)
+
 
     @pyqtSlot(str, str, str, str, str)
     def updatePlayer(self, playerid, name, score, tokens, currentPlayer):
@@ -276,6 +327,29 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             getattr(self, "player" + playerid + "Name").setFont(highlight_font)
         getattr(self, "player" + playerid + "Score").setText(score)
         getattr(self, "player" + playerid + "FT").setText(tokens)
+
+    @pyqtSlot(list)
+    def updateWheel(self, sector_list):
+        for i, each in enumerate(sector_list):
+            sector_alias = getattr(self, "label_wheel_" + str(i))
+            if (each == "bankrupt"):
+                sector_alias.setStyleSheet('background-color: black; color: white')
+            elif each == "loseturn":
+                sector_alias.setStyleSheet("")
+            elif each == "accumulatefreeturn":
+                sector_alias.setStyleSheet("")
+            elif each == 'playerschoice':
+                sector_alias.setStyleSheet("")
+            elif each == "opponentschoice":
+                sector_alias.setStyleSheet("")
+            elif each == "doublescore":
+                sector_alias.setStyleSheet("")
+                #sector_alias.setStylesheet("background-color:#ff0000;")
+            sector_alias.setText(each)
+        num_sectors = len(sector_list)
+        if num_sectors != 12:
+            for each in range(num_sectors, 12):
+                getattr(self, "label_wheel_" + str(each)).setDisabled(True)
 
     @pyqtSlot(str)
     def displayWinner(self, playername):
