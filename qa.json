@@ -35,5 +35,13 @@
     "category": "portmath",
     "answer": "1",
     "question": "telnet-ssh"}
+  {
+    "category": "geography",
+    "answer": "New York",
+    "question": "America's smallest county in area"},
+  {
+    "category": "president",
+    "answer": "Calvin Coolidge",
+    "question": "Only president born on the 4th of July"},
 ]
 
