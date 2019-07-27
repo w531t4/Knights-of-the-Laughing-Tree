@@ -85,3 +85,49 @@ class Trivia:
         else:
             return [{"category": x, "topics": self.db[x]} for x in selected_categories]
 
+
+class TriviaDB:
+    def __init__(self, current_trivia, loglevel=logging.INFO, starting_price=200):
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
+        self.data = {}
+        if current_trivia is not None:
+            for catobj in current_trivia:
+                print("catobj=", catobj)
+                if catobj['category'] not in self.data.keys():
+                    self.data[catobj['category']] = dict()
+                price = starting_price
+                for topic in catobj['topics']:
+                    self.data[catobj['category']][str(price)] = topic
+                    price += starting_price
+
+    def getCategories(self):
+        return self.data.keys()
+
+    def getPlayableCategories(self):
+        rlist = list()
+        for each in self.getCategories():
+            if len(self.listRemainingQuestions(each)) > 0:
+                rlist.append(each)
+        return rlist
+
+    def getQuestion(self, category):
+        if category not in self.data.keys():
+            raise Exception("Cannot find category='" + str(category) + "' in the self.data")
+        remaining_questions = [x for x in self.data[category].keys()]
+        remaining_questions.sort()
+        if len(remaining_questions) == 0:
+            raise Exception("Selected category contains no remaining questions to be asekd")
+        to_return = self.data[category][str(remaining_questions[0])]
+        self.data[category].pop(str(remaining_questions[0]))
+        to_return['score'] = remaining_questions[0]
+        return to_return
+
+    def listRemainingQuestions(self, category):
+        if category not in self.data.keys():
+            raise Exception("Cannot find the category specified in the database")
+        remaining_questions = [x for x in self.data[category].keys()]
+        remaining_questions.sort()
+        return remaining_questions
+
+
