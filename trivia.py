@@ -73,10 +73,10 @@ class Trivia:
                     return_list.append({"category": category, "topics": self.db[category]})
                     self.logger.debug("return_list=" + str(return_list))
                 else:
-                    hitlist = []
-                    selection = []
-                    while len(hitlist) < num_questions:
-                        r = random.randrange(0,num_questions)
+                    hitlist = list()
+                    selection = list()
+                    while len(hitlist) < num_questions and len(hitlist) < n_questions_per_category:
+                        r = random.randrange(0, num_questions)
                         if r not in hitlist:
                             hitlist.append(r)
                             selection.append(self.db[category][r])
