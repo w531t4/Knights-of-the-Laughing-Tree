@@ -28,6 +28,14 @@
     "answer": "1/x",
     "question": "ln(x)"},
   {
+    "category": "calculus",
+    "answer": "1",
+    "question": "x"},
+   {
+    "category": "calculus",
+    "answer": "9",
+    "question": "9x"},
+  {
     "category": "portmath",
     "answer": "105",
     "question": "http+smtp"},
@@ -35,6 +43,14 @@
     "category": "portmath",
     "answer": "1",
     "question": "telnet-ssh"},
+   {
+    "category": "portmath",
+    "answer": "421",
+    "question": "https-ssh"},
+    {
+    "category": "portmath",
+    "answer": "465",
+    "question": "https+ssh"},
   {
     "category": "geography",
     "answer": "New York",
@@ -102,6 +118,90 @@
   {
     "category": "Game of Thrones Sigils",
     "answer": "bear",
-    "question": "House Mormont Sigil"}
+    "question": "House Mormont Sigil"},
+  {
+    "category": "State Capitals",
+    "answer": "Lansing",
+    "question": "Michigan" },
+  {
+    "category": "State Capitals",
+    "answer": "Annapolis",
+    "question": "Maryland" },
+    {
+    "category": "State Capitals",
+    "answer": "New York",
+    "question": "New York" },
+    {
+    "category": "State Capitals",
+    "answer": "Columbus",
+    "question": "Ohio" },
+    {
+    "category": "State Capitals",
+    "answer": "Boise",
+    "question": "Idaho" },
+    {
+    "category": "State Capitals",
+    "answer": "Springfield",
+    "question": "Illinois" },
+    {
+    "category": "State Capitals",
+    "answer": "Honolulu",
+    "question": "Hawaii" },
+    {
+    "category": "State Capitals",
+    "answer": "Dover",
+    "question": "Delaware" },
+   {
+    "category": "State Capitals",
+    "answer": "Frankfurt",
+    "question": "Kentucky" },
+  {
+    "category": "TV",
+    "answer": "Superman",
+    "question": "Every Episode of Seinfeld mentions which superhero at least once?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+    {
+    "category": "TV",
+    "answer": "I want to Believe",
+    "question": "What is the phrase of the UFO poster in Fox Mulders office in X-Files?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+    {
+    "category": "TV",
+    "answer": "Kathleen Turner",
+    "question": "Who played Chandler's father on Friends?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+      {
+    "category": "TV",
+    "answer": "Survivor",
+    "question": "What reality TV show debuted a Pontiac Aztec as their Season 1 Grand Prize?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+        {
+    "category": "TV",
+    "answer": "Drew Barrymore",
+    "question": "Youngest person to host Saturday Night Live?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+          {
+    "category": "TV",
+    "answer": "Orange & Green",
+    "question": "What colors is the Brady Bunch kitchen?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+          {
+    "category": "TV",
+    "answer": "Creed",
+    "question": "What character becomes a wanted fugitive in the final season of The Office?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+  {
+    "category": "TV",
+    "answer": "The Flintstones",
+    "question": "First Animated TV show made for prime-time television?",
+    "citation": "https://www.usefultrivia.com/tv_trivia/"
+  }
 ]
 

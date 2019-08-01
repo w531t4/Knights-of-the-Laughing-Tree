@@ -29,8 +29,8 @@ class Game:
         self.maxSpins = 8 # TODO: Change back to 50
         # game config
         # TODO: Alter Geometry
-        self.geometry_width = 2
-        self.geometry_height = 2
+        self.geometry_width = 3
+        self.geometry_height = 3
         self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
 
         if len(self.triviadb) < (self.totalRounds * self.geometry_width):
