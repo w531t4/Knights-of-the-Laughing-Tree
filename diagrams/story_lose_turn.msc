@@ -1,0 +1,26 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Player    [label="PlayerController"],
+  Board     [label="BoardController"];
+
+  Game => HMILog [label="endSpin"];
+  HMILog => HMI	[label="disable(button_correct)"];
+  HMILog => HMI	[label="disable(button_incorrect)"];
+  HMILog => HMI	[label="enable(button_spin)"];
+  HMILog >> Game [label="ack"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => HMILog [label="updateStats()"];
+  HMILog => HMI [label="updateBoard()"];
+  HMILog => HMI [label="updatePlayerScores()"];
+  HMILog >> Game [label="ack"];
+  }

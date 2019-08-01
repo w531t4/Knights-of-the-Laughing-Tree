@@ -1,0 +1,53 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Player    [label="PlayerController"],
+  Board     [label="BoardController"];
+
+ Game => HMILog [label="displayQuestion(dict)"];
+  Game >> Game [label="startTimer()"];
+  HMILog => HMI	[label="enable(question_field)"];
+  HMILog => HMI	[label="populate(question_field)"];
+  HMILog => HMI	[label="enable(timer)"];
+  HMILog => HMI	[label="populate(timer)"];
+  HMILog => HMI	[label="enable(reveal_button)"];
+  HMILog => HMI	[label="start_countdown(timer)"];
+  HMI >> HMI	[label="async_countdown(timer)"];
+
+  HMILog >> Game [label="ack"];
+  Game -> Game [label="checkTimer()"];
+  HMI => HMILog	[label="button_press(reveal)"];
+  HMILog => Game [label="revealAnswer"];
+  Game -> Game [label="checkTimer()"];
+  Game >> HMILog [label="ack"];
+  HMILog => HMI 	[label="disable(button_reveal)"];
+  HMILog => HMI 	[label="clear(timer)"];
+  HMILog => HMI 	[label="disable(timer)"];
+  Game => HMILog [label="displayAnswer(dict)"];
+  HMILog => HMI	[label="enable(answer_field)"];
+  HMILog => HMI	[label="populate(answer_field)"];
+  HMILog => HMI	[label="enable(button_correct)"];
+  HMILog => HMI	[label="enable(button_incorrect)"];
+  HMILog >> Game [label="ack"];
+  HMI => HMILog	[label="button_press(correct_or_incorrect)"];
+  HMILog => Game [label="responseQuestion(bool)"];
+  Game >> HMILog [label="ack"];
+  HMILog => HMI	[label="disable(button_correct)"];
+  HMILog => HMI	[label="disable(button_incorrect)"];
+  HMILog => HMI	[label="enable(button_spin)"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => HMILog [label="updateStats()"];
+  HMILog => HMI [label="updateBoard()"];
+  HMILog => HMI [label="updatePlayerScores()"];
+  HMILog >> Game [label="ack"];
+
+  }

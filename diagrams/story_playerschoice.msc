@@ -1,0 +1,22 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Board     [label="BoardController"];
+
+
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+Game => HMILog [label="promptCategorySelectByUser(list)"];
+  HMILog >> Game [label="ack"];
+  HMILog => HMI	[label="open_dialog(select category)"];
+  HMI => HMILog	[label="button_press(selected_category)"];
+  HMILog => Game [label="responseCategorySelect(str)"];
+  Game >> HMILog [label="ack"];
+  Game box Game [label="Execute Answer Jeopardy Question"];
+  }

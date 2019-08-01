@@ -1,0 +1,23 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Player    [label="PlayerController"],
+  Board     [label="BoardController"];
+
+  Game => Player [label="set_round_score(player,0)"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => HMILog [label="updateStats()"];
+  HMILog => HMI [label="updateBoard()"];
+  HMILog => HMI [label="updatePlayerScores()"];
+  HMILog >> Game [label="ack"];
+  Game box Game [label="Execute Lose Turn"];
+  }

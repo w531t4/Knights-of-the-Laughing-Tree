@@ -1,13 +1,26 @@
 #!/bin/env python3
 
 import sys
-from game import WOJ
 import logging
+import threading
+from hmi import HMI
+from game import Game
+from PyQt5 import QtWidgets
+
 
 
 def main(loglevel=logging.INFO):
 
-    WOJ(loglevel=loglevel)
+    game_thread = threading.Thread(target=Game, kwargs={"loglevel": loglevel, })
+    game_thread.start()
+    #Inspired by:
+    #https://kushaldas.in/posts/pyqt5-thread-example.html
+    app = QtWidgets.QApplication(sys.argv)
+    # Using QT-Designer 5.12.4
+
+    form = HMI(ui_file="ui.ui", loglevel=loglevel)
+    form.show()
+    app.exec_()
 
 def banner():
 

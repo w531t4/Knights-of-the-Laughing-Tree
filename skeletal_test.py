@@ -1,6 +1,6 @@
 #!/bin/env python3
 
-from game import WOJ
+from game import Game
 from player import Player
 from trivia import Trivia
 from wheel import Wheel
@@ -16,6 +16,7 @@ import queue
 import socket
 import time
 import logging
+
 
 def test():
         hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
