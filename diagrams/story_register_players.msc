@@ -1,0 +1,30 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Player    [label="PlayerController"],
+  Board     [label="BoardController"];
+
+    Game => HMILog [label="promptPlayerRegistration"];
+    HMILog >> Game [label="ack"];
+    HMILog => HMI [label="display_prompt(ask_name)"];
+    HMI => HMILog [label="button_press(submit)"];
+    HMILog => Game [label="responsePlayerRegistration(a)"];
+    Game >> HMILog [label="ack"];
+    Game => Player [label="createPlayer(a)"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => HMILog [label="updateStats()"];
+  HMILog => HMI [label="updateBoard()"];
+  HMILog => HMI [label="updatePlayerScores()"];
+  HMILog >> Game [label="ack"];
+  Game => Game [label="check_num_players()"];
+  ---   [label="loop if needed back to beginning"];
+  }

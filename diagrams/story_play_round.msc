@@ -1,0 +1,37 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Player    [label="PlayerController"],
+  Trivia    [label="TriviaController"],
+  Board     [label="BoardController"];
+
+  Game => Player [label="updateGameScore(player, player.roundScore)"];
+  Game => Trivia [label="getTriviaBundle()"];
+  Trivia => Game [label="TriviaBundle"];
+  Game => Board [label="writeBoardState"];
+  Game => Game  [label="nextRound()"];
+  Game => Game   [label="select_starting_user"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => HMILog [label="updateStats()"];
+  HMILog => HMI [label="updateBoard()"];
+  HMILog => HMI [label="updatePlayerScores()"];
+  HMILog >> Game [label="ack"];
+  ---   [label="repeat from here down until\ncondition's are met"];
+  Game box Game [label="Execute: Spin Wheel"];
+  Game => Game [label="checkSpins<50"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Game [label="checkQuestionsRemaining>0"];
+  ---   [label="loop"];
+
+
+ }
