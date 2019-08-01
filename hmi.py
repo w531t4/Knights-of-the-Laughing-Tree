@@ -8,11 +8,13 @@ import messaging
 import queue
 import json
 import random
+import logging
+import logs
 
 
 class HMI:
-    def __init__(self, hmi_debug):
-        self.debug = hmi_debug
+    def __init__(self, loglevel=logging.INFO):
+        self.logger = logs.build_logger(__name__, loglevel)
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -21,7 +23,7 @@ class HMI:
         self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.receiver.bind(("127.0.0.1", commsettings.HMI_LISTEN))
         self.receiver.listen(2)
-        print("HMI: successfully opened", str(commsettings.HMI_LISTEN))
+        self.logger.info("successfully opened port " + str(commsettings.HMI_LISTEN))
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
@@ -34,7 +36,8 @@ class HMI:
                 continue
 
         self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue, debug=self.debug, name="HMI")
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue,
+                                                                                loglevel=loglevel, name="HMI")
         self.logic_controller = threading.Thread(target=self.logic_controller)
         self.logic_controller.start()
 
@@ -76,6 +79,12 @@ class HMI:
                     response['action'] = "responsePlayerRegistration"
                     response['arguments'] = self.registerPlayer()
                     self.msg_controller.send_string(self.sender, json.dumps(response))
+                elif message['action'] == "spinWheel":
+                    self.spinWheel(json.dumps(message['arguments']))
+                    response = dict()
+                    response['action'] = "responsePlayerRegistration"
+                    response['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.sender, json.dumps(response))
                 else:
                     response = dict()
                     response['action'] = message['action']
@@ -111,3 +120,7 @@ class HMI:
         test_names = ["Aaron", "James", "Glenn", "Lorraine", "Markham"]
         r = random.randrange(0, len(test_names))
         return test_names[r]
+
+    def spinWheel(self, destination):
+        """ Make the Wheel Spin. Ensure it lands on Destination"""
+        pass

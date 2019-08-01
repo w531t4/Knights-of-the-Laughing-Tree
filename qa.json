@@ -63,5 +63,45 @@
     "category": "politics",
     "answer": "Franklin D. Roosevelt",
     "question": "Who was the first president to have a state car built to secret service standards"},
+=======
+    "category": "Game of Thrones Sigils",
+    "answer": "lion",
+    "question": "House Lannister Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "direwolf",
+    "question": "House Stark Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "rose",
+    "question": "House Tyrell Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "trout",
+    "question": "House Tully Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "stag",
+    "question": "House Baratheon Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "flayed man",
+    "question": "House Bolton Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "kraken",
+    "question": "House Greyjoy Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "falcon",
+    "question": "House Arryn Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "sun and spear",
+    "question": "House Martell Sigil"},
+  {
+    "category": "Game of Thrones Sigils",
+    "answer": "bear",
+    "question": "House Mormont Sigil"}
 ]
 
