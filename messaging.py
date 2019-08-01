@@ -39,4 +39,5 @@ class Messaging(QThread):
         return message.split(self.breaker)[0]
 
     def send_string(self, sock, message):
+        self.logger.debug("    Sent Message (" + str(message) + ")")
         sock.sendall("".join([message, self.breaker]).encode())

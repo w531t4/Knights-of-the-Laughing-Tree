@@ -15,7 +15,7 @@ class Player:
             self.id = id
 
     def addToScore(self, score):
-        self.setScore(self.roundScore + score)
+        self.setScore(self.roundScore + int(score))
 
     def setScore(self, score):
         self.roundScore = score

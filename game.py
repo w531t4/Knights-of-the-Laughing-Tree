@@ -1,7 +1,8 @@
 #!/bin/env python3
 
 from player import Player
-from trivia import Trivia
+from trivia import Trivia, TriviaDB
+from timeit import default_timer as timer
 
 import commsettings
 import messaging
@@ -25,12 +26,12 @@ class Game:
         self.round = 0
         self.spins = 0
 
-        self.maxSpins = 5 # TODO: Change back to 50
+        self.maxSpins = 8 # TODO: Change back to 50
         # game config
         # TODO: Alter Geometry
         self.geometry_width = 2
         self.geometry_height = 2
-        self.triviadb = Trivia(min_questions=self.geometry_height)
+        self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
 
         if len(self.triviadb) < (self.totalRounds * self.geometry_width):
             raise Exception("Insufficient trivia exists to complete a game with", self.totalRounds, "rounds and",
@@ -103,6 +104,7 @@ class Game:
                 self.currentPlayerIndex = 0
         else:
                 self.currentPlayerIndex += 1
+        self.pushUpdateGameState()
 
     def enrollPlayers(self):
         """Determine number of users playing"""
@@ -150,7 +152,6 @@ class Game:
             raise Exception("The type of self.current_trivia is not list")
         if len(self.current_trivia) <= 0 and self.round >= 1:
             raise Exception("The length of the current trivia db is not sufficient")
-        #if self.debug: print("self.current_trivia=", self.current_trivia)
 
         self.round += 1
         self.logger.info("Changing round from " + str(self.round-1) + " to " +  str(self.round))
@@ -164,7 +165,12 @@ class Game:
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
+
         self.wheel_map = self.build_map()
+
+        self.current_triviaDB = TriviaDB(self.current_trivia, loglevel=self.loglevel)
+
+        self.logger.debug("self.current_trivia=" + str(self.current_trivia))
         self.logger.debug(str(self.wheel_map))
 
         self.pushUpdateGameState()
@@ -206,9 +212,18 @@ class Game:
                 spinResult = self.doSpin()
 
                 self.logger.debug("Spin Result=" + str(spinResult))
+
                 postSpinAction = spinMap.get(self.wheel_map.index(spinResult), lambda: "Out of Scope")
-                postSpinAction()
+                if self.wheel_map.index(spinResult) < 6:
+                    postSpinAction()
+                else:
+                    postSpinAction(self.wheel_map.index(spinResult))
                 self.pushUpdateGameState()
+                message = dict()
+                message['action'] = "endSpin"
+                message['arguments'] = None
+                self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                self.receive_ack("endSpin")
 
         # TODO: Compare Points, Declare Victor
         for play in self.players:
@@ -217,6 +232,20 @@ class Game:
         message['action'] = "displayWinner"
         message['arguments'] = self.calculateWinner()
         self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+    def receive_ack(self, action, extra_test=True):
+        while self.msg_controller.q.empty() and extra_test is True:
+            pass
+            time.sleep(.1)
+        if not self.msg_controller.q.empty():
+            response = self.msg_controller.q.get()
+            if json.loads(response)['action'] != action:
+                raise Exception("Expecting action=" + action)
+            if json.loads(response)['arguments'] != "ACK":
+                raise Exception("Expecting ACK to action=" + action)
+            return response
+        else:
+            raise Exception("Queue was emptied prior to being serviced")
 
     def calculateWinner(self):
         winner = self.players[0].getName()
@@ -235,21 +264,21 @@ class Game:
             time.sleep(.1)
         response = self.msg_controller.q.get()
         if json.loads(response)['action'] != 'userInitiatedSpin':
-            raise Exception("Was expecting user initiated spin, received something else")
+            raise Exception("Was expecting user initiated spin, received " + str(json.loads(response)['action']))
+        message = dict()
+        message['action'] = "userInitiatedSpin"
+        message['arguments'] = "ACK"
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
         random_int = random.randrange(0, self.geometry_width + 6)
+
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = random_int
         self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
         self.spins += 1
 
-        while self.msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.msg_controller.q.get()
-
-        if json.loads(response)['arguments'] != "ACK":
-            raise Exception("didn't get correct response")
+        self.receive_ack("spinWheel")
         return random_int
 
     def build_map(self):
@@ -287,11 +316,10 @@ class Game:
             t['index'] = self.wheel_map[index+6]
             t['name'] = catobject['category']
             t['type'] = "category"
+            t['questions'] = self.current_triviaDB.listRemainingQuestions(catobject['category'])
             r.append(t)
 
         return sorted(r, key = lambda i: i['index'])
-
-
 
     def pickCategoryHelper(self, category):
         # TODO: Resolve Question/Answer from dictionary
@@ -301,44 +329,93 @@ class Game:
         # TODO: After displaying answer, display mechanism to indicate if the question was answered successfully
         # TODO: Alter Player Score according to whether the question was answered successfully or not
         self.logger.debug("Start")
-        # if (question answered successfully):
-        #   increase player score
-        #   pass
-        # else:
-        #   decrease player score
-        #   self.changeTurn()
-        pass
+        ANSWER_TIMEOUT = 30
 
-    def pickRandomCategory(self):
-        self.logger.debug("Start")
-        # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
-        random_number = random.randrange(0, len(self.current_trivia))
-        category = self.current_trivia[random.randrange(0, len(self.current_trivia))]['category']
-        # if (
-        # TODO: Check number of remaining questions for category
-        # ) == 0:
-        #           select a different available category (by Random)
-        self.pickCategoryHelper(category)
+        message = dict()
+        message['action'] = "displayQuestion"
+        question_answer = self.current_triviaDB.getQuestion(category)
+        question_answer['timeout'] = ANSWER_TIMEOUT
+        question_only = dict(question_answer)
+        question_only.pop("answer")
+        message['arguments'] = question_only
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        # kick off 30s timer
+
+        start = timer()
+        self.receive_ack("displayQuestion", extra_test=((timer()-start) < ANSWER_TIMEOUT))
+
+        # wait for revealAnswer
+        while self.msg_controller.q.empty() and ((timer()-start) < ANSWER_TIMEOUT):
+            pass
+            time.sleep(.1)
+        if not self.msg_controller.q.empty():
+            response = self.msg_controller.q.get()
+            # TODO: Needs message['action'] sanity check
+            if json.loads(response)['action'] != "revealAnswer":
+                raise Exception("Expecting action type 'revealAnswer'")
+
+            message = dict()
+            message['action'] = "revealAnswer"
+            message['arguments'] = "ACK"
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            message = dict()
+            message['action'] = "displayAnswer"
+            message['arguments'] = question_answer
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            self.receive_ack("displayAnswer")
+
+            while self.msg_controller.q.empty():
+                pass
+                time.sleep(.1)
+            response = self.msg_controller.q.get()
+            # TODO: Needs message['action'] sanity check
+            if json.loads(response)['action'] != "responseQuestion":
+                raise Exception("Expecting action type 'responseQuestion' for ACK")
+            if json.loads(response)['arguments'] is not False and json.loads(response)['arguments'] is not True:
+                raise Exception("Expecting responseQuestion to contain either True or False only")
+
+            if json.loads(response)['arguments'] is True:
+                self.getCurrentPlayer().addToScore(int(question_answer['score']))
+            else:
+                self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
+
+            message = dict()
+            message['action'] = "responseQuestion"
+            message['arguments'] = "ACK"
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+        else:
+            #timer ran out
+            pass
         self.changeTurn()
-        pass
+
+    def pickRandomCategory(self, index):
+        self.logger.debug("Start")
+        self.logger.debug("index=" + str(index))
+        category = self.current_trivia[index-6]['category']
+        self.logger.debug("category=" + str(category))
+        if len(self.current_triviaDB.listRemainingQuestions(category)) > 0:
+            self.pickCategoryHelper(category)
+            self.changeTurn()
+        else:
+            #do nothing, don't change turn - allow player to spin again
+            pass
 
     def pickLoseTurn(self):
         self.logger.debug("Start")
         self.changeTurn()
-        self.pushUpdateGameState()
-        pass
 
     def pickAccumulateFreeTurnToken(self):
         self.logger.debug("Start")
         self.getCurrentPlayer().addFreeTurnToken()
         self.changeTurn()
-        self.pushUpdateGameState()
 
     def pickBecomeBankrupt(self):
         self.logger.debug("Start")
         self.getCurrentPlayer().setScore(0)
         self.changeTurn()
-        self.pushUpdateGameState()
 
     def pickPlayersChoice(self):
         # TODO: Facilitate Explicit Selection (by Current Player) of Category from those available as 'category'
@@ -349,7 +426,7 @@ class Game:
         self.logger.debug("Start")
 
         # TODO: Resolve Categories
-        categorylist = [x['category'] for x in self.current_trivia]
+        categorylist = self.current_triviaDB.getPlayableCategories()
 
         message = dict()
         message['action'] = "promptCategorySelectByUser"
@@ -372,9 +449,23 @@ class Game:
         # ) == 0:
         #           request selection of new category (by Opponents)
         self.logger.debug("Start")
-        category = "chicken&waffles"
-        self.pickCategoryHelper(category)
-        pass
+
+        # TODO: Resolve Categories
+        categorylist = self.current_triviaDB.getPlayableCategories()
+
+        message = dict()
+        message['action'] = "promptCategorySelectByOpponent"
+        message['arguments'] = categorylist
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.msg_controller.q.get()
+        # TODO: Needs message['action'] sanity check
+        if json.loads(response)['arguments'] in message['arguments']:
+            self.pickCategoryHelper(json.loads(response)['arguments'])
+        else:
+            raise Exception("Response Category not from the allowed list")
 
     def buildGameState(self):
         gameState = dict()
@@ -395,16 +486,10 @@ class Game:
         self.logger.debug("Start")
         self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
-        self.pushUpdateGameState()
 
     def pushUpdateGameState(self):
         message = dict()
         message['action'] = "updateGameState"
         message['arguments'] = self.buildGameState()
         self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.msg_controller.q.get()
-        if json.loads(response)['arguments'] != "ACK":
-            raise Exception("Did not receive ACK from HMI")
+        response = self.receive_ack("updateGameState")
