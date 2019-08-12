@@ -22,6 +22,8 @@ class Game:
         self.loglevel = loglevel
 
         self.players = []
+        self.maxPlayers = 3
+        self.minPlayers = 2
         self.totalRounds = 2 # TODO: Review self.totalRounds
         self.round = 0
         self.spins = 0
@@ -111,12 +113,13 @@ class Game:
         # TODO: find num_players
         num_players = 0
         done = False
-        while num_players < 3 and done is False:
+        while num_players < self.maxPlayers and done is False:
             message = dict()
             current_player_names = [x.getName() for x in self.players]
-            message['action'] = "promptPlayerRegistration"
-            message['arguments'] = current_player_names
-            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            if num_players < self.maxPlayers:
+                message['action'] = "promptPlayerRegistration"
+                message['arguments'] = current_player_names
+                self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
             while self.msg_controller.q.empty():
                 pass
                 time.sleep(.1)
@@ -128,10 +131,17 @@ class Game:
                     num_players += 1
                     self.pushUpdateGameState()
             elif response['action'] == "responseFinishedPlayerRegistration":
-                done = True
+                if num_players < self.minPlayers:
+                    #TODO: This should really throw a message to HMI with feedback on the error
+                    raise Exception("Cannot proceed with less than the minimum number of players")
+                elif num_players > self.maxPlayers:
+                    #TODO: This should really throw a message to HMI with feedback on the error
+                    raise Exception("Cannot proceed with more than the maximum number of players")
+                else:
+                    done = True
             else:
                 raise Exception("Received event with unexpected action")
-        if num_players < 2:
+        if num_players < self.minPlayers:
             raise Exception("Game must be played with more than one person")
 
     def configureGame(self):
