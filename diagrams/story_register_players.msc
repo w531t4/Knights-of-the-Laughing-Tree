@@ -10,13 +10,17 @@ msc {
   Player    [label="PlayerController"],
   Board     [label="BoardController"];
 
-    Game => HMILog [label="promptPlayerRegistration"];
-    HMILog >> Game [label="ack"];
-    HMILog => HMI [label="display_prompt(ask_name)"];
-    HMI => HMILog [label="button_press(submit)"];
-    HMILog => Game [label="responsePlayerRegistration(a)"];
+    HMILog => Game [label="queryGameParameters"];
     Game >> HMILog [label="ack"];
-    Game => Player [label="createPlayer(a)"];
+    HMILog => HMI [label="start user reg wizard"];
+    HMILog => Game [label="responsePlayerRegistration(player_list)"];
+    Game => Game [label="sanity_check(player_list)"];
+    --- [label="if rejected"];
+    Game >> HMILog [label="nack or rejection comments"];
+    --- [label="revisit user reg wizard"];
+    --- [label="if approved"];
+    Game => Player [label="createPlayer(player_list)"];
+    Game >> HMILog [label="ack"];
   Game => Board [label="getBoardStats"];
   Board => Game [label="BoardStats"];
   Game => Player [label="getUserStats"];
@@ -24,7 +28,6 @@ msc {
   Game => HMILog [label="updateStats()"];
   HMILog => HMI [label="updateBoard()"];
   HMILog => HMI [label="updatePlayerScores()"];
-  HMILog >> Game [label="ack"];
-  Game => Game [label="check_num_players()"];
-  ---   [label="loop if needed back to beginning"];
+   Game => Game [label="wait for spin"];
+   --- [label="end approved"];
   }

@@ -10,9 +10,10 @@ import random
 import logging
 import logs
 from timeit import default_timer as timer
+import wizard
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
-from PyQt5 import QtWidgets, uic, QtGui, QtTest
+from PyQt5 import QtWidgets, uic, QtGui, QtTest, QtWidgets
 from functools import partial
 
 
@@ -109,6 +110,7 @@ class HMILogicController(QObject):
         if "arguments" not in message.keys():
             raise Exception("Message does not possess arguments key")
 
+        #TODO: Break out into function
         perform_ack_at_end = True
         # Proceed with performing actioning a message
         if message['action'] == "promptCategorySelectByUser":
@@ -173,6 +175,7 @@ class HMILogicController(QObject):
         if perform_ack_at_end is True and message['arguments'] != "ACK":
             self.issueAck(message['action'])
 
+        #TODO: Break out into a recv() function
         if message['arguments'] == "ACK":
             if message['action'] == "responseQuestion":
                 local_action = dict()
@@ -193,6 +196,9 @@ class HMILogicController(QObject):
                                         "textbox_answer"]
                 local_action['clear_textbox'] = ["textbox_question", "textbox_answer"]
                 self.signal_lock_unlock.emit(local_action)
+            elif message['action'] == "responseFinishedPlayerRegistration":
+                pass
+
 
     @pyqtSlot()
     def askToSpin(self):
@@ -212,6 +218,7 @@ class HMILogicController(QObject):
         """Ask Player what their name is"""
         # TODO: Prompt Players for their Names at the start of a game
         test_names = ["Aaron", "James", "Glenn", "Lorraine", "Markham"]
+
         r = random.randrange(0, len(test_names))
         return test_names[r]
 
@@ -239,6 +246,13 @@ class HMILogicController(QObject):
     def notifyNeedAnswer(self):
         response = dict()
         response['action'] = "revealAnswer"
+        response['arguments'] = None
+        self.signal_send_message.emit(json.dumps(response))
+
+    @pyqtSlot()
+    def notifyFinishUserReg(self):
+        response = dict()
+        response['action'] = "responseFinishedPlayerRegistration"
         response['arguments'] = None
         self.signal_send_message.emit(json.dumps(response))
 
@@ -332,6 +346,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         #self.button_reveal.clicked.connect(partial(self.button_reveal.setDisabled, True))
         #self.button_reveal.clicked.connect(partial(self.doSpin.setDisabled, True))
         self.wheel_resting_place = None
+        self.wiz = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
+        self.wiz.show()
+        self.wiz.exec_()
 
     @pyqtSlot(list)
     def selectCategory(self, categories):
@@ -413,6 +430,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
         #self.doSpin.setEnabled(True)
+        #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
@@ -548,6 +566,7 @@ class MyTimer(QObject):
             after = delta.split(".")[1][0]
             new_time = str(before) + "." + str(after)
             self.signal_update_timer.emit(new_time)
+            #TODO: Magic Number
             QtTest.QTest.qWait(50)
 
     def stop(self):
