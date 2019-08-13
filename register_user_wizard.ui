@@ -56,7 +56,10 @@
     </property>
    </widget>
   </widget>
-  <widget class="QWizardPage" name="pageUserEntry">
+  <widget class="MyRegistrationWizardPage" name="pageUserEntry">
+   <property name="focusPolicy">
+    <enum>Qt::WheelFocus</enum>
+   </property>
    <widget class="QTextBrowser" name="inputPlayerName">
     <property name="geometry">
      <rect>
@@ -112,22 +115,6 @@
      <string>Player Name Entry</string>
     </property>
    </widget>
-   <widget class="QLabel" name="labelPageNotes">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>150</y>
-      <width>141</width>
-      <height>71</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>If no additional players will participate, leave the 'Player Name' field blank and select the 'Next' button</string>
-    </property>
-    <property name="wordWrap">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="labelFeedback">
     <property name="geometry">
      <rect>
@@ -146,7 +133,7 @@
      <rect>
       <x>200</x>
       <y>110</y>
-      <width>151</width>
+      <width>140</width>
       <height>81</height>
      </rect>
     </property>
@@ -172,17 +159,30 @@
      <enum>QAbstractItemView::SelectItems</enum>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="buttonAddPlayer">
     <property name="geometry">
      <rect>
-      <x>110</x>
-      <y>110</y>
+      <x>200</x>
+      <y>80</y>
       <width>80</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
      <string>Add Player</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="buttonClearPlayers">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>200</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clear</string>
     </property>
    </widget>
   </widget>
@@ -235,6 +235,14 @@
    </widget>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MyRegistrationWizardPage</class>
+   <extends>QWizardPage</extends>
+   <header location="global">myRegistrationWizardPage</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

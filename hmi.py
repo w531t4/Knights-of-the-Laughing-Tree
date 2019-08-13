@@ -18,7 +18,7 @@ from PyQt5 import uic, QtGui, QtTest, QtWidgets
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
 # If this is set to False, ui.py must be manually updated by issuing pyuic5
-IMPORT_UI_ONTHEFLY = False
+IMPORT_UI_ONTHEFLY = True
 # END
 
 if not IMPORT_UI_ONTHEFLY:
@@ -87,6 +87,9 @@ class HMILogicController(QObject):
     signal_lock_unlock = pyqtSignal(dict)
     signal_start_timer = pyqtSignal(int)
     signal_stop_timer = pyqtSignal()
+    signal_feedback_registration_fail = pyqtSignal()
+    signal_feedback_registration_failmsg = pyqtSignal(str)
+    signal_feedback_registration_success = pyqtSignal()
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -124,13 +127,14 @@ class HMILogicController(QObject):
             self.signal_display_question.emit(message['arguments'])
             # TODO: static value set here, needs to be sent in message
             self.signal_start_timer.emit(30)
-        elif message['action'] == "promptPlayerRegistration":
-            # TODO: Needs conversion to UI model
+        elif message['action'] == "responsePlayerRegistration":
+            # cover ACK and NACK variants
             perform_ack_at_end = False
-            response = dict()
-            response['action'] = "responsePlayerRegistration"
-            response['arguments'] = self.registerPlayer()
-            self.signal_send_message.emit(json.dumps(response))
+            if message['arguments'] == "ACK":
+                self.signal_feedback_registration_success.emit()
+            elif len(message['arguments']) > 3 and message['arguments'][0:4] == "NACK":
+                self.signal_feedback_registration_fail.emit()
+                self.signal_feedback_registration_failmsg.emit(message['arguments'].split(":")[1])
         elif message['action'] == "spinWheel":
             perform_ack_at_end = False
             self.signal_spin_wheel.emit(message['arguments'])
@@ -241,11 +245,11 @@ class HMILogicController(QObject):
         response['arguments'] = None
         self.signal_send_message.emit(json.dumps(response))
 
-    @pyqtSlot()
-    def notifyFinishUserReg(self):
+    @pyqtSlot(list)
+    def notifyUserRegistration(self, playerList):
         response = dict()
-        response['action'] = "responseFinishedPlayerRegistration"
-        response['arguments'] = None
+        response['action'] = "responsePlayerRegistration"
+        response['arguments'] = json.dumps(playerList)
         self.signal_send_message.emit(json.dumps(response))
 
 
@@ -269,6 +273,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.loglevel = loglevel
 
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
+
+        self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
 
         self.logic_controller = HMILogicController(loglevel=loglevel)
         self.logic_controller_thread = QThread(self)
@@ -324,6 +330,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
+        #connect logic controller to wizard success/fail
+        self.logic_controller.signal_feedback_registration_fail.connect(self.registration_wizard.pageUserEntry.signal_validation_response_failure)
+        self.logic_controller.signal_feedback_registration_failmsg.connect(self.registration_wizard.setFeedback)
+        self.logic_controller.signal_feedback_registration_success.connect(self.registration_wizard.pageUserEntry.signal_validation_response_success)
+        self.registration_wizard.signal_submit_players.connect(self.logic_controller.notifyUserRegistration)
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -337,9 +348,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         #self.button_reveal.clicked.connect(partial(self.button_reveal.setDisabled, True))
         #self.button_reveal.clicked.connect(partial(self.doSpin.setDisabled, True))
         self.wheel_resting_place = None
-        self.wiz = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
-        self.wiz.show()
-        self.wiz.exec_()
+        self.registration_wizard.show()
+        self.registration_wizard.exec_()
 
     @pyqtSlot(list)
     def selectCategory(self, categories):

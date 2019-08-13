@@ -113,36 +113,33 @@ class Game:
         # TODO: find num_players
         num_players = 0
         done = False
-        while num_players < self.maxPlayers and done is False:
-            message = dict()
+        while done is False:
             current_player_names = [x.getName() for x in self.players]
-            if num_players < self.maxPlayers:
-                message['action'] = "promptPlayerRegistration"
-                message['arguments'] = current_player_names
-                self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
             while self.msg_controller.q.empty():
                 pass
                 time.sleep(.1)
             response = json.loads(self.msg_controller.q.get())
             if response['action'] == "responsePlayerRegistration":
-                if response['arguments'] not in current_player_names:
-                    playerIndex=len(self.players)
-                    self.players.append(Player(id=playerIndex, name=response['arguments']))
-                    num_players += 1
-                    self.pushUpdateGameState()
-            elif response['action'] == "responseFinishedPlayerRegistration":
-                if num_players < self.minPlayers:
-                    #TODO: This should really throw a message to HMI with feedback on the error
-                    raise Exception("Cannot proceed with less than the minimum number of players")
-                elif num_players > self.maxPlayers:
-                    #TODO: This should really throw a message to HMI with feedback on the error
-                    raise Exception("Cannot proceed with more than the maximum number of players")
+                playerList = json.loads(response['arguments'])
+                try:
+                    self.checkSanityPlayerList(playerList)
+                except Exception as e:
+                    message = dict()
+                    message['action'] = "responsePlayerRegistration"
+                    #TODO: Perhaps a better structure for passing info back with Nack
+                    message['arguments'] = ":".join(["NACK", str(e)])
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
                 else:
+                    for playerName in playerList:
+                        playerIndex=len(self.players)
+                        self.players.append(Player(id=playerIndex, name=playerName))
+                        num_players += 1
+                        self.pushUpdateGameState()
+                    message = dict()
+                    message['action'] = "responsePlayerRegistration"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
                     done = True
-            else:
-                raise Exception("Received event with unexpected action")
-        if num_players < self.minPlayers:
-            raise Exception("Game must be played with more than one person")
 
     def configureGame(self):
         # TODO: Adjustable Number of Rounds in Game (self.totalRounds)
@@ -150,6 +147,18 @@ class Game:
         # TODO: Adjustable Timeout for User Decisions
         # TODO: Adjustable Bankruptsy Behavior
         pass
+
+    def checkSanityPlayerList(self, playerList):
+        if not isinstance(playerList, list):
+            raise Exception("provided argument is not a list")
+        elif len(set(playerList)) < len(playerList):
+            raise Exception("provided list contains duplicate names")
+        elif len(playerList) < self.minPlayers:
+            raise Exception("not enough players")
+        elif len(playerList) > self.maxPlayers:
+            raise Exception("too many players")
+        else:
+            return
 
     def changeRound(self):
         """Progress GameState to the Next Round"""
