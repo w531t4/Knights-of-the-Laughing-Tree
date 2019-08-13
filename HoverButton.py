@@ -1,9 +1,13 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSignal
 import logs
 import logging
 
 
 class HoverButton(QtWidgets.QLabel):
+
+    clicked = pyqtSignal(str)
+
     #Help from https://stackoverflow.com/questions/9384305/hover-issue-in-pyqt
     def __init__(self, parent=None, loglevel=logging.DEBUG):
         super(HoverButton, self).__init__(parent)
@@ -52,3 +56,7 @@ class HoverButton(QtWidgets.QLabel):
                             ''')
         self.logger.debug("leave")
 
+    def mousePressEvent(self, event):
+        self.logger.debug("mousepressevent occurred, i am %s" % (self.objectName()))
+        self.clicked.emit(self.text())
+        QtWidgets.QLabel.mousePressEvent(self, event)

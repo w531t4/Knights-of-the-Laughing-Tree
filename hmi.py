@@ -12,6 +12,7 @@ import logs
 from timeit import default_timer as timer
 import wizard
 import catselect
+from functools import partial
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
@@ -78,7 +79,8 @@ class HMILogicController(QObject):
     signal_update_game_stats = pyqtSignal(str, str, str, str)
     signal_update_player_data = pyqtSignal(str, str, str, str, str)
     signal_spin_wheel = pyqtSignal(int)
-    signal_select_category = pyqtSignal(list)
+    signal_playerselect_category = pyqtSignal(list)
+    signal_opponentselect_category = pyqtSignal(list)
     signal_display_winner = pyqtSignal(str)
     signal_update_wheel = pyqtSignal(list)
     signal_update_board = pyqtSignal(list)
@@ -117,10 +119,10 @@ class HMILogicController(QObject):
         # Proceed with performing actioning a message
         if message['action'] == "promptCategorySelectByUser":
             perform_ack_at_end = False
-            self.signal_select_category.emit(message['arguments'])
+            self.signal_playerselect_category.emit(message['arguments'])
         elif message['action'] == "promptCategorySelectByOpponent":
             perform_ack_at_end = False
-            self.signal_select_category.emit(message['arguments'])
+            self.signal_opponentselect_category.emit(message['arguments'])
         elif message['action'] == "promptIncorrectCorrectResponse":
             self.signal_determine_correctness.emit()
         elif message['action'] == "displayQuestion":
@@ -300,7 +302,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_display_winner.connect(self.displayWinner)
 
         # Pass requests from the logic controller to prompt a user to select a category
-        self.logic_controller.signal_select_category.connect(self.selectCategory)
+        self.logic_controller.signal_playerselect_category.connect(partial(self.selectCategory, target="player"))
+        self.logic_controller.signal_opponentselect_category.connect(partial(self.selectCategory, target="opponents"))
 
         # temporarily, connect category stuff up
         self.signal_temp_select_category.connect(self.logic_controller.returnCategory)
@@ -346,8 +349,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.button_correct.clicked.connect(self.logic_controller.notifySuccesfullOutcome)
 
         self.button_reveal.clicked.connect(self.logic_controller.notifyNeedAnswer)
-        #self.button_reveal.clicked.connect(partial(self.button_reveal.setDisabled, True))
-        #self.button_reveal.clicked.connect(partial(self.doSpin.setDisabled, True))
         self.wheel_resting_place = None
 
         self.registration_wizard.show()
@@ -356,16 +357,18 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     @pyqtSlot(list)
-    def selectCategory(self, categories):
+    def selectCategory(self, categories, target="player"):
         """Prompt user or opponents to select a category"""
         if isinstance(categories, list):
             if len(categories) <= 0:
                 raise Exception("Category List does not include a sane value")
             else:
-                self.cat_select = catselect.MyCatSelect(ui_file="select_category.ui", loglevel=self.loglevel)
+                self.cat_select = catselect.MyCatSelect(ui_file="select_category.ui",
+                                                        loglevel=self.loglevel,
+                                                        categories=categories,
+                                                        audience=target)
+                self.cat_select.signal_submit_category.connect(self.logic_controller.returnCategory)
                 self.cat_select.show()
-                # wait for response
-                self.signal_temp_select_category.emit(categories[random.randrange(0, len(categories))])
 
     @pyqtSlot()
     def selectOutcome(self):
