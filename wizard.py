@@ -36,6 +36,7 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
         self.loglevel = loglevel
         self.buttonAddPlayer.clicked.connect(self.add_user)
         self.pageUserEntry.signal_ask_for_validation.connect(self.submit_players)
+        self.buttonClearPlayers.clicked.connect(self.clearPlayers)
 
     @pyqtSlot()
     def add_user(self):
@@ -56,3 +57,7 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
     @pyqtSlot(str)
     def setFeedback(self, string):
         self.labelFeedback.setText(string)
+
+    @pyqtSlot()
+    def clearPlayers(self):
+        self.listWidget.clear()
