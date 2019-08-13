@@ -60,28 +60,6 @@
    <property name="focusPolicy">
     <enum>Qt::WheelFocus</enum>
    </property>
-   <widget class="QTextBrowser" name="inputPlayerName">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>70</y>
-      <width>151</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="tabChangesFocus">
-     <bool>true</bool>
-    </property>
-    <property name="readOnly">
-     <bool>false</bool>
-    </property>
-    <property name="acceptRichText">
-     <bool>false</bool>
-    </property>
-    <property name="placeholderText">
-     <string>Amilio</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="labelPlayerName">
     <property name="geometry">
      <rect>
@@ -183,6 +161,22 @@
     </property>
     <property name="text">
      <string>Clear</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="inputPlayerName">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>80</y>
+      <width>151</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="inputMethodHints">
+     <set>Qt::ImhNoPredictiveText</set>
+    </property>
+    <property name="placeholderText">
+     <string>Amilio</string>
     </property>
    </widget>
   </widget>

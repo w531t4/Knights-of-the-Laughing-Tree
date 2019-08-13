@@ -40,7 +40,7 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
 
     @pyqtSlot()
     def add_user(self):
-        proposedPlayerName = self.inputPlayerName.toPlainText()
+        proposedPlayerName = self.inputPlayerName.text()
         if proposedPlayerName != "":
             self.labelFeedback.setText("")
             self.listWidget.addItem(proposedPlayerName)
