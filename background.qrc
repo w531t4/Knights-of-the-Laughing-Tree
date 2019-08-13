@@ -1,0 +1,15 @@
+<RCC>
+  <qresource prefix="Tree">
+    <file>Laughing_Tree.jpg</file>
+  </qresource>
+  <qresource prefix="Arrow">
+    <file>Arrow_Cropped.png</file>
+  </qresource>
+  <qresource prefix="Wheel">
+    <file>Wheel_Colored_Cropped_Large.png</file>
+    <file>Wheel_Colored_Cropped.png</file>
+  </qresource>
+  <qresource prefix="Board">
+    <file>blank-jeopardy.jpg</file>
+  </qresource>
+</RCC>

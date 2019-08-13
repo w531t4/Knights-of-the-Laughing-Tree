@@ -26,11 +26,11 @@ class Game:
         self.round = 0
         self.spins = 0
 
-        self.maxSpins = 8 # TODO: Change back to 50
+        self.maxSpins = 10 # TODO: Change back to 50
         # game config
         # TODO: Alter Geometry
-        self.geometry_width = 3
-        self.geometry_height = 3
+        self.geometry_width = 4
+        self.geometry_height = 5
         self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
 
         if len(self.triviadb) < (self.totalRounds * self.geometry_width):
