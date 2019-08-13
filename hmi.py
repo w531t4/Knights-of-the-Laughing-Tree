@@ -11,6 +11,7 @@ import logging
 import logs
 from timeit import default_timer as timer
 import wizard
+import catselect
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
@@ -348,8 +349,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         #self.button_reveal.clicked.connect(partial(self.button_reveal.setDisabled, True))
         #self.button_reveal.clicked.connect(partial(self.doSpin.setDisabled, True))
         self.wheel_resting_place = None
+
         self.registration_wizard.show()
         self.registration_wizard.exec_()
+
+
 
     @pyqtSlot(list)
     def selectCategory(self, categories):
@@ -358,8 +362,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             if len(categories) <= 0:
                 raise Exception("Category List does not include a sane value")
             else:
-                # TODO: Implement UI for selecting from list of categories
-                #prompt user with categories to select --
+                self.cat_select = catselect.MyCatSelect(ui_file="select_category.ui", loglevel=self.loglevel)
+                self.cat_select.show()
+                # wait for response
                 self.signal_temp_select_category.emit(categories[random.randrange(0, len(categories))])
 
     @pyqtSlot()
