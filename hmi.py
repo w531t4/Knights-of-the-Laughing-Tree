@@ -13,9 +13,7 @@ from timeit import default_timer as timer
 import wizard
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
-from PyQt5 import QtWidgets, uic, QtGui, QtTest, QtWidgets
-from functools import partial
-
+from PyQt5 import uic, QtGui, QtTest, QtWidgets
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -138,7 +136,6 @@ class HMILogicController(QObject):
             self.signal_spin_wheel.emit(message['arguments'])
         elif message['action'] == "displayAnswer":
             self.signal_display_answer.emit(message['arguments'])
-            #self.signal_stop_timer.emit()
         elif message['action'] == "displayWinner":
             self.signal_display_winner.emit(message['arguments'])
         elif message['action'] == "endSpin":
@@ -146,7 +143,6 @@ class HMILogicController(QObject):
             local_action['unlock'] = ["doSpin"]
             local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
             self.signal_lock_unlock.emit(local_action)
-            #self.signal_stop_timer.emit()
         elif message['action'] == "updateGameState":
             # Update Player Data
             if "players" not in message['arguments'].keys():
@@ -170,7 +166,6 @@ class HMILogicController(QObject):
                 cats = [x for x in message['arguments']['wheelboard'] if x['type'] == "category"]
                 self.logger.debug("cats=" + str(cats))
                 self.signal_update_board.emit(cats)
-
 
         if perform_ack_at_end is True and message['arguments'] != "ACK":
             self.issueAck(message['action'])
@@ -196,9 +191,6 @@ class HMILogicController(QObject):
                                         "textbox_answer"]
                 local_action['clear_textbox'] = ["textbox_question", "textbox_answer"]
                 self.signal_lock_unlock.emit(local_action)
-            elif message['action'] == "responseFinishedPlayerRegistration":
-                pass
-
 
     @pyqtSlot()
     def askToSpin(self):
@@ -337,7 +329,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.MSG_controller.start()
 
         self.doSpin.clicked.connect(self.logic_controller.askToSpin)
-        #self.doSpin.clicked.connect(partial(self.doSpin.setDisabled, True))
 
         self.button_incorrect.clicked.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.button_correct.clicked.connect(self.logic_controller.notifySuccesfullOutcome)
@@ -428,8 +419,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors)
         self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors, target=int(destination))
 
-
-        #self.doSpin.setEnabled(True)
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
     @pyqtSlot(str, str, str, str)
@@ -572,12 +561,3 @@ class MyTimer(QObject):
     def stop(self):
         # tip from https://stackoverflow.com/questions/51135444/how-to-kill-a-running-thread
         self._running = False
-
-
-# UI Arrangements
-# 1: Wait for user spin
-# 2: Wait for user reveal
-# 3: Wait for user to indicate correct/incorrect
-# 4: Wait for user to indicate if they wish to spend freeturn token
-# 5: Wait for user to select category
-# 6: Wait for opponnent to select category

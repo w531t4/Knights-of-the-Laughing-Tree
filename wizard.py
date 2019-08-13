@@ -1,18 +1,9 @@
-import socket
-import commsettings
-import time
-import messaging
-import queue
-import json
-import random
+
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5 import uic, QtWidgets
+
 import logging
 import logs
-from timeit import default_timer as timer
-
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
-from PyQt5 import QtWidgets, uic, QtGui, QtTest, QtWidgets
-
-from functools import partial
 
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
@@ -38,7 +29,6 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_MainWindow):
             if ui_file is None:
                 raise Exception("Did not specify a .ui file")
             uic.loadUi(ui_file, self)
-
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
         self.logger.debug("testtest")
