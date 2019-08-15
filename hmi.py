@@ -352,7 +352,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.wheel_resting_place = None
 
         self.registration_wizard.show()
-        self.registration_wizard.exec_()
+
+        # Ensure registration wizard is focused on at startup. Without this, mainUI is focused
+        # activateWindow() must be called first
+        self.registration_wizard.activateWindow()
+        self.registration_wizard.raise_()
 
 
 
