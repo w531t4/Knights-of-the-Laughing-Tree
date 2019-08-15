@@ -340,16 +340,17 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_feedback_registration_success.connect(self.registration_wizard.pageUserEntry.signal_validation_response_success)
         self.registration_wizard.signal_submit_players.connect(self.logic_controller.notifyUserRegistration)
 
-        self.logic_controller_thread.start()
-        self.MSG_controller.start()
-
         self.doSpin.clicked.connect(self.logic_controller.askToSpin)
 
         self.button_incorrect.clicked.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.button_correct.clicked.connect(self.logic_controller.notifySuccesfullOutcome)
-
         self.button_reveal.clicked.connect(self.logic_controller.notifyNeedAnswer)
         self.wheel_resting_place = None
+
+        self.registration_wizard.signal_close.connect(self.close)
+
+        self.logic_controller_thread.start()
+        self.MSG_controller.start()
 
         self.registration_wizard.show()
 

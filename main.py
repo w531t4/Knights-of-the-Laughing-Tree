@@ -21,7 +21,7 @@ def main(loglevel=logging.INFO):
 
     form = HMI(ui_file="ui.ui", loglevel=loglevel)
     form.show()
-    app.exec_()
+    sys.exit(app.exec_())
 
 def banner():
 
