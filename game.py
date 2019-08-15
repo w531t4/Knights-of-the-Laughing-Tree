@@ -478,7 +478,50 @@ class Game:
 
     def pickLoseTurn(self):
         self.logger.debug("Start")
-        self.changeTurn()
+        doChangeTurn = False
+        if self.getCurrentPlayer().getFreeTurnTokens() > 0:
+            message = dict()
+            message['action'] = "promptSpendFreeTurnToken"
+            message['arguments'] = None
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            self.receive_ack("promptSpendFreeTurnToken")
+
+            correctResponseReceived = False
+            while not correctResponseReceived:
+                self.logger.debug("entered currectResponseReceived loop")
+                while self.msg_controller.q.empty():
+                    pass
+                    time.sleep(.1)
+                self.logger.debug("msg_controller queue is no longer empty")
+                response = self.msg_controller.q.get()
+                if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
+                    self.logger.debug("user indicated to spend ft token")
+                    self.getCurrentPlayer().spendFreeTurnToken()
+                    # user indicated to spend free turn token
+                    correctResponseReceived = True
+                    doChangeTurn = False
+                    message = dict()
+                    message['action'] = "userInitiatedFreeTurnTokenSpend"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
+                    self.logger.debug("user indicated to skip spending ft token")
+                    # user declided to spend token, decrement score since they answered incorrectly
+                    doChangeTurn = True
+                    correctResponseReceived = True
+                    message = dict()
+                    message['action'] = "userInitiatedFreeTurnTokenSkip"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                else:
+                    raise Exception(
+                        "Was expecting a decision on free token spending, received "
+                        + str(json.loads(response)['action']))
+        else:
+            doChangeTurn = True
+        if doChangeTurn:
+            self.changeTurn()
 
     def pickAccumulateFreeTurnToken(self):
         self.logger.debug("Start")
