@@ -93,6 +93,7 @@ class HMILogicController(QObject):
     signal_feedback_registration_fail = pyqtSignal()
     signal_feedback_registration_failmsg = pyqtSignal(str)
     signal_feedback_registration_success = pyqtSignal()
+    signal_determine_freeturn_spend = pyqtSignal()
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -150,6 +151,11 @@ class HMILogicController(QObject):
             local_action['unlock'] = ["doSpin"]
             local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
             self.signal_lock_unlock.emit(local_action)
+        elif message['action'] == "promptSpendFreeTurnToken":
+            local_action = dict()
+            local_action['unlock'] = ["freeTurnSkip", "freeTurnSpend"]
+            self.signal_lock_unlock.emit(local_action)
+            #self.signal_determine_freeturn_spend.emit()
         elif message['action'] == "updateGameState":
             # Update Player Data
             if "players" not in message['arguments'].keys():
@@ -190,12 +196,20 @@ class HMILogicController(QObject):
                 local_action['clear_lcd'] = ["timer"]
                 self.signal_lock_unlock.emit(local_action)
                 self.signal_stop_timer.emit()
+            elif message['action'] == "userInitiatedFreeTurnTokenSkip":
+                local_action = dict()
+                local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
+                self.signal_lock_unlock.emit(local_action)
+            elif message['action'] == "userInitiatedFreeTurnTokenSpend":
+                local_action = dict()
+                local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
+                self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "userInitiatedSpin":
                 self.logger.debug("Processing ACK of userInitiatedSpin")
                 local_action = dict()
                 local_action['lock'] = ["doSpin", "button_correct", "button_incorrect",
                                         "button_reveal", "timer", "textbox_question",
-                                        "textbox_answer"]
+                                        "textbox_answer", "freeTurnSkip", "freeTurnSpend"]
                 local_action['clear_textbox'] = ["textbox_question", "textbox_answer"]
                 self.signal_lock_unlock.emit(local_action)
 
@@ -253,6 +267,19 @@ class HMILogicController(QObject):
         response = dict()
         response['action'] = "responsePlayerRegistration"
         response['arguments'] = json.dumps(playerList)
+        self.signal_send_message.emit(json.dumps(response))
+
+    @pyqtSlot()
+    def notifyFreeTurnSkip(self):
+        response = dict()
+        response['action'] = "userInitiatedFreeTurnTokenSkip"
+        response['arguments'] = None
+        self.signal_send_message.emit(json.dumps(response))
+    @pyqtSlot()
+    def notifyFreeTurnSpend(self):
+        response = dict()
+        response['action'] = "userInitiatedFreeTurnTokenSpend"
+        response['arguments'] = None
         self.signal_send_message.emit(json.dumps(response))
 
 
@@ -339,6 +366,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_feedback_registration_failmsg.connect(self.registration_wizard.setFeedback)
         self.logic_controller.signal_feedback_registration_success.connect(self.registration_wizard.pageUserEntry.signal_validation_response_success)
         self.registration_wizard.signal_submit_players.connect(self.logic_controller.notifyUserRegistration)
+
+        #self.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
+        self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
+        self.freeTurnSpend.clicked.connect(self.logic_controller.notifyFreeTurnSpend)
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -552,6 +583,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def stopTimer(self):
         self.timer.setDisabled(True)
         self.timer_obj.stop()
+
+#    @pyqtSlot()
+#    def determineFreeTurnSpend(self):
 
 
 class MyTimer(QObject):
