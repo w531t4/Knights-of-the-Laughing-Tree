@@ -186,8 +186,10 @@ class Game:
                                              exclude=self.utilized_categories)
 
         self.wheel_map = self.build_map()
-
-        self.current_triviaDB = TriviaDB(self.current_trivia, loglevel=self.loglevel)
+        if self.round == 1:
+            self.current_triviaDB = TriviaDB(self.current_trivia, loglevel=self.loglevel, starting_price=100)
+        else:
+            self.current_triviaDB = TriviaDB(self.current_trivia, loglevel=self.loglevel, starting_price=200)
 
         self.logger.debug("self.current_trivia=" + str(self.current_trivia))
         self.logger.debug(str(self.wheel_map))
@@ -336,6 +338,7 @@ class Game:
             t['name'] = catobject['category']
             t['type'] = "category"
             t['questions'] = self.current_triviaDB.listRemainingQuestions(catobject['category'])
+            t['valid_prices'] = self.current_triviaDB.getListOfPrices()
             r.append(t)
 
         return sorted(r, key = lambda i: i['index'])
