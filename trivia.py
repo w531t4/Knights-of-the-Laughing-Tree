@@ -90,16 +90,20 @@ class TriviaDB:
     def __init__(self, current_trivia, loglevel=logging.INFO, starting_price=200):
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.starting_price = starting_price
+        self.price_list = list()
         self.data = {}
         if current_trivia is not None:
             for catobj in current_trivia:
-                print("catobj=", catobj)
+                self.logger.debug("catobj=%s" % (catobj))
                 if catobj['category'] not in self.data.keys():
                     self.data[catobj['category']] = dict()
-                price = starting_price
+                price = self.starting_price
                 for topic in catobj['topics']:
                     self.data[catobj['category']][str(price)] = topic
-                    price += starting_price
+                    self.price_list.append(price)
+                    price += self.starting_price
+
 
     def getCategories(self):
         return self.data.keys()
@@ -123,11 +127,15 @@ class TriviaDB:
         to_return['score'] = remaining_questions[0]
         return to_return
 
-    def listRemainingQuestions(self, category):
+    def listRemainingQuestions(self, category, ):
         if category not in self.data.keys():
             raise Exception("Cannot find the category specified in the database")
         remaining_questions = [x for x in self.data[category].keys()]
         remaining_questions.sort()
         return remaining_questions
 
+    def getListOfPrices(self):
+        r = list(set(self.price_list))
+        r.sort()
+        return r
 

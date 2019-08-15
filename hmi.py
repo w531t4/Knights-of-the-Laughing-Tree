@@ -488,17 +488,19 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(list)
     def updateBoard(self, category_list):
-        for i, each in enumerate(category_list):
-            getattr(self, "label_board_col" + str(i+1) + "_row1").setText(str(each['name']))
-            #self.logger.debug("set header_alias=" + each['name'])
-            for j, score in enumerate([200, 400, 600, 800, 1000]):
-                row_alias = getattr(self, "label_board_col" + str(i+1) + "_row" + str(j+2))
+        for xpos, each in enumerate(category_list, 1):
+            valid_prices = each['valid_prices']
+            getattr(self, "label_board_col" + str(xpos) + "_row1").setText(str(each['name']))
+            #self.logger.debug("category_list=%s" % (category_list))
+            for ypos, score in enumerate(valid_prices, 2):
+                #ypos == enumerate starts at 0 + (row1 is category row), so it starts at 2. therefore ypos + 2. ugly.
+                row_alias = getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos))
                 if str(score) in each['questions']:
-                    getattr(self, "label_board_col" + str(i + 1) + "_row" + str(j + 2)).setEnabled(True)
-                    getattr(self, "label_board_col" + str(i + 1) + "_row" + str(j + 2)).setText(str(score))
+                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(True)
+                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(score))
                 else:
-                    getattr(self, "label_board_col" + str(i + 1) + "_row" + str(j + 2)).setEnabled(False)
-                    getattr(self, "label_board_col" + str(i + 1) + "_row" + str(j + 2)).setText("")
+                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(False)
+                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText("")
 
     @pyqtSlot(str)
     def displayWinner(self, playername):
