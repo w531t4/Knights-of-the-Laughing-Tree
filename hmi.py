@@ -16,6 +16,7 @@ from functools import partial
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
+from PyQt5.QtMultimedia import QSound
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -94,6 +95,11 @@ class HMILogicController(QObject):
     signal_feedback_registration_failmsg = pyqtSignal(str)
     signal_feedback_registration_success = pyqtSignal()
     signal_determine_freeturn_spend = pyqtSignal()
+    signal_play_spin_sound = pyqtSignal()
+    signal_play_correct_sound = pyqtSignal()
+    signal_play_incorrect_sound = pyqtSignal()
+    signal_play_bankrupt_sound = pyqtSignal()
+    signal_play_double_sound = pyqtSignal()
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -141,6 +147,7 @@ class HMILogicController(QObject):
                 self.signal_feedback_registration_failmsg.emit(message['arguments'].split(":")[1])
         elif message['action'] == "spinWheel":
             perform_ack_at_end = False
+            self.signal_play_spin_sound.emit()
             self.signal_spin_wheel.emit(message['arguments'])
         elif message['action'] == "displayAnswer":
             self.signal_display_answer.emit(message['arguments'])
@@ -191,6 +198,7 @@ class HMILogicController(QObject):
                 local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "playerBecomesBankrupt":
+                # self.signal_play_bankrupt_sound.emit()
                 pass
             elif message['action'] == "revealAnswer":
                 local_action = dict()
@@ -248,6 +256,7 @@ class HMILogicController(QObject):
         response = dict()
         response['action'] = "responseQuestion"
         response['arguments'] = True
+        self.signal_play_correct_sound.emit()
         self.signal_send_message.emit(json.dumps(response))
 
     @pyqtSlot()
@@ -255,6 +264,7 @@ class HMILogicController(QObject):
         response = dict()
         response['action'] = "responseQuestion"
         response['arguments'] = False
+        self.signal_play_incorrect_sound.emit()
         self.signal_send_message.emit(json.dumps(response))
 
     @pyqtSlot()
@@ -303,7 +313,17 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+
         self.setWindowTitle("Wheel of Jeopardy")
+
+        self.sounds = {
+            "Correct" : QSound("Correct.wav"),
+            "Incorrect" : QSound("Incorrect.wav"),
+            "Bankrupt" : QSound("Bankrupt.wav"),
+            "Spin" : QSound("Spinning.wav"),
+            "Double" : QSound("Double.wav")
+        }
+
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
@@ -368,6 +388,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_feedback_registration_failmsg.connect(self.registration_wizard.setFeedback)
         self.logic_controller.signal_feedback_registration_success.connect(self.registration_wizard.pageUserEntry.signal_validation_response_success)
         self.registration_wizard.signal_submit_players.connect(self.logic_controller.notifyUserRegistration)
+
+        #connect sounds
+        self.logic_controller.signal_play_spin_sound.connect(self.playSpin)
+        self.logic_controller.signal_play_correct_sound.connect(self.playCorrect)
+        self.logic_controller.signal_play_incorrect_sound.connect(self.playIncorrect)
+        self.logic_controller.signal_play_bankrupt_sound.connect(self.playBankrupt)
+        self.logic_controller.signal_play_double_sound.connect(self.playDouble)
 
         #self.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
         self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
@@ -601,6 +628,26 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def stopTimer(self):
         self.timer.setDisabled(True)
         self.timer_obj.stop()
+
+    @pyqtSlot()
+    def playSpin(self):
+        self.sounds["Spin"].play()
+
+    @pyqtSlot()
+    def playCorrect(self):
+        self.sounds["Correct"].play()
+
+    @pyqtSlot()
+    def playIncorrect(self):
+        self.sounds["Incorrect"].play()
+
+    @pyqtSlot()
+    def playBankrupt(self):
+        self.sounds["Bankrupt"].play()
+
+    @pyqtSlot()
+    def playBankrupt(self):
+        self.sounds["Double"].play()
 
 #    @pyqtSlot()
 #    def determineFreeTurnSpend(self):
