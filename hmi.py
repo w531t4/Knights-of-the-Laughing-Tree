@@ -301,7 +301,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
-
+        self.setWindowTitle("Wheel of Jeopardy")
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
