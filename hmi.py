@@ -99,6 +99,7 @@ class HMILogicController(QObject):
     signal_play_correct_sound = pyqtSignal()
     signal_play_incorrect_sound = pyqtSignal()
     signal_play_bankrupt_sound = pyqtSignal()
+    signal_play_double_sound = pyqtSignal()
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -197,9 +198,8 @@ class HMILogicController(QObject):
                 local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "playerBecomesBankrupt":
-                pass
                 # self.signal_play_bankrupt_sound.emit()
-                # print("akdsjfklasdjfklasjflkasdjlkasdjflkasjlskdjadslkfjalkdsjasdklj")
+                pass
             elif message['action'] == "revealAnswer":
                 local_action = dict()
                 local_action['lock'] = ["button_reveal", "timer"]
@@ -320,7 +320,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Correct" : QSound("Correct.wav"),
             "Incorrect" : QSound("Incorrect.wav"),
             "Bankrupt" : QSound("Bankrupt.wav"),
-            "Spin" : QSound("Spinning.wav")
+            "Spin" : QSound("Spinning.wav"),
+            "Double" : QSound("Double.wav")
         }
 
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
@@ -393,6 +394,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_play_correct_sound.connect(self.playCorrect)
         self.logic_controller.signal_play_incorrect_sound.connect(self.playIncorrect)
         self.logic_controller.signal_play_bankrupt_sound.connect(self.playBankrupt)
+        self.logic_controller.signal_play_double_sound.connect(self.playDouble)
 
         #self.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
         self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
@@ -642,7 +644,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def playBankrupt(self):
         self.sounds["Bankrupt"].play()
-        print("BANKRUPTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+
+    @pyqtSlot()
+    def playBankrupt(self):
+        self.sounds["Double"].play()
 
 #    @pyqtSlot()
 #    def determineFreeTurnSpend(self):
