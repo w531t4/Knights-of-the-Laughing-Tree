@@ -202,6 +202,42 @@
     "answer": "The Flintstones",
     "question": "First Animated TV show made for prime-time television?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
-  }
+  },
+
+  {
+    "category": "Animals",
+    "answer": "Bowhead whales",
+    "question": "Which mammal has the longest lifespan? "},
+
+  {
+    "category": "Animals",
+    "answer": "Bats",
+    "question": "What is the only mammal capable of true flight? ? "},
+
+  {
+    "category": "Animals",
+    "answer": "Bowhead whales",
+    "question": "What is the largest of the great apes?? "},
+
+  {
+    "category": "Animals",
+    "answer": "Mountain Gorilla",
+    "question": "Which mammal has the longest lifespan? "},
+
+  {
+    "category": "Animals",
+    "answer": "Giraffe ",
+    "question": "What animal has the highest blood pressure? "},
+
+  {
+    "category": "Animals",
+    "answer": "Three-toed sloth ",
+    "question": "What is the slowest animal? "},
+
+  {
+    "category": "Animals",
+    "answer": "Bullfrog ",
+    "question": "What animal never sleeps? "}
+
 ]
 
