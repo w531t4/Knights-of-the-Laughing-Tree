@@ -12,6 +12,7 @@ from PyQt5 import QtWidgets
 def main(loglevel=logging.INFO):
 
     game_thread = threading.Thread(target=Game, kwargs={"loglevel": loglevel, })
+    game_thread.daemon = True
     game_thread.start()
     #Inspired by:
     #https://kushaldas.in/posts/pyqt5-thread-example.html
@@ -20,7 +21,7 @@ def main(loglevel=logging.INFO):
 
     form = HMI(ui_file="ui.ui", loglevel=loglevel)
     form.show()
-    app.exec_()
+    sys.exit(app.exec_())
 
 def banner():
 

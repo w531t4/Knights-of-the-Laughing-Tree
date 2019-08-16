@@ -1,5 +1,5 @@
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5 import uic, QtWidgets
 
 import logging
@@ -22,6 +22,7 @@ else:
 class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
 
     signal_submit_players = pyqtSignal(list)
+    signal_close = pyqtSignal()
 
     def __init__(self, parent=None, ui_file=None, loglevel=logging.INFO):
         super(MyWizard, self).__init__(parent)
@@ -54,6 +55,10 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
         list_contents = [self.listWidget.item(x).text() for x in range(0, list_length)]
         self.signal_submit_players.emit(list_contents)
 
+    def closeEvent(self, event):
+        self.signal_close.emit()
+        super(MyWizard, self).closeEvent(event)
+
     @pyqtSlot(str)
     def setFeedback(self, string):
         self.labelFeedback.setText(string)
@@ -61,3 +66,9 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
     @pyqtSlot()
     def clearPlayers(self):
         self.listWidget.clear()
+
+    def keyPressEvent(self, keyevent) -> None:
+        #help from https://stackoverflow.com/questions/46717186/how-to-implement-a-key-listener-in-pyqt5-for-a-qplaintextedit-or-any-other-comp
+        if keyevent.key() == Qt.Key_Escape:
+            self.close()
+
