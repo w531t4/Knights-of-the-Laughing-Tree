@@ -618,6 +618,51 @@
      <string>Reveal Answer</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="freeTurnSpend">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>350</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Spend</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="freeTurnSkip">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>350</y>
+      <width>80</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Don't Spend</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="freeTurnLabel">
+    <property name="geometry">
+     <rect>
+      <x>375</x>
+      <y>356</y>
+      <width>54</width>
+      <height>10</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>FreeTurn</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

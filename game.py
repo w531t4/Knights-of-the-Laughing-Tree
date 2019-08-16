@@ -92,7 +92,7 @@ class Game:
         self.logger.debug("Enter Function")
         return random.randrange(0, len(self.players))
 
-    def getCurrentPlayer(self):
+    def getCurrentPlayer(self) -> Player:
         self.logger.debug("Enter Function")
         if len(self.players) > 0:
             return self.players[self.currentPlayerIndex]
@@ -261,9 +261,15 @@ class Game:
         if not self.msg_controller.q.empty():
             response = self.msg_controller.q.get()
             if json.loads(response)['action'] != action:
-                raise Exception("Expecting action=" + action)
+                raise Exception("Expecting action=%s, received action=%s arguments=%s" %
+                            (action,
+                             json.loads(response)['action'],
+                             json.loads(response)['arguments']))
             if json.loads(response)['arguments'] != "ACK":
-                raise Exception("Expecting ACK to action=" + action)
+                raise Exception("Expecting ACK to action=%s, received action=%s arguments=%s" %
+                                (action,
+                                 json.loads(response)['action'],
+                                 json.loads(response)['arguments']))
             return response
         else:
             raise Exception("Queue was emptied prior to being serviced")
@@ -367,6 +373,7 @@ class Game:
         self.receive_ack("displayQuestion", extra_test=((timer()-start) < ANSWER_TIMEOUT))
 
         # wait for revealAnswer
+        doChangeTurn = True
         while self.msg_controller.q.empty() and ((timer()-start) < ANSWER_TIMEOUT):
             pass
             time.sleep(.1)
@@ -401,7 +408,50 @@ class Game:
             if json.loads(response)['arguments'] is True:
                 self.getCurrentPlayer().addToScore(int(question_answer['score']))
             else:
-                self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
+                # User answered question incorrectly
+
+                # Check to see if user has freeTurn tokens available
+                if self.getCurrentPlayer().getFreeTurnTokens() > 0:
+                    message = dict()
+                    message['action'] = "promptSpendFreeTurnToken"
+                    message['arguments'] = None
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+                    self.receive_ack("promptSpendFreeTurnToken")
+
+                    correctResponseReceived = False
+                    while not correctResponseReceived:
+                        self.logger.debug("entered currectResponseReceived loop")
+                        while self.msg_controller.q.empty():
+                            pass
+                            time.sleep(.1)
+                        self.logger.debug("msg_controller queue is no longer empty")
+                        response = self.msg_controller.q.get()
+                        if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
+                            self.logger.debug("user indicated to spend ft token")
+                            self.getCurrentPlayer().spendFreeTurnToken()
+                            # user indicated to spend free turn token
+                            correctResponseReceived = True
+                            doChangeTurn = False
+                            message = dict()
+                            message['action'] = "userInitiatedFreeTurnTokenSpend"
+                            message['arguments'] = "ACK"
+                            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                        elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
+                            self.logger.debug("user indicated to skip spending ft token")
+                            # user declided to spend token, decrement score since they answered incorrectly
+                            self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
+                            correctResponseReceived = True
+                            message = dict()
+                            message['action'] = "userInitiatedFreeTurnTokenSkip"
+                            message['arguments'] = "ACK"
+                            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                        else:
+                            raise Exception(
+                                "Was expecting a decision on free token spending, received "
+                                + str(json.loads(response)['action']))
+                else:
+                    self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
 
             message = dict()
             message['action'] = "responseQuestion"
@@ -411,7 +461,8 @@ class Game:
         else:
             #timer ran out
             pass
-        self.changeTurn()
+        if doChangeTurn:
+            self.changeTurn()
 
     def pickRandomCategory(self, index):
         self.logger.debug("Start")
@@ -427,7 +478,50 @@ class Game:
 
     def pickLoseTurn(self):
         self.logger.debug("Start")
-        self.changeTurn()
+        doChangeTurn = False
+        if self.getCurrentPlayer().getFreeTurnTokens() > 0:
+            message = dict()
+            message['action'] = "promptSpendFreeTurnToken"
+            message['arguments'] = None
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            self.receive_ack("promptSpendFreeTurnToken")
+
+            correctResponseReceived = False
+            while not correctResponseReceived:
+                self.logger.debug("entered currectResponseReceived loop")
+                while self.msg_controller.q.empty():
+                    pass
+                    time.sleep(.1)
+                self.logger.debug("msg_controller queue is no longer empty")
+                response = self.msg_controller.q.get()
+                if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
+                    self.logger.debug("user indicated to spend ft token")
+                    self.getCurrentPlayer().spendFreeTurnToken()
+                    # user indicated to spend free turn token
+                    correctResponseReceived = True
+                    doChangeTurn = False
+                    message = dict()
+                    message['action'] = "userInitiatedFreeTurnTokenSpend"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
+                    self.logger.debug("user indicated to skip spending ft token")
+                    # user declided to spend token, decrement score since they answered incorrectly
+                    doChangeTurn = True
+                    correctResponseReceived = True
+                    message = dict()
+                    message['action'] = "userInitiatedFreeTurnTokenSkip"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                else:
+                    raise Exception(
+                        "Was expecting a decision on free token spending, received "
+                        + str(json.loads(response)['action']))
+        else:
+            doChangeTurn = True
+        if doChangeTurn:
+            self.changeTurn()
 
     def pickAccumulateFreeTurnToken(self):
         self.logger.debug("Start")
