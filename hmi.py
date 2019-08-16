@@ -197,7 +197,9 @@ class HMILogicController(QObject):
                 local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "playerBecomesBankrupt":
-                self.signal_play_spin_sound.emit()
+                pass
+                # self.signal_play_bankrupt_sound.emit()
+                # print("akdsjfklasdjfklasjflkasdjlkasdjflkasjlskdjadslkfjalkdsjasdklj")
             elif message['action'] == "revealAnswer":
                 local_action = dict()
                 local_action['lock'] = ["button_reveal", "timer"]
@@ -640,6 +642,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def playBankrupt(self):
         self.sounds["Bankrupt"].play()
+        print("BANKRUPTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
 
 #    @pyqtSlot()
 #    def determineFreeTurnSpend(self):
