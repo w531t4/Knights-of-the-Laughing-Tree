@@ -25,6 +25,7 @@ class MyCatSelect(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_Frame):
 
     signal_submit_category = pyqtSignal(str)
     signal_close = pyqtSignal()
+    signal_shift_scene = pyqtSignal()
 
     def __init__(self, parent=None, ui_file=None, loglevel=logging.INFO, categories=[], audience="Player"):
         super(MyCatSelect, self).__init__(parent)
@@ -47,6 +48,7 @@ class MyCatSelect(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_Frame):
             getattr(self, "cat%s" % (i)).setWordWrap(True)
             getattr(self, "cat%s" % (i)).setObjectName("cat%s" % (i))
             getattr(self, "cat%s" % (i)).clicked.connect(self.somethingClicked)
+            getattr(self, "cat%s" % (i)).clicked.connect(self.shift_scene)
             getattr(self, "cat%s" % (i)).setText(categories[i])
             self.horizontalLayout_3.addWidget(getattr(self, "cat%s" % (i)))
         self.message.setText("%s, please select a category" % (audience))
@@ -56,5 +58,9 @@ class MyCatSelect(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_Frame):
         self.logger.debug("Captured the selection of category=%s" % (s))
         self.signal_submit_category.emit(s)
         self.signal_close.emit()
+
+    @pyqtSlot()
+    def shift_scene(self):
+        self.signal_shift_scene.emit()
 
 

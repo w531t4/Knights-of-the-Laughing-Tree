@@ -23,6 +23,7 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
 
     signal_submit_players = pyqtSignal(list)
     signal_close = pyqtSignal()
+    signal_shift_scene = pyqtSignal()
 
     def __init__(self, parent=None, ui_file=None, loglevel=logging.INFO):
         super(MyWizard, self).__init__(parent)
@@ -38,6 +39,7 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
         self.buttonAddPlayer.clicked.connect(self.add_user)
         self.pageUserEntry.signal_ask_for_validation.connect(self.submit_players)
         self.buttonClearPlayers.clicked.connect(self.clearPlayers)
+
 
     @pyqtSlot()
     def add_user(self):

@@ -371,6 +371,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
         self.freeTurnSpend.clicked.connect(self.logic_controller.notifyFreeTurnSpend)
 
+        #help from https://stackoverflow.com/questions/46174073/open-a-new-window-after-finish-button-has-been-clicked-on-qwizard-pyqt5?rq=1
+        self.registration_wizard.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.shiftToComboWheelBoardScore)
+
+
         self.logic_controller_thread.start()
         self.MSG_controller.start()
 
@@ -386,14 +390,15 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller_thread.start()
         self.MSG_controller.start()
 
-        self.registration_wizard.show()
+        #self.registration_wizard.show()
+        self.main = self.takeCentralWidget()
+        self.setCentralWidget(self.registration_wizard)
+        #self.setCentralWidget(self.main)
 
-        # Ensure registration wizard is focused on at startup. Without this, mainUI is focused
-        # activateWindow() must be called first
-        self.registration_wizard.activateWindow()
-        self.registration_wizard.raise_()
-
-
+    @pyqtSlot()
+    def shiftToComboWheelBoardScore(self):
+        self.logger.debug("Shifting focus to combo-wheel-board-score panel")
+        self.setCentralWidget(self.main)
 
     @pyqtSlot(list)
     def selectCategory(self, categories, target="player"):
@@ -407,7 +412,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                         categories=categories,
                                                         audience=target)
                 self.cat_select.signal_submit_category.connect(self.logic_controller.returnCategory)
-                self.cat_select.show()
+                self.cat_select.signal_shift_scene.connect(self.shiftToComboWheelBoardScore)
+                self.main = self.takeCentralWidget()
+                self.setCentralWidget(self.cat_select)
+                #self.cat_select.show()
 
     @pyqtSlot()
     def selectOutcome(self):
