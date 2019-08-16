@@ -161,37 +161,37 @@
     "question": "Every Episode of Seinfeld mentions which superhero at least once?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-    {
+  {
     "category": "TV",
     "answer": "I want to Believe",
     "question": "What is the phrase of the UFO poster in Fox Mulders office in X-Files?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-    {
+  {
     "category": "TV",
     "answer": "Kathleen Turner",
     "question": "Who played Chandler's father on Friends?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-      {
+  {
     "category": "TV",
     "answer": "Survivor",
     "question": "What reality TV show debuted a Pontiac Aztec as their Season 1 Grand Prize?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-        {
+  {
     "category": "TV",
     "answer": "Drew Barrymore",
     "question": "Youngest person to host Saturday Night Live?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-          {
+  {
     "category": "TV",
     "answer": "Orange & Green",
     "question": "What colors is the Brady Bunch kitchen?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-          {
+  {
     "category": "TV",
     "answer": "Creed",
     "question": "What character becomes a wanted fugitive in the final season of The Office?",
@@ -202,6 +202,40 @@
     "answer": "The Flintstones",
     "question": "First Animated TV show made for prime-time television?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "So far away",
+    "question": "What lyric follows `Yesterday, all my troubles seemed`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Twist and shout",
+    "question": "What lyric follows `Well, shake it up, baby, now`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Let it Be",
+    "question": "What lyric follows `Mother Mary comes to me, speaking words of wisdom`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Like a dog",
+    "question": "What lyric follows `It's been a hard day's night, and I've been working`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Gently weeps",
+    "question": "What lyric follows `It's turning, while my guitar`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "And in my eyes",
+    "question": "What lyric follows `Penny Lane is in my ears`?"
+  },
+  {
+    "category": "TV",
+    "answer": "With diamonds",
+    "question": "What lyric follows `Lucy in the Sky`?"
   }
 ]
-
