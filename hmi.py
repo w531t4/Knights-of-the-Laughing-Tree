@@ -646,7 +646,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.sounds["Bankrupt"].play()
 
     @pyqtSlot()
-    def playBankrupt(self):
+    def playDouble(self):
         self.sounds["Double"].play()
 
 #    @pyqtSlot()
