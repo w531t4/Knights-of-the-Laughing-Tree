@@ -13,6 +13,8 @@ from timeit import default_timer as timer
 import wizard
 import catselect
 from functools import partial
+from hmi_controller import HMILogicController
+
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
@@ -28,259 +30,6 @@ if not IMPORT_UI_ONTHEFLY:
 else:
     class Ui_MainWindow:
         pass
-
-
-class HMIMessageController(QThread):
-    signal_recieve_message = pyqtSignal(str)
-
-    def __init__(self, loglevel=logging.INFO):
-        QThread.__init__(self)
-        self.logger = logs.build_logger(__name__, loglevel)
-        self.loglevel = loglevel
-
-        self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue,
-                                                                                loglevel=self.loglevel, name="HMILogic")
-
-    def run(self):
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.receiver.bind(("127.0.0.1", commsettings.HMI_LISTEN))
-        self.receiver.listen(2)
-        self.logger.info("successfully opened port " + str(commsettings.HMI_LISTEN))
-        # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                self.sender = socket.create_connection(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
-                break
-            except Exception as e:
-                self.logger.error(e)
-                time.sleep(1)
-                continue
-
-        self.msg_controller.start()
-
-        while True:
-            if not self.clientqueue.empty():
-                self.signal_recieve_message.emit(self.clientqueue.get())
-            time.sleep(.1)
-
-    @pyqtSlot(str)
-    def send_message(self, msg):
-        self.msg_controller.send_string(self.sender, msg)
-
-
-class HMILogicController(QObject):
-
-    signal_send_message = pyqtSignal(str)
-    signal_update_game_stats = pyqtSignal(str, str, str, str)
-    signal_update_player_data = pyqtSignal(str, str, str, str, str)
-    signal_spin_wheel = pyqtSignal(int)
-    signal_playerselect_category = pyqtSignal(list)
-    signal_opponentselect_category = pyqtSignal(list)
-    signal_display_winner = pyqtSignal(str)
-    signal_update_wheel = pyqtSignal(list)
-    signal_update_board = pyqtSignal(list)
-    signal_display_question = pyqtSignal(dict)
-    signal_display_answer = pyqtSignal(dict)
-    signal_determine_correctness = pyqtSignal()
-    signal_lock_unlock = pyqtSignal(dict)
-    signal_start_timer = pyqtSignal(int)
-    signal_stop_timer = pyqtSignal()
-    signal_feedback_registration_fail = pyqtSignal()
-    signal_feedback_registration_failmsg = pyqtSignal(str)
-    signal_feedback_registration_success = pyqtSignal()
-    signal_determine_freeturn_spend = pyqtSignal()
-
-    def __init__(self, loglevel=logging.INFO):
-        QObject.__init__(self)
-        self.logger = logs.build_logger(__name__, loglevel)
-        self.loglevel = loglevel
-
-    @pyqtSlot(str)
-    def processMessage(self, incoming_message):
-        try:
-            message = json.loads(incoming_message)
-        except json.JSONDecodeError:
-            print("HMI: Failed to decode Message")
-
-        # Check for Sane Message
-        if not isinstance(message, dict):
-            raise Exception("JSON Blob didn't resolve to a dictionary")
-        if "action" not in message.keys():
-            raise Exception("Message does not possess action key")
-        if "arguments" not in message.keys():
-            raise Exception("Message does not possess arguments key")
-
-        #TODO: Break out into function
-        perform_ack_at_end = True
-        # Proceed with performing actioning a message
-        if message['action'] == "promptCategorySelectByUser":
-            perform_ack_at_end = False
-            self.signal_playerselect_category.emit(message['arguments'])
-        elif message['action'] == "promptCategorySelectByOpponent":
-            perform_ack_at_end = False
-            self.signal_opponentselect_category.emit(message['arguments'])
-        elif message['action'] == "promptIncorrectCorrectResponse":
-            self.signal_determine_correctness.emit()
-        elif message['action'] == "displayQuestion":
-            perform_ack_at_end = False
-            self.signal_display_question.emit(message['arguments'])
-            # TODO: static value set here, needs to be sent in message
-            self.signal_start_timer.emit(30)
-        elif message['action'] == "responsePlayerRegistration":
-            # cover ACK and NACK variants
-            perform_ack_at_end = False
-            if message['arguments'] == "ACK":
-                self.signal_feedback_registration_success.emit()
-            elif len(message['arguments']) > 3 and message['arguments'][0:4] == "NACK":
-                self.signal_feedback_registration_fail.emit()
-                self.signal_feedback_registration_failmsg.emit(message['arguments'].split(":")[1])
-        elif message['action'] == "spinWheel":
-            perform_ack_at_end = False
-            self.signal_spin_wheel.emit(message['arguments'])
-        elif message['action'] == "displayAnswer":
-            self.signal_display_answer.emit(message['arguments'])
-        elif message['action'] == "displayWinner":
-            self.signal_display_winner.emit(message['arguments'])
-        elif message['action'] == "endSpin":
-            local_action = dict()
-            local_action['unlock'] = ["doSpin"]
-            local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
-            self.signal_lock_unlock.emit(local_action)
-        elif message['action'] == "promptSpendFreeTurnToken":
-            local_action = dict()
-            local_action['unlock'] = ["freeTurnSkip", "freeTurnSpend"]
-            self.signal_lock_unlock.emit(local_action)
-            #self.signal_determine_freeturn_spend.emit()
-        elif message['action'] == "updateGameState":
-            # Update Player Data
-            if "players" not in message['arguments'].keys():
-                raise Exception("Missing player information in update data")
-            if len(message['arguments']['players']) == 0:
-                raise Exception("Player entry in update data is empty")
-
-            for person in message['arguments']['players']:
-                self.signal_update_player_data.emit(str(person['id']),
-                                                    str(person['name']),
-                                                    str((person['gameScore'] + person['roundScore'])),
-                                                    str(person['freeTurnTokens']),
-                                                    str(message['arguments']['currentPlayer'])
-                                  )
-            self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
-                                               str(message['arguments']['maxSpins']),
-                                               str(message['arguments']['round']),
-                                               str(message['arguments']['totalRounds']))
-            if "wheelboard" in message['arguments'].keys():
-                self.signal_update_wheel.emit([x['name'] for x in message['arguments']['wheelboard']])
-                cats = [x for x in message['arguments']['wheelboard'] if x['type'] == "category"]
-                self.logger.debug("cats=" + str(cats))
-                self.signal_update_board.emit(cats)
-
-        if perform_ack_at_end is True and message['arguments'] != "ACK":
-            self.issueAck(message['action'])
-
-        #TODO: Break out into a recv() function
-        if message['arguments'] == "ACK":
-            if message['action'] == "responseQuestion":
-                local_action = dict()
-                local_action['unlock'] = ["doSpin"]
-                local_action['lock'] = ["button_incorrect", "button_correct"]
-                self.signal_lock_unlock.emit(local_action)
-            elif message['action'] == "revealAnswer":
-                local_action = dict()
-                local_action['lock'] = ["button_reveal", "timer"]
-                local_action['clear_lcd'] = ["timer"]
-                self.signal_lock_unlock.emit(local_action)
-                self.signal_stop_timer.emit()
-            elif message['action'] == "userInitiatedFreeTurnTokenSkip":
-                local_action = dict()
-                local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
-                self.signal_lock_unlock.emit(local_action)
-            elif message['action'] == "userInitiatedFreeTurnTokenSpend":
-                local_action = dict()
-                local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
-                self.signal_lock_unlock.emit(local_action)
-            elif message['action'] == "userInitiatedSpin":
-                self.logger.debug("Processing ACK of userInitiatedSpin")
-                local_action = dict()
-                local_action['lock'] = ["doSpin", "button_correct", "button_incorrect",
-                                        "button_reveal", "timer", "textbox_question",
-                                        "textbox_answer", "freeTurnSkip", "freeTurnSpend"]
-                local_action['clear_textbox'] = ["textbox_question", "textbox_answer"]
-                self.signal_lock_unlock.emit(local_action)
-
-    @pyqtSlot()
-    def askToSpin(self):
-        response = dict()
-        response['action'] = "userInitiatedSpin"
-        response['arguments'] = None
-        self.signal_send_message.emit(json.dumps(response))
-
-    @pyqtSlot(str)
-    def returnCategory(self, string):
-        response = dict()
-        response['action'] = "responseCategorySelect"
-        response['arguments'] = string
-        self.signal_send_message.emit(json.dumps(response))
-
-    def registerPlayer(self):
-        """Ask Player what their name is"""
-        # TODO: Prompt Players for their Names at the start of a game
-        test_names = ["Aaron", "James", "Glenn", "Lorraine", "Markham"]
-
-        r = random.randrange(0, len(test_names))
-        return test_names[r]
-
-    def issueAck(self, action):
-        response = dict()
-        response['action'] = action
-        response['arguments'] = "ACK"
-        self.signal_send_message.emit(json.dumps(response))
-
-    @pyqtSlot()
-    def notifySuccesfullOutcome(self):
-        response = dict()
-        response['action'] = "responseQuestion"
-        response['arguments'] = True
-        self.signal_send_message.emit(json.dumps(response))
-
-    @pyqtSlot()
-    def notifyUnsuccesfullOutcome(self):
-        response = dict()
-        response['action'] = "responseQuestion"
-        response['arguments'] = False
-        self.signal_send_message.emit(json.dumps(response))
-
-    @pyqtSlot()
-    def notifyNeedAnswer(self):
-        response = dict()
-        response['action'] = "revealAnswer"
-        response['arguments'] = None
-        self.signal_send_message.emit(json.dumps(response))
-
-    @pyqtSlot(list)
-    def notifyUserRegistration(self, playerList):
-        response = dict()
-        response['action'] = "responsePlayerRegistration"
-        response['arguments'] = json.dumps(playerList)
-        self.signal_send_message.emit(json.dumps(response))
-
-    @pyqtSlot()
-    def notifyFreeTurnSkip(self):
-        response = dict()
-        response['action'] = "userInitiatedFreeTurnTokenSkip"
-        response['arguments'] = None
-        self.signal_send_message.emit(json.dumps(response))
-    @pyqtSlot()
-    def notifyFreeTurnSpend(self):
-        response = dict()
-        response['action'] = "userInitiatedFreeTurnTokenSpend"
-        response['arguments'] = None
-        self.signal_send_message.emit(json.dumps(response))
 
 
 class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -302,7 +51,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
 
-        self.MSG_controller = HMIMessageController(loglevel=loglevel)
+        self.MSG_controller = messaging.MessageController(loglevel=loglevel,
+                                                   msg_controller_name="HMILogic",
+                                                   listen_port=commsettings.HMI_LISTEN,
+                                                   target_port=commsettings.GAME_HMI_LISTEN)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
 
@@ -528,15 +280,15 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(list)
     def updateBoard(self, category_list):
         for xpos, each in enumerate(category_list, 1):
-            valid_prices = each['valid_prices']
+            valid_values = each['valid_values']
             getattr(self, "label_board_col" + str(xpos) + "_row1").setText(str(each['name']))
             #self.logger.debug("category_list=%s" % (category_list))
-            for ypos, score in enumerate(valid_prices, 2):
+            for ypos, value in enumerate(valid_values, 2):
                 #ypos == enumerate starts at 0 + (row1 is category row), so it starts at 2. therefore ypos + 2. ugly.
                 row_alias = getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos))
-                if str(score) in each['questions']:
+                if str(value) in each['questions']:
                     getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(True)
-                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(score))
+                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(value))
                 else:
                     getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(False)
                     getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText("")
@@ -554,18 +306,22 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         if "lock" in state.keys():
             lock = state['lock']
             for each in lock:
+                self.logger.debug("locking %s" % (each))
                 getattr(self, each).setDisabled(True)
         if "unlock" in state.keys():
             unlock = state['unlock']
             for each in unlock:
+                self.logger.debug("unlocking %s" % (each))
                 getattr(self, each).setEnabled(True)
         if "clear_lcd" in state.keys():
             clear = state['clear_lcd']
             for each in clear:
+                self.logger.debug("clear_lcd %s" % (each))
                 getattr(self, each).display("")
         if "clear_textbox" in state.keys():
             clear = state['clear_textbox']
             for each in clear:
+                self.logger.debug("clear_textbox %s" % (each))
                 getattr(self, each).setText("")
                 pass
 
@@ -591,9 +347,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def stopTimer(self):
         self.timer.setDisabled(True)
         self.timer_obj.stop()
-
-#    @pyqtSlot()
-#    def determineFreeTurnSpend(self):
 
 
 class MyTimer(QObject):

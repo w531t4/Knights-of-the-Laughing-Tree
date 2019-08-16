@@ -87,22 +87,22 @@ class Trivia:
 
 
 class TriviaDB:
-    def __init__(self, current_trivia, loglevel=logging.INFO, starting_price=200):
+    def __init__(self, current_trivia, loglevel=logging.INFO, starting_value=200):
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
-        self.starting_price = starting_price
-        self.price_list = list()
+        self.starting_value = starting_value
+        self.value_list = list()
         self.data = {}
         if current_trivia is not None:
             for catobj in current_trivia:
                 self.logger.debug("catobj=%s" % (catobj))
                 if catobj['category'] not in self.data.keys():
                     self.data[catobj['category']] = dict()
-                price = self.starting_price
+                value = self.starting_value
                 for topic in catobj['topics']:
-                    self.data[catobj['category']][str(price)] = topic
-                    self.price_list.append(price)
-                    price += self.starting_price
+                    self.data[catobj['category']][str(value)] = topic
+                    self.value_list.append(value)
+                    value += self.starting_value
 
 
     def getCategories(self):
@@ -124,7 +124,7 @@ class TriviaDB:
             raise Exception("Selected category contains no remaining questions to be asekd")
         to_return = self.data[category][str(remaining_questions[0])]
         self.data[category].pop(str(remaining_questions[0]))
-        to_return['score'] = remaining_questions[0]
+        to_return['value'] = remaining_questions[0]
         return to_return
 
     def listRemainingQuestions(self, category, ):
@@ -134,8 +134,8 @@ class TriviaDB:
         remaining_questions.sort()
         return remaining_questions
 
-    def getListOfPrices(self):
-        r = list(set(self.price_list))
+    def getListOfValues(self):
+        r = list(set(self.value_list))
         r.sort()
         return r
 

@@ -12,6 +12,9 @@ test_logs/*
 # Ignore venv
 venv/*
 
+# Ignore .idea
+.idea/*.iml
+
 # Ignore formal documentation
 docs/*
 
