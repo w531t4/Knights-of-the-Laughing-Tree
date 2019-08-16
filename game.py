@@ -531,6 +531,11 @@ class Game:
     def pickBecomeBankrupt(self):
         self.logger.debug("Start")
         self.getCurrentPlayer().setScore(0)
+        message = dict()
+        message['action'] = "playerBecomesBankrupt"
+        message['arguments'] = None
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.receive_ack("playerBecomesBankrupt")
         self.changeTurn()
 
     def pickPlayersChoice(self):

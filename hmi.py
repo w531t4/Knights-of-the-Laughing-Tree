@@ -190,6 +190,8 @@ class HMILogicController(QObject):
                 local_action['unlock'] = ["doSpin"]
                 local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
+            elif message['action'] == "playerBecomesBankrupt":
+                pass
             elif message['action'] == "revealAnswer":
                 local_action = dict()
                 local_action['lock'] = ["button_reveal", "timer"]
