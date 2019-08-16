@@ -197,7 +197,7 @@ class HMILogicController(QObject):
                 local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "playerBecomesBankrupt":
-                pass
+                self.signal_play_spin_sound.emit()
             elif message['action'] == "revealAnswer":
                 local_action = dict()
                 local_action['lock'] = ["button_reveal", "timer"]
@@ -313,7 +313,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.loglevel = loglevel
 
         self.setWindowTitle("Wheel of Jeopardy")
-        
+
         self.sounds = {
             "Correct" : QSound("Correct.wav"),
             "Incorrect" : QSound("Incorrect.wav"),
@@ -420,14 +420,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setCentralWidget(self.registration_wizard)
         #self.setCentralWidget(self.main)
 
-<<<<<<< HEAD
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
         self.logger.debug("Shifting focus to combo-wheel-board-score panel")
         self.setCentralWidget(self.main)
 
-=======
->>>>>>> Added some sound effects.
     @pyqtSlot(list)
     def selectCategory(self, categories, target="player"):
         """Prompt user or opponents to select a category"""
