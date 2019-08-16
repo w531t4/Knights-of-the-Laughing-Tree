@@ -37,10 +37,13 @@ class Player:
         self.freeTurnTokens += 1
 
     def spendFreeTurnToken(self):
-        if (self.freeTurnTokens > 1):
-            self.freeTurnToken -= 1
+        if self.freeTurnTokens > 0:
+            self.freeTurnTokens -= 1
         else:
             raise Exception("Player cannot spend freeTurnToken they do not have")
+
+    def getFreeTurnTokens(self):
+        return self.freeTurnTokens
 
     def renderStatus(self):
         output = dict()
