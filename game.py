@@ -1,12 +1,9 @@
 #!/bin/env python3
 
 from player import Player
-from trivia import Trivia
-from wheel import Wheel
-from board import Board
+from trivia import Trivia, TriviaDB
+from timeit import default_timer as timer
 
-from hmi import HMI
-import threading
 import commsettings
 import messaging
 
@@ -16,26 +13,27 @@ import queue
 import time
 import json
 import logging
-import sys
 import logs
 
-class WOJ:
+
+class Game:
     def __init__(self, loglevel=logging.INFO):
-        self.logger = logs.build_logger(__name__, logging.INFO)
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
 
         self.players = []
+        self.maxPlayers = 3
+        self.minPlayers = 2
         self.totalRounds = 2 # TODO: Review self.totalRounds
         self.round = 0
         self.spins = 0
 
-        self.maxSpins = 5 # TODO: Change back to 50
+        self.maxSpins = 8 # TODO: Change back to 50
         # game config
         # TODO: Alter Geometry
-        self.geometry_width = 2
-        self.geometry_height = 2
-
-        # initialize trivia
-        self.triviadb = Trivia(min_questions=self.geometry_height)
+        self.geometry_width = 3
+        self.geometry_height = 3
+        self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
 
         if len(self.triviadb) < (self.totalRounds * self.geometry_width):
             raise Exception("Insufficient trivia exists to complete a game with", self.totalRounds, "rounds and",
@@ -49,8 +47,6 @@ class WOJ:
         #   How many players are playing?
         #   Gather information about each player?
 
-
-
         self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -60,15 +56,12 @@ class WOJ:
         self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
         self.hmi_receiver.listen(2)
         self.hmi_receiver_queue = queue.Queue()
-        self.hmi_msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
+        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
                                                         self.hmi_receiver,
                                                         self.hmi_receiver_queue,
-                                                        loglevel=loglevel,
+                                                        loglevel=self.loglevel,
                                                         name="HMI_rcv")
-        self.hmi = threading.Thread(target=HMI, kwargs={'loglevel': loglevel,})
-
-        self.hmi.start()
-
+        self.msg_controller.start()
 
         # Keep trying to create the sender until the correct receiver has been created
         while True:
@@ -81,14 +74,13 @@ class WOJ:
                 time.sleep(.1)
                 continue
 
-
         self.currentPlayerIndex = None
+        self.wheel_map = None
         self.enrollPlayers()
         self.currentPlayerIndex = self.selectRandomFirstPlayer()
+
         # Once players are registered, agree upon game terms
         self.configureGame()
-
-
 
         # Once all setup is completed, start the show
         self.gameLoop()
@@ -100,10 +92,10 @@ class WOJ:
         self.logger.debug("Enter Function")
         return random.randrange(0, len(self.players))
 
-    def getCurrentPlayer(self):
+    def getCurrentPlayer(self) -> Player:
         self.logger.debug("Enter Function")
-        if len(self.players) > 0 and self.currentPlayerIndex is not None:
-            return Player(self.players[self.currentPlayerIndex])
+        if len(self.players) > 0:
+            return self.players[self.currentPlayerIndex]
         else:
             return None
 
@@ -114,33 +106,40 @@ class WOJ:
                 self.currentPlayerIndex = 0
         else:
                 self.currentPlayerIndex += 1
+        self.pushUpdateGameState()
 
     def enrollPlayers(self):
         """Determine number of users playing"""
         # TODO: find num_players
         num_players = 0
         done = False
-        while num_players < 3 and done is False:
-            message = dict()
+        while done is False:
             current_player_names = [x.getName() for x in self.players]
-            message['action'] = "promptPlayerRegistration"
-            message['arguments'] = current_player_names
-            self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-            while self.hmi_msg_controller.q.empty():
+            while self.msg_controller.q.empty():
                 pass
                 time.sleep(.1)
-            response = json.loads(self.hmi_msg_controller.q.get())
+            response = json.loads(self.msg_controller.q.get())
             if response['action'] == "responsePlayerRegistration":
-                if response['arguments'] not in current_player_names:
-                    self.players.append(Player(name=response['arguments']))
-                    num_players += 1
-                    self.pushUpdateGameState()
-            elif response['action'] == "responseFinishedPlayerRegistration":
-                done = True
-            else:
-                raise Exception("Received event with unexpected action")
-        if num_players < 2:
-            raise Exception("Game must be played with more than one person")
+                playerList = json.loads(response['arguments'])
+                try:
+                    self.checkSanityPlayerList(playerList)
+                except Exception as e:
+                    message = dict()
+                    message['action'] = "responsePlayerRegistration"
+                    #TODO: Perhaps a better structure for passing info back with Nack
+                    message['arguments'] = ":".join(["NACK", str(e)])
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                else:
+                    for playerName in playerList:
+                        playerIndex=len(self.players)
+                        self.players.append(Player(id=playerIndex, name=playerName))
+                        num_players += 1
+                        self.pushUpdateGameState()
+                    message = dict()
+                    message['action'] = "responsePlayerRegistration"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                    done = True
 
     def configureGame(self):
         # TODO: Adjustable Number of Rounds in Game (self.totalRounds)
@@ -148,6 +147,18 @@ class WOJ:
         # TODO: Adjustable Timeout for User Decisions
         # TODO: Adjustable Bankruptsy Behavior
         pass
+
+    def checkSanityPlayerList(self, playerList):
+        if not isinstance(playerList, list):
+            raise Exception("provided argument is not a list")
+        elif len(set(playerList)) < len(playerList):
+            raise Exception("provided list contains duplicate names")
+        elif len(playerList) < self.minPlayers:
+            raise Exception("not enough players")
+        elif len(playerList) > self.maxPlayers:
+            raise Exception("too many players")
+        else:
+            return
 
     def changeRound(self):
         """Progress GameState to the Next Round"""
@@ -160,7 +171,6 @@ class WOJ:
             raise Exception("The type of self.current_trivia is not list")
         if len(self.current_trivia) <= 0 and self.round >= 1:
             raise Exception("The length of the current trivia db is not sufficient")
-        #if self.debug: print("self.current_trivia=", self.current_trivia)
 
         self.round += 1
         self.logger.info("Changing round from " + str(self.round-1) + " to " +  str(self.round))
@@ -174,6 +184,17 @@ class WOJ:
         self.current_trivia = self.triviadb.selectRandomCategories(self.geometry_width,
                                              n_questions_per_category=self.geometry_height,
                                              exclude=self.utilized_categories)
+
+        self.wheel_map = self.build_map()
+        if self.round == 1:
+            self.current_triviaDB = TriviaDB(self.current_trivia, loglevel=self.loglevel, starting_price=100)
+        else:
+            self.current_triviaDB = TriviaDB(self.current_trivia, loglevel=self.loglevel, starting_price=200)
+
+        self.logger.debug("self.current_trivia=" + str(self.current_trivia))
+        self.logger.debug(str(self.wheel_map))
+
+        self.pushUpdateGameState()
         self.logger.debug("Round Change Complete")
 
     def gameLoop(self):
@@ -183,19 +204,19 @@ class WOJ:
             # borrowed idea for switch from
             # https://jaxenter.com/implement-switch-case-statement-python-138315.html
 
-            0: self.pickRandomCategory,
-            1: self.pickRandomCategory,
-            2: self.pickRandomCategory,
-            3: self.pickRandomCategory,
-            4: self.pickRandomCategory,
-            5: self.pickRandomCategory,
-            6: self.pickLoseTurn,
-            7: self.pickAccumulateFreeTurnToken,
-            8: self.pickBecomeBankrupt,
-            9: self.pickPlayersChoice,
-            10: self.pickOpponentsChoice,
-            11: self.pickDoublePlayerRoundScore
 
+            0: self.pickLoseTurn,
+            1: self.pickAccumulateFreeTurnToken,
+            2: self.pickBecomeBankrupt,
+            3: self.pickPlayersChoice,
+            4: self.pickOpponentsChoice,
+            5: self.pickDoublePlayerRoundScore,
+            6: self.pickRandomCategory,
+            7: self.pickRandomCategory,
+            8: self.pickRandomCategory,
+            9: self.pickRandomCategory,
+            10: self.pickRandomCategory,
+            11: self.pickRandomCategory
         }
 
         for round in range(0, self.totalRounds):
@@ -211,30 +232,122 @@ class WOJ:
                 #if self.debug: print("Game: Sending message to wheel")
                 spinResult = self.doSpin()
 
-
                 self.logger.debug("Spin Result=" + str(spinResult))
-                postSpinAction = spinMap.get(spinResult, lambda: "Out of Scope")
-                postSpinAction()
+
+                postSpinAction = spinMap.get(self.wheel_map.index(spinResult), lambda: "Out of Scope")
+                if self.wheel_map.index(spinResult) < 6:
+                    postSpinAction()
+                else:
+                    postSpinAction(self.wheel_map.index(spinResult))
+                self.pushUpdateGameState()
+                message = dict()
+                message['action'] = "endSpin"
+                message['arguments'] = None
+                self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                self.receive_ack("endSpin")
 
         # TODO: Compare Points, Declare Victor
+        for play in self.players:
+            play.archivePoints()
+        message = dict()
+        message['action'] = "displayWinner"
+        message['arguments'] = self.calculateWinner()
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+    def receive_ack(self, action, extra_test=True):
+        while self.msg_controller.q.empty() and extra_test is True:
+            pass
+            time.sleep(.1)
+        if not self.msg_controller.q.empty():
+            response = self.msg_controller.q.get()
+            if json.loads(response)['action'] != action:
+                raise Exception("Expecting action=%s, received action=%s arguments=%s" %
+                            (action,
+                             json.loads(response)['action'],
+                             json.loads(response)['arguments']))
+            if json.loads(response)['arguments'] != "ACK":
+                raise Exception("Expecting ACK to action=%s, received action=%s arguments=%s" %
+                                (action,
+                                 json.loads(response)['action'],
+                                 json.loads(response)['arguments']))
+            return response
+        else:
+            raise Exception("Queue was emptied prior to being serviced")
+
+    def calculateWinner(self):
+        winner = self.players[0].getName()
+        winnerScore = 0
+        for each in self.players:
+            self.logger.debug("each.getGameScore()=" + str(each.getGameScore()))
+            if each.getGameScore() > winnerScore:
+                winner = each.getName()
+                winnerScore = each.getGameScore()
+        return winner
 
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""
-        random_int = random.randrange(0, 12)
+        while self.msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.msg_controller.q.get()
+        if json.loads(response)['action'] != 'userInitiatedSpin':
+            raise Exception("Was expecting user initiated spin, received " + str(json.loads(response)['action']))
+        message = dict()
+        message['action'] = "userInitiatedSpin"
+        message['arguments'] = "ACK"
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+        random_int = random.randrange(0, self.geometry_width + 6)
+
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = random_int
-        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        # if self.debug: print("Game: Sent message to wheel")
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
         self.spins += 1
-        while self.hmi_msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.hmi_msg_controller.q.get()
 
-        if json.loads(response)['arguments'] != "ACK":
-            raise Exception("didn't get correct response")
+        self.receive_ack("spinWheel")
         return random_int
+
+    def build_map(self):
+        random_list = list()
+        while len(random_list) < (self.geometry_width + 6):
+            randomint = random.randrange(0, (self.geometry_width + 6))
+            if randomint not in random_list:
+                random_list.append(randomint)
+        return random_list
+
+    def build_wheelboard(self):
+        # 1 - 6 always represent static sectors, 7-n represent categorical columns
+        # current_trivia = [a,b,c.. n]
+        #           where a = {'category': 'blah', 'questions': [{q1: a1, q2: a2, .. qn, an}] }
+        r = list()
+        for each in range(0, 6):
+            t = dict()
+            t['index'] = self.wheel_map[each]
+            t['type'] = "noncategory"
+            if each == 0:
+                t['name'] = "loseturn"
+            elif each == 1:
+                t['name'] = "accumulatefreeturn"
+            elif each == 2:
+                t['name'] = "bankrupt"
+            elif each == 3:
+                t['name'] = 'playerschoice'
+            elif each == 4:
+                t['name'] = "opponentschoice"
+            else:
+                t['name'] = "doublescore"
+            r.append(t)
+        for index, catobject in enumerate(self.current_trivia):
+            t = dict()
+            t['index'] = self.wheel_map[index+6]
+            t['name'] = catobject['category']
+            t['type'] = "category"
+            t['questions'] = self.current_triviaDB.listRemainingQuestions(catobject['category'])
+            t['valid_prices'] = self.current_triviaDB.getListOfPrices()
+            r.append(t)
+
+        return sorted(r, key = lambda i: i['index'])
 
     def pickCategoryHelper(self, category):
         # TODO: Resolve Question/Answer from dictionary
@@ -244,44 +357,181 @@ class WOJ:
         # TODO: After displaying answer, display mechanism to indicate if the question was answered successfully
         # TODO: Alter Player Score according to whether the question was answered successfully or not
         self.logger.debug("Start")
-        # if (question answered successfully):
-        #   increase player score
-        #   pass
-        # else:
-        #   decrease player score
-        #   self.changeTurn()
-        pass
+        ANSWER_TIMEOUT = 30
 
-    def pickRandomCategory(self):
+        message = dict()
+        message['action'] = "displayQuestion"
+        question_answer = self.current_triviaDB.getQuestion(category)
+        question_answer['timeout'] = ANSWER_TIMEOUT
+        question_only = dict(question_answer)
+        question_only.pop("answer")
+        message['arguments'] = question_only
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        # kick off 30s timer
+
+        start = timer()
+        self.receive_ack("displayQuestion", extra_test=((timer()-start) < ANSWER_TIMEOUT))
+
+        # wait for revealAnswer
+        doChangeTurn = True
+        while self.msg_controller.q.empty() and ((timer()-start) < ANSWER_TIMEOUT):
+            pass
+            time.sleep(.1)
+        if not self.msg_controller.q.empty():
+            response = self.msg_controller.q.get()
+            # TODO: Needs message['action'] sanity check
+            if json.loads(response)['action'] != "revealAnswer":
+                raise Exception("Expecting action type 'revealAnswer'")
+
+            message = dict()
+            message['action'] = "revealAnswer"
+            message['arguments'] = "ACK"
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            message = dict()
+            message['action'] = "displayAnswer"
+            message['arguments'] = question_answer
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            self.receive_ack("displayAnswer")
+
+            while self.msg_controller.q.empty():
+                pass
+                time.sleep(.1)
+            response = self.msg_controller.q.get()
+            # TODO: Needs message['action'] sanity check
+            if json.loads(response)['action'] != "responseQuestion":
+                raise Exception("Expecting action type 'responseQuestion' for ACK")
+            if json.loads(response)['arguments'] is not False and json.loads(response)['arguments'] is not True:
+                raise Exception("Expecting responseQuestion to contain either True or False only")
+
+            if json.loads(response)['arguments'] is True:
+                self.getCurrentPlayer().addToScore(int(question_answer['score']))
+            else:
+                # User answered question incorrectly
+
+                # Check to see if user has freeTurn tokens available
+                if self.getCurrentPlayer().getFreeTurnTokens() > 0:
+                    message = dict()
+                    message['action'] = "promptSpendFreeTurnToken"
+                    message['arguments'] = None
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+                    self.receive_ack("promptSpendFreeTurnToken")
+
+                    correctResponseReceived = False
+                    while not correctResponseReceived:
+                        self.logger.debug("entered currectResponseReceived loop")
+                        while self.msg_controller.q.empty():
+                            pass
+                            time.sleep(.1)
+                        self.logger.debug("msg_controller queue is no longer empty")
+                        response = self.msg_controller.q.get()
+                        if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
+                            self.logger.debug("user indicated to spend ft token")
+                            self.getCurrentPlayer().spendFreeTurnToken()
+                            # user indicated to spend free turn token
+                            correctResponseReceived = True
+                            doChangeTurn = False
+                            message = dict()
+                            message['action'] = "userInitiatedFreeTurnTokenSpend"
+                            message['arguments'] = "ACK"
+                            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                        elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
+                            self.logger.debug("user indicated to skip spending ft token")
+                            # user declided to spend token, decrement score since they answered incorrectly
+                            self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
+                            correctResponseReceived = True
+                            message = dict()
+                            message['action'] = "userInitiatedFreeTurnTokenSkip"
+                            message['arguments'] = "ACK"
+                            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                        else:
+                            raise Exception(
+                                "Was expecting a decision on free token spending, received "
+                                + str(json.loads(response)['action']))
+                else:
+                    self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
+
+            message = dict()
+            message['action'] = "responseQuestion"
+            message['arguments'] = "ACK"
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+        else:
+            #timer ran out
+            pass
+        if doChangeTurn:
+            self.changeTurn()
+
+    def pickRandomCategory(self, index):
         self.logger.debug("Start")
-        # TODO: This is wrong! we need to randomly select the category to place on the wheel, otherwise this is like opponents choice.
-        random_number = random.randrange(0, len(self.current_trivia))
-        category = self.current_trivia[random.randrange(0, len(self.current_trivia))]['category']
-        # if (
-        # TODO: Check number of remaining questions for category
-        # ) == 0:
-        #           select a different available category (by Random)
-        self.pickCategoryHelper(category)
-        self.changeTurn()
-        pass
+        self.logger.debug("index=" + str(index))
+        category = self.current_trivia[index-6]['category']
+        self.logger.debug("category=" + str(category))
+        if len(self.current_triviaDB.listRemainingQuestions(category)) > 0:
+            self.pickCategoryHelper(category)
+            self.changeTurn()
+        else:
+            #do nothing, don't change turn - allow player to spin again
+            pass
 
     def pickLoseTurn(self):
         self.logger.debug("Start")
-        self.changeTurn()
-        self.pushUpdateGameState()
-        pass
+        doChangeTurn = False
+        if self.getCurrentPlayer().getFreeTurnTokens() > 0:
+            message = dict()
+            message['action'] = "promptSpendFreeTurnToken"
+            message['arguments'] = None
+            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+
+            self.receive_ack("promptSpendFreeTurnToken")
+
+            correctResponseReceived = False
+            while not correctResponseReceived:
+                self.logger.debug("entered currectResponseReceived loop")
+                while self.msg_controller.q.empty():
+                    pass
+                    time.sleep(.1)
+                self.logger.debug("msg_controller queue is no longer empty")
+                response = self.msg_controller.q.get()
+                if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
+                    self.logger.debug("user indicated to spend ft token")
+                    self.getCurrentPlayer().spendFreeTurnToken()
+                    # user indicated to spend free turn token
+                    correctResponseReceived = True
+                    doChangeTurn = False
+                    message = dict()
+                    message['action'] = "userInitiatedFreeTurnTokenSpend"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
+                    self.logger.debug("user indicated to skip spending ft token")
+                    # user declided to spend token, decrement score since they answered incorrectly
+                    doChangeTurn = True
+                    correctResponseReceived = True
+                    message = dict()
+                    message['action'] = "userInitiatedFreeTurnTokenSkip"
+                    message['arguments'] = "ACK"
+                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                else:
+                    raise Exception(
+                        "Was expecting a decision on free token spending, received "
+                        + str(json.loads(response)['action']))
+        else:
+            doChangeTurn = True
+        if doChangeTurn:
+            self.changeTurn()
 
     def pickAccumulateFreeTurnToken(self):
         self.logger.debug("Start")
         self.getCurrentPlayer().addFreeTurnToken()
         self.changeTurn()
-        self.pushUpdateGameState()
 
     def pickBecomeBankrupt(self):
         self.logger.debug("Start")
         self.getCurrentPlayer().setScore(0)
         self.changeTurn()
-        self.pushUpdateGameState()
 
     def pickPlayersChoice(self):
         # TODO: Facilitate Explicit Selection (by Current Player) of Category from those available as 'category'
@@ -292,16 +542,17 @@ class WOJ:
         self.logger.debug("Start")
 
         # TODO: Resolve Categories
-        categorylist = [x['category'] for x in self.current_trivia]
+        categorylist = self.current_triviaDB.getPlayableCategories()
 
         message = dict()
         message['action'] = "promptCategorySelectByUser"
         message['arguments'] = categorylist
-        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.hmi_msg_controller.q.empty():
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.msg_controller.q.empty():
             pass
             time.sleep(.1)
-        response = self.hmi_msg_controller.q.get()
+        response = self.msg_controller.q.get()
+        # TODO: Needs message['action'] sanity check
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:
@@ -314,9 +565,23 @@ class WOJ:
         # ) == 0:
         #           request selection of new category (by Opponents)
         self.logger.debug("Start")
-        category = "chicken&waffles"
-        self.pickCategoryHelper(category)
-        pass
+
+        # TODO: Resolve Categories
+        categorylist = self.current_triviaDB.getPlayableCategories()
+
+        message = dict()
+        message['action'] = "promptCategorySelectByOpponent"
+        message['arguments'] = categorylist
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        while self.msg_controller.q.empty():
+            pass
+            time.sleep(.1)
+        response = self.msg_controller.q.get()
+        # TODO: Needs message['action'] sanity check
+        if json.loads(response)['arguments'] in message['arguments']:
+            self.pickCategoryHelper(json.loads(response)['arguments'])
+        else:
+            raise Exception("Response Category not from the allowed list")
 
     def buildGameState(self):
         gameState = dict()
@@ -326,23 +591,21 @@ class WOJ:
         gameState['spinsExecuted'] = self.spins
         gameState['maxSpins'] = self.maxSpins
         if len(self.players) > 0 and self.currentPlayerIndex is not None:
-            gameState['currentPlayer'] = str(self.getCurrentPlayer().getName())
+            gameState['currentPlayer'] = self.getCurrentPlayer().getName()
+        else:
+            gameState['currentPlayer'] = ""
+        if self.wheel_map is not None:
+            gameState['wheelboard'] = self.build_wheelboard()
         return gameState
 
     def pickDoublePlayerRoundScore(self):
         self.logger.debug("Start")
         self.getCurrentPlayer().setScore(self.getCurrentPlayer().getRoundScore() * 2)
         self.changeTurn()
-        self.pushUpdateGameState()
 
     def pushUpdateGameState(self):
         message = dict()
         message['action'] = "updateGameState"
         message['arguments'] = self.buildGameState()
-        self.hmi_msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.hmi_msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.hmi_msg_controller.q.get()
-        if json.loads(response)['arguments'] != "ACK":
-            raise Exception("Did not receive ACK from HMI")
+        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        response = self.receive_ack("updateGameState")

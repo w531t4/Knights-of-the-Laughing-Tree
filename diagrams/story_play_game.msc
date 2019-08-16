@@ -1,0 +1,38 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"],
+  Player    [label="PlayerController"],
+  Trivia    [label="TriviaController"],
+  Board     [label="BoardController"];
+
+  ---   [label="User Opens Program"];
+  Game => Trivia  [label="Load TriviaDB"];
+  Trivia => Trivia [label="Organize Trivia"];
+  Game box Game  [label="Exceute: Register Users"];
+  Game => Game   [label="select_starting_user"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => HMILog [label="updateStats()"];
+  HMILog => HMI [label="updateBoard()"];
+  HMILog => HMI [label="updatePlayerScores()"];
+  HMILog >> Game [label="ack"];
+  Game box Game [label="Execute: Play Round"];
+  Game box Game [label="Execute: Play Round"];
+  Game => Board [label="getBoardStats"];
+  Board => Game [label="BoardStats"];
+  Game => Player [label="getUserStats"];
+  Player => Game [label="userStats"];
+  Game => Game  [label="selectWinner"];
+  Game => HMILog [label="displayWinner"];
+  HMILog => HMI [label="display_text(winner_name)"];
+  HMILog >> Game [label="ack"];
+  ---   [label="User Closes Program"];
+ }
