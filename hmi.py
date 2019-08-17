@@ -145,6 +145,8 @@ class HMILogicController(QObject):
             elif len(message['arguments']) > 3 and message['arguments'][0:4] == "NACK":
                 self.signal_feedback_registration_fail.emit()
                 self.signal_feedback_registration_failmsg.emit(message['arguments'].split(":")[1])
+        elif message['action'] == "playerBecomesBankrupt":
+            self.signal_play_bankrupt_sound.emit()
         elif message['action'] == "spinWheel":
             perform_ack_at_end = False
             self.signal_play_spin_sound.emit()
@@ -197,9 +199,6 @@ class HMILogicController(QObject):
                 local_action['unlock'] = ["doSpin"]
                 local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
-            elif message['action'] == "playerBecomesBankrupt":
-                # self.signal_play_bankrupt_sound.emit()
-                pass
             elif message['action'] == "revealAnswer":
                 local_action = dict()
                 local_action['lock'] = ["button_reveal", "timer"]
