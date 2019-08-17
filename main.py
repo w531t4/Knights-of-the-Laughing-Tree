@@ -2,24 +2,38 @@
 
 import sys
 import logging
-import threading
 from hmi import HMI
 from game import Game
 from PyQt5 import QtWidgets
-
-
+import commsettings
 
 def main(loglevel=logging.INFO):
+    start_port = 10000
 
-    #Inspired by:
-    #https://kushaldas.in/posts/pyqt5-thread-example.html
+    HMI_PORT = None
+    GAME_PORT = None
+    while HMI_PORT is None:
+        start_port += 1
+        try:
+            commsettings.is_port_in_use(start_port)
+        except:
+            pass
+        else:
+            HMI_PORT = start_port
+    while GAME_PORT is None:
+        start_port += 1
+        try:
+            commsettings.is_port_in_use(start_port)
+        except:
+            pass
+        else:
+            GAME_PORT = start_port
+
     app = QtWidgets.QApplication(sys.argv)
     # Using QT-Designer 5.12.4
-    game_thread = Game(loglevel=loglevel)
-    #game_thread = threading.Thread(target=Game, kwargs={"loglevel": loglevel, })
-    #game_thread.daemon = True
+    game_thread = Game(loglevel=loglevel, hmi_port=HMI_PORT, game_port=GAME_PORT)
     game_thread.start()
-    form = HMI(ui_file="ui.ui", loglevel=loglevel)
+    form = HMI(ui_file="ui.ui", loglevel=loglevel, hmi_port=HMI_PORT, game_port=GAME_PORT)
     form.show()
     sys.exit(app.exec_())
 

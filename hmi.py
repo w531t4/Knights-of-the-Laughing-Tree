@@ -254,7 +254,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     signal_temp_select_category = pyqtSignal(str)
     signal_start_timer = pyqtSignal(int)
 
-    def __init__(self, ui_file=None, loglevel=logging.INFO):
+    def __init__(self, ui_file=None, loglevel=logging.INFO, hmi_port=None, game_port=None):
         QtWidgets.QMainWindow.__init__(self)
         if not IMPORT_UI_ONTHEFLY:
             self.setupUi(self)
@@ -266,6 +266,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.hmi_port = hmi_port
+        self.game_port = game_port
+        self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
+        self.logger.debug("selected game_port=%s" % (self.game_port))
 
         self.setWindowTitle("Wheel of Jeopardy")
 
@@ -279,8 +283,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
                                                           msg_controller_name="HMILogic",
-                                                          listen_port=commsettings.HMI_LISTEN,
-                                                          target_port=commsettings.GAME_HMI_LISTEN)
+                                                          listen_port=self.hmi_port,
+                                                          target_port=self.game_port)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
 

@@ -17,11 +17,16 @@ import logs
 from PyQt5.QtCore import QThread
 from PyQt5 import QtTest
 
+
 class Game(QThread):
-    def __init__(self, parent=None, loglevel=logging.INFO):
+    def __init__(self, parent=None, loglevel=logging.INFO, hmi_port=None, game_port=None):
         super(Game, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.hmi_port = hmi_port
+        self.game_port = game_port
+        self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
+        self.logger.debug("selected game_port=%s" % (self.game_port))
 
     def run(self):
         self.players = []
@@ -52,8 +57,8 @@ class Game(QThread):
 
         self.MSG_controller = messaging.MessageController(loglevel=self.loglevel,
                                                msg_controller_name="GameLogic",
-                                               listen_port=commsettings.GAME_HMI_LISTEN,
-                                               target_port=commsettings.HMI_LISTEN)
+                                               listen_port=self.game_port,
+                                               target_port=self.hmi_port)
         self.MSG_controller.start()
 
         self.currentPlayerIndex = None

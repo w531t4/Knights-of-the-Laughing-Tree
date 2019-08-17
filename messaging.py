@@ -50,7 +50,6 @@ class Messaging(QThread):
 
 class MessageController(QThread):
 
-
     def __init__(self, loglevel=logging.INFO, msg_controller_name="setme", listen_port=None, target_port=None):
         QThread.__init__(self)
         self.logger = logs.build_logger(__name__+":" + msg_controller_name +".msgCtrl", loglevel)

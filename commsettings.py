@@ -1,20 +1,10 @@
 #!/bin/env python3
 
-HMI_LISTEN = 10002
-GAME_HMI_LISTEN = 10012
+import socket
+
+# credit https://stackoverflow.com/questions/2470971/fast-way-to-test-if-a-port-is-in-use-using-python
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
 
 MESSAGE_BREAKER="@#$@#$@#$!!!@sdkd!"
-#wheel
-#    binds on 10000
-#    connects to 10010
-#board
-#    binds on 10001
-#    connects to 10011
-#hmi
-#    binds on 10002
-#    connects to 10012
-#
-#game:
-#    binds on 10010 wheel
-#    binds on 10011 board
-#    binds on 10012 hmi
