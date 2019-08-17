@@ -39,8 +39,8 @@ class Game(QThread):
         self.maxSpins = 8 # TODO: Change back to 50
         # game config
         # TODO: Alter Geometry
-        self.geometry_width = 3
-        self.geometry_height = 3
+        self.geometry_width = 5
+        self.geometry_height = 5
         self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
 
         if len(self.triviadb) < (self.totalRounds * self.geometry_width):

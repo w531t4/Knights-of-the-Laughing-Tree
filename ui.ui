@@ -39,7 +39,7 @@
       <x>0</x>
       <y>30</y>
       <width>301</width>
-      <height>81</height>
+      <height>87</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="playerData">
@@ -222,7 +222,7 @@
       <x>0</x>
       <y>124</y>
       <width>301</width>
-      <height>236</height>
+      <height>271</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="wheel_categories">
@@ -324,6 +324,9 @@
     <layout class="QGridLayout" name="gridLayout_4">
      <item row="3" column="1">
       <widget class="QLabel" name="label_board_col2_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -331,6 +334,9 @@
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_board_col1_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -338,6 +344,9 @@
      </item>
      <item row="0" column="4">
       <widget class="QLabel" name="label_board_col5_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -345,6 +354,9 @@
      </item>
      <item row="1" column="1">
       <widget class="QLabel" name="label_board_col2_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -352,6 +364,9 @@
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="label_board_col1_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -359,6 +374,9 @@
      </item>
      <item row="2" column="1">
       <widget class="QLabel" name="label_board_col2_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -366,6 +384,9 @@
      </item>
      <item row="0" column="2">
       <widget class="QLabel" name="label_board_col3_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -373,6 +394,9 @@
      </item>
      <item row="4" column="1">
       <widget class="QLabel" name="label_board_col2_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -380,6 +404,9 @@
      </item>
      <item row="0" column="3">
       <widget class="QLabel" name="label_board_col4_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -387,6 +414,9 @@
      </item>
      <item row="0" column="1">
       <widget class="QLabel" name="label_board_col2_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -394,6 +424,9 @@
      </item>
      <item row="5" column="1">
       <widget class="QLabel" name="label_board_col2_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -401,6 +434,9 @@
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_board_col1_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -408,6 +444,9 @@
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="label_board_col1_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -415,6 +454,9 @@
      </item>
      <item row="4" column="0">
       <widget class="QLabel" name="label_board_col1_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -422,6 +464,9 @@
      </item>
      <item row="5" column="0">
       <widget class="QLabel" name="label_board_col1_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -429,6 +474,9 @@
      </item>
      <item row="1" column="2">
       <widget class="QLabel" name="label_board_col3_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -436,6 +484,9 @@
      </item>
      <item row="2" column="2">
       <widget class="QLabel" name="label_board_col3_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -443,6 +494,9 @@
      </item>
      <item row="3" column="2">
       <widget class="QLabel" name="label_board_col3_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -450,6 +504,9 @@
      </item>
      <item row="4" column="2">
       <widget class="QLabel" name="label_board_col3_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -457,6 +514,9 @@
      </item>
      <item row="5" column="2">
       <widget class="QLabel" name="label_board_col3_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -464,6 +524,9 @@
      </item>
      <item row="1" column="3">
       <widget class="QLabel" name="label_board_col4_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -471,6 +534,9 @@
      </item>
      <item row="1" column="4">
       <widget class="QLabel" name="label_board_col5_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -478,6 +544,9 @@
      </item>
      <item row="2" column="3">
       <widget class="QLabel" name="label_board_col4_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -485,6 +554,9 @@
      </item>
      <item row="2" column="4">
       <widget class="QLabel" name="label_board_col5_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -492,6 +564,9 @@
      </item>
      <item row="3" column="3">
       <widget class="QLabel" name="label_board_col4_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -499,6 +574,9 @@
      </item>
      <item row="3" column="4">
       <widget class="QLabel" name="label_board_col5_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -506,6 +584,9 @@
      </item>
      <item row="4" column="3">
       <widget class="QLabel" name="label_board_col4_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -513,6 +594,9 @@
      </item>
      <item row="5" column="3">
       <widget class="QLabel" name="label_board_col4_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -520,6 +604,9 @@
      </item>
      <item row="4" column="4">
       <widget class="QLabel" name="label_board_col5_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -527,6 +614,9 @@
      </item>
      <item row="5" column="4">
       <widget class="QLabel" name="label_board_col5_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -670,7 +760,7 @@
      <x>0</x>
      <y>0</y>
      <width>706</width>
-     <height>19</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
