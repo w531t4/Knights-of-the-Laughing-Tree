@@ -277,7 +277,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Double" : QSound("Double.wav")
         }
 
-        self.MSG_controller = messaging.MessageController(loglevel=loglevel,
+        self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
                                                           msg_controller_name="HMILogic",
                                                           listen_port=commsettings.HMI_LISTEN,
                                                           target_port=commsettings.GAME_HMI_LISTEN)

@@ -49,7 +49,7 @@ class Messaging(QThread):
 
 
 class MessageController(QThread):
-    signal_recieve_message = pyqtSignal(str)
+
 
     def __init__(self, loglevel=logging.INFO, msg_controller_name="setme", listen_port=None, target_port=None):
         QThread.__init__(self)
@@ -67,7 +67,7 @@ class MessageController(QThread):
                                                                                 name=self.msg_controller_name)
         self.built = True
 
-    def run(self):
+    def build_listener(self):
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
         # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
         # by ForceBru
@@ -75,6 +75,8 @@ class MessageController(QThread):
         self.receiver.bind(("127.0.0.1", self.listen_port))
         self.receiver.listen(2)
         self.logger.info("successfully opened port " + str(self.listen_port))
+
+    def build_destination(self):
         # Keep trying to create the sender until the correct receiver has been created
         while True:
             try:
@@ -85,40 +87,32 @@ class MessageController(QThread):
                 QtTest.QTest.qWait(1000)
                 continue
 
+    def run(self):
+        self.build_listener()
+        self.build_destination()
+        self.msg_controller.start()
+
+    @pyqtSlot(str)
+    def send_message(self, msg):
+        self.msg_controller.send_string(self.sender, msg)
+
+
+class HMIMessageController(MessageController):
+
+    signal_recieve_message = pyqtSignal(str)
+
+    def __init__(self, loglevel=logging.INFO, msg_controller_name="setme", listen_port=None, target_port=None):
+        super(HMIMessageController, self).__init__(loglevel=loglevel,
+                                                    msg_controller_name=msg_controller_name,
+                                                    listen_port=listen_port,
+                                                    target_port=target_port)
+
+    def run(self):
+        self.build_listener()
+        self.build_destination()
         self.msg_controller.start()
 
         while True:
             if not self.clientqueue.empty():
                 self.signal_recieve_message.emit(self.clientqueue.get())
             QtTest.QTest.qWait(100)
-
-    @pyqtSlot(str)
-    def send_message(self, msg):
-        self.msg_controller.send_string(self.sender, msg)
-
-class GameMessageController(MessageController):
-    def __init__(self, loglevel=logging.INFO, msg_controller_name="setme", listen_port=None, target_port=None):
-        super(GameMessageController, self).__init__(loglevel=loglevel,
-                                                    msg_controller_name=msg_controller_name,
-                                                    listen_port=listen_port,
-                                                    target_port=target_port)
-
-    def run(self):
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.receiver.bind(("127.0.0.1", self.listen_port))
-        self.receiver.listen(2)
-        self.logger.info("successfully opened port " + str(self.listen_port))
-        # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                self.sender = socket.create_connection(("127.0.0.1", self.target_port))
-                break
-            except Exception as e:
-                self.logger.error(e)
-                QtTest.QTest.qWait(1000)
-                continue
-
-        self.msg_controller.start()

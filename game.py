@@ -50,7 +50,7 @@ class Game(QThread):
         #   How many players are playing?
         #   Gather information about each player?
 
-        self.MSG_controller = messaging.GameMessageController(loglevel=self.loglevel,
+        self.MSG_controller = messaging.MessageController(loglevel=self.loglevel,
                                                msg_controller_name="GameLogic",
                                                listen_port=commsettings.GAME_HMI_LISTEN,
                                                target_port=commsettings.HMI_LISTEN)
