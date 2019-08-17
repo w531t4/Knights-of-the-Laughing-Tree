@@ -95,7 +95,6 @@ class HMILogicController(QObject):
     signal_feedback_registration_failmsg = pyqtSignal(str)
     signal_feedback_registration_success = pyqtSignal()
     signal_determine_freeturn_spend = pyqtSignal()
-    signal_play_spin_sound = pyqtSignal()
     signal_play_correct_sound = pyqtSignal()
     signal_play_incorrect_sound = pyqtSignal()
     signal_play_bankrupt_sound = pyqtSignal()
@@ -149,7 +148,6 @@ class HMILogicController(QObject):
             self.signal_play_bankrupt_sound.emit()
         elif message['action'] == "spinWheel":
             perform_ack_at_end = False
-            self.signal_play_spin_sound.emit()
             self.signal_spin_wheel.emit(message['arguments'])
         elif message['action'] == "displayAnswer":
             self.signal_display_answer.emit(message['arguments'])
@@ -319,7 +317,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Correct" : QSound("Correct.wav"),
             "Incorrect" : QSound("Incorrect.wav"),
             "Bankrupt" : QSound("Bankrupt.wav"),
-            "Spin" : QSound("Spinning.wav"),
             "Double" : QSound("Double.wav")
         }
 
@@ -389,7 +386,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.registration_wizard.signal_submit_players.connect(self.logic_controller.notifyUserRegistration)
 
         #connect sounds
-        self.logic_controller.signal_play_spin_sound.connect(self.playSpin)
         self.logic_controller.signal_play_correct_sound.connect(self.playCorrect)
         self.logic_controller.signal_play_incorrect_sound.connect(self.playIncorrect)
         self.logic_controller.signal_play_bankrupt_sound.connect(self.playBankrupt)
@@ -494,6 +490,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 last = sectors - 1
             for each in range(number, num_switches):
                 each = each % sectors
+                # betterspin.wav from
+                # https://freesound.org/people/door15studio/sounds/244774/
+                QSound.play("betterspin.wav")
                 if last is not None:
                     getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
                 getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
@@ -504,13 +503,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 QtTest.QTest.qWait(delay_ms)
             return number
 
-        #num_sectors = 8
-        self.wheel_resting_place = cycle(last, 15, num_sectors*10, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 30, num_sectors*5, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 45, num_sectors*3, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 70, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors, target=int(destination))
+
+        self.wheel_resting_place = cycle(last, 190, num_sectors*3, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors)
+        self.wheel_resting_place = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
