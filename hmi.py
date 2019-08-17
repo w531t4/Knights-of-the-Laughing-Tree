@@ -14,9 +14,11 @@ import wizard
 import catselect
 from functools import partial
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.QtMultimedia import QSound
+from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -320,6 +322,44 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Double" : QSound("Double.wav")
         }
 
+        # # Create wheel image
+        # self.image = QImage.fromData(open("Wheel.png", 'rb').read(), "png")
+        # self.image.convertToFormat(QImage.Format_ARGB32)
+        # self.image_size = min(self.image.width(), self.image.height())
+        # rect = QRect(
+        #     (self.image.width()-self.image_size),
+        #     (self.image.height()-self.image_size),
+        #     self.image_size,
+        #     self.image_size
+        #     )
+        # self.image = self.image.copy(rect)
+        #
+        # # Create transparent background image
+        # self.output_image = QImage(self.image_size, self.image_size, QImage.Format_ARGB32)
+        # self.output_image.fill(Qt.transparent)
+        #
+        # self.brush = QBrush(self.image)
+        # self.painter = QPainter(self.output_image)
+        # self.painter.setBrush(self.brush)
+        # self.painter.setPen(Qt.NoPen)
+        # self.painter.setRenderHint(QPainter.Antialiasing, True)
+        # self.painter.drawEllipse(0, 0, self.image_size, self.image_size)
+        # self.painter.end()
+        #
+        # self.pixel_ratio = QWindow().devicePixelRatio()
+        # self.pixel_map = QPixmap.fromImage(self.output_image)
+        # self.pixel_map.setDevicePixelRatio(self.pixel_ratio)
+        # self.size = 64 * self.pixel_ratio
+        # self.pixel_map = self.pixel_map.scaled(self.size, self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        #
+        # self.image_label = QLabel()
+        # self.image_label.setPixmap(self.pixel_map)
+        #
+        # # self.QtWidgets.QMainWindow.
+        #
+
+
+
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
@@ -471,6 +511,73 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
+
+        self.image = QImage.fromData(open("Wheel.png", 'rb').read(), "png")
+        new_pixel_map = QPixmap(self.image)
+        my_wheel_gui = getattr(self, "wheel_gui")
+        
+        my_wheel_gui.setPixmap(new_pixel_map)
+
+        # Create wheel image
+
+
+        # self.image.convertToFormat(QImage.Format_ARGB32)
+        # self.image_size = min(self.image.width(), self.image.height())
+        # rect = QRect(
+        #     (self.image.width()-self.image_size),
+        #     (self.image.height()-self.image_size),
+        #     self.image_size,
+        #     self.image_size
+        #     )
+        # self.image = self.image.copy(rect)
+        #
+        # # Create transparent background image
+        # self.output_image = QImage(self.image_size, self.image_size, QImage.Format_ARGB32)
+        # self.output_image.fill(Qt.transparent)
+
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+        getattr(self, "wheel_gui").rotate(36)
+
 
         num_sectors = 0
         for each in range(0, 12):
