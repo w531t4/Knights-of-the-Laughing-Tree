@@ -69,7 +69,7 @@ class WOJTest(unittest.TestCase):
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
-        self.assertEquals(self.hmi.player0Score.text(), 200)
+        self.assertEqual(self.hmi.player0Score.text(), str(200))
 
 
 if __name__ == "__main__":
