@@ -643,6 +643,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 #    @pyqtSlot()
 #    def determineFreeTurnSpend(self):
 
+    def close(self):
+        self.logger.debug("closing")
+        self.MSG_controller.quit()
+        super(HMI, self).close()
 
 class MyTimer(QObject):
 

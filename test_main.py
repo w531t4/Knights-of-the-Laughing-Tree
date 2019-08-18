@@ -11,6 +11,7 @@ import logging
 
 app = QApplication(sys.argv)
 
+
 class WOJTest(unittest.TestCase):
     def setUp(self):
         # help from http://johnnado.com/pyqt-qtest-example/
@@ -30,6 +31,8 @@ class WOJTest(unittest.TestCase):
         #self.args = build_args(logging.DEBUG, 10000, json.dumps(scenario))
 
     def test_doublescore(self):
+        app = QApplication(sys.argv)
+
         self.scenario['spins'] = [
             "pickBecomeBankrupt",
             "pickBecomeBankrupt",
@@ -40,11 +43,13 @@ class WOJTest(unittest.TestCase):
             "pickDoublePlayerRoundScore",
         ]
         self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario))
+        self.game = None
         self.game = game.Game(**self.args['game'])
         self.game.start()
+        self.hmi = None
         self.hmi = hmi.HMI(**self.args['hmi'])
         self.hmi.show()
-        QTest.qWait(2000)
+        QTest.qWait(3000)
 
         spinWidget = self.hmi.doSpin
 
@@ -70,7 +75,51 @@ class WOJTest(unittest.TestCase):
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
         self.assertEqual(self.hmi.player0Score.text(), str(200))
+        self.game.quit()
+        self.hmi.close()
+        QTest.qWait(1000)
+        app.exit()
 
+    def test_bankruptcy(self):
+        app = QApplication(sys.argv)
+        self.scenario['spins'] = [
+            "pickRandomCategory1",
+            "pickBecomeBankrupt",
+            "pickBecomeBankrupt",
+            "pickBecomeBankrupt",
+        ]
+        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario))
+        self.game = None
+        self.game = game.Game(**self.args['game'])
+        self.game.start()
+        self.hmi = None
+        self.hmi = hmi.HMI(**self.args['hmi'])
+        self.hmi.show()
+        QTest.qWait(2000)
 
+        spinWidget = self.hmi.doSpin
+
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(1000)
+        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        QTest.qWait(1000)
+        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.qWait(1000)
+
+        self.assertEqual(self.hmi.player0Score.text(), str(100))
+
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(1000)
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(1000)
+
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(1000)
+
+        self.assertEqual(self.hmi.player0Score.text(), str(0))
+        self.game.quit()
+        self.hmi.close()
+        QTest.qWait(1000)
+        app.exit()
 if __name__ == "__main__":
     unittest.main()

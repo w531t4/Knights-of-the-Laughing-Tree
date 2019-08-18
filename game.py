@@ -510,6 +510,11 @@ class Game(QThread):
             #do nothing, don't change turn - allow player to spin again
             pass
 
+    def quit(self) -> None:
+        self.logger.debug("quitting")
+        self.MSG_controller.quit()
+        super(Game, self).quit()
+
     def pickLoseTurn(self):
         self.logger.debug("Start")
         doChangeTurn = False
