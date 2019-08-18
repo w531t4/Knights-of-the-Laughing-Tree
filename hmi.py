@@ -11,9 +11,11 @@ import wizard
 import catselect
 from functools import partial
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.QtMultimedia import QSound
+from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -388,6 +390,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.setCentralWidget(self.main)
 
+        self.rotation_angle = 0;
+        # for i in range(1,13):
+        #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
+        #     getattr(self, "wheel_label_1").setText("Bankrupt")
+
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
         self.logger.debug("Shifting focus to combo-wheel-board-score panel")
@@ -440,7 +447,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
-
+        self.image = QImage.fromData(open("Wheel_12.png", 'rb').read(), "png")
+        
         num_sectors = 0
         for each in range(0, 12):
             if getattr(self, "label_wheel_" + str(each)).isEnabled():
@@ -450,7 +458,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_resting_place = 0
         last = self.wheel_resting_place
 
-        def cycle(start_number, delay_ms, num_switches, sectors, target=None):
+        def cycle(start_number, delay_ms, num_switches, sectors, image_data, rot_angle, target=None):
             number = start_number
             delay_ms = delay_ms/5
             if start_number > 0:
@@ -462,15 +470,24 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 # betterspin.wav from
                 # https://freesound.org/people/door15studio/sounds/244774/
                 QSound.play("betterspin.wav")
+
+                new_pixel_map = QPixmap(image_data)
+                rot_angle = ((rot_angle + 30) % 360)
+                transform = QtGui.QTransform().rotate(rot_angle)
+                new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
+                my_wheel_gui = getattr(self, "wheel_gui")
+                my_wheel_gui.setPixmap(new_pixel_map)
+
                 if last is not None:
                     getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
                 getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
                 number = each
                 last = each
                 if number == target and target is not None:
-                    return number
+                    return number, rot_angle
                 QtTest.QTest.qWait(delay_ms)
-            return number
+
+            return number, rot_angle
 
         if self.skip_spinanimation:
             for each in range(0, num_sectors):
@@ -479,12 +496,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
         else:
-            self.wheel_resting_place = cycle(last, 190, num_sectors*3, num_sectors)
-            self.wheel_resting_place = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors)
-            self.wheel_resting_place = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors)
-            self.wheel_resting_place = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors)
-            self.wheel_resting_place = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors)
-            self.wheel_resting_place = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, target=int(destination))
+            self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
