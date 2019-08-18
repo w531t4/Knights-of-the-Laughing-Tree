@@ -1,10 +1,7 @@
 #!/bin/env python3
 
-import socket
 import commsettings
-import time
 import messaging
-import queue
 import json
 import random
 import logging
@@ -31,49 +28,6 @@ if not IMPORT_UI_ONTHEFLY:
 else:
     class Ui_MainWindow:
         pass
-
-
-class HMIMessageController(QThread):
-    signal_recieve_message = pyqtSignal(str)
-
-    def __init__(self, loglevel=logging.INFO):
-        QThread.__init__(self)
-        self.logger = logs.build_logger(__name__, loglevel)
-        self.loglevel = loglevel
-
-        self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue,
-                                                                                loglevel=self.loglevel, name="HMILogic")
-
-    def run(self):
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.receiver.bind(("127.0.0.1", commsettings.HMI_LISTEN))
-        self.receiver.listen(2)
-        self.logger.info("successfully opened port " + str(commsettings.HMI_LISTEN))
-        # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                self.sender = socket.create_connection(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
-                break
-            except Exception as e:
-                self.logger.error(e)
-                time.sleep(1)
-                continue
-
-        self.msg_controller.start()
-
-        while True:
-            if not self.clientqueue.empty():
-                self.signal_recieve_message.emit(self.clientqueue.get())
-            time.sleep(.1)
-
-    @pyqtSlot(str)
-    def send_message(self, msg):
-        self.msg_controller.send_string(self.sender, msg)
 
 
 class HMILogicController(QObject):
@@ -300,7 +254,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     signal_temp_select_category = pyqtSignal(str)
     signal_start_timer = pyqtSignal(int)
 
-    def __init__(self, ui_file=None, loglevel=logging.INFO):
+    def __init__(self, ui_file=None,
+                 loglevel=logging.INFO,
+                 hmi_port=None,
+                 game_port=None,
+                 skip_userreg=False,
+                 skip_spinanimation=False):
         QtWidgets.QMainWindow.__init__(self)
         if not IMPORT_UI_ONTHEFLY:
             self.setupUi(self)
@@ -312,6 +271,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.hmi_port = hmi_port
+        self.game_port = game_port
+        self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
+        self.logger.debug("selected game_port=%s" % (self.game_port))
+        self.skip_spinanimation = skip_spinanimation
 
         self.setWindowTitle("Wheel of Jeopardy")
 
@@ -322,7 +286,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Double" : QSound("Double.wav")
         }
 
-        self.MSG_controller = HMIMessageController(loglevel=loglevel)
+        self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
+                                                          msg_controller_name="HMILogic",
+                                                          listen_port=self.hmi_port,
+                                                          target_port=self.game_port)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
 
@@ -415,11 +382,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
-
-        #self.registration_wizard.show()
         self.main = self.takeCentralWidget()
-        self.setCentralWidget(self.registration_wizard)
-        #self.setCentralWidget(self.main)
+        if not skip_userreg:
+            #self.registration_wizard.show()
+            self.setCentralWidget(self.registration_wizard)
+            #self.setCentralWidget(self.main)
+        else:
+            self.setCentralWidget(self.main)
 
         self.rotation_angle = 0;
         # for i in range(1,13):
@@ -520,12 +489,19 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
             return number, rot_angle
 
-        self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
+        if self.skip_spinanimation:
+            for each in range(0, num_sectors):
+                if each != int(destination):
+                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
+                else:
+                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+        else:
+            self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
@@ -667,6 +643,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 #    @pyqtSlot()
 #    def determineFreeTurnSpend(self):
 
+    def close(self):
+        self.logger.debug("closing")
+        self.MSG_controller.quit()
+        super(HMI, self).close()
 
 class MyTimer(QObject):
 
