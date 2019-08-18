@@ -112,10 +112,15 @@ class Game(QThread):
     def changeTurn(self):
         """Alter player state """
         numPlayers = len(self.players)
+        prev_player = self.currentPlayerIndex
         if self.currentPlayerIndex == numPlayers - 1:
                 self.currentPlayerIndex = 0
         else:
                 self.currentPlayerIndex += 1
+        self.logger.debug("Changed player from %s (%s) to %s (%s)" % (self.players[prev_player].getName(),
+                                                                      prev_player,
+                                                                      self.players[self.currentPlayerIndex].getName(),
+                                                                      self.currentPlayerIndex))
         self.pushUpdateGameState()
 
     def enrollPlayers(self):
@@ -505,7 +510,6 @@ class Game(QThread):
         self.logger.debug("category=" + str(category))
         if len(self.current_triviaDB.listRemainingQuestions(category)) > 0:
             self.pickCategoryHelper(category)
-            self.changeTurn()
         else:
             #do nothing, don't change turn - allow player to spin again
             pass
