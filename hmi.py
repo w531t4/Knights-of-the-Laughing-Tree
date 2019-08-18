@@ -294,6 +294,22 @@ class HMILogicController(QObject):
         self.signal_send_message.emit(json.dumps(response))
 
 
+class WheelLabel(QWidget):
+    def __init__(self, text, x, y):
+        super(self.__class__, self).__init__()
+        self.text = text
+        self.x = x;
+        self.y = y;
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setPen(Qt.black)
+        # painter.translate(20, 100)
+        # painter.rotate(36)
+        if self.text:
+            painter.drawText(self.x, self.y, self.text)
+        painter.end()
+
 class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     signal_send_message = pyqtSignal(str)
@@ -321,6 +337,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Bankrupt" : QSound("Bankrupt.wav"),
             "Double" : QSound("Double.wav")
         }
+
+        self.wheel_labels = []
+        self.wheel_labels.append(WheelLabel("Bankrupt", 200, 530))
+        self.wheel_labels.append(WheelLabel("Hello", 200, 560))
+        self.wheel_labels.append(WheelLabel("World", 200, 590))
+        self.wheel_labels.append(WheelLabel("YAY", 200, 620))
 
         # # Create wheel image
         # self.image = QImage.fromData(open("Wheel.png", 'rb').read(), "png")
@@ -513,7 +535,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
+        for item in self.wheel_labels:
+            item.update()
         self.image = QImage.fromData(open("Wheel_Cropped_Small.png", 'rb').read(), "png")
+
 
         def cycle_wheel(image_data, rot_angle):
             new_pixel_map = QPixmap(image_data)
