@@ -19,7 +19,13 @@ from PyQt5 import QtTest
 
 
 class Game(QThread):
-    def __init__(self, parent=None, loglevel=logging.INFO, hmi_port=None, game_port=None):
+    def __init__(self,
+                 parent=None,
+                 loglevel=logging.INFO,
+                 hmi_port=None,
+                 game_port=None,
+                 predetermined_spins=None,
+                 predetermined_players=None):
         super(Game, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
@@ -28,8 +34,19 @@ class Game(QThread):
         self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
         self.logger.debug("selected game_port=%s" % (self.game_port))
 
+        self.predetermined_spins = queue.Queue()
+        if predetermined_spins is not None:
+            [self.predetermined_spins.put(x) for x in predetermined_spins]
+        self.players = list()
+        self.use_predetermined_players = False
+        if predetermined_players is not None:
+            self.logger.debug("using predetermined players")
+            self.use_predetermined_players = True
+            for playerName in predetermined_players:
+                playerIndex = len(self.players)
+                self.players.append(Player(id=playerIndex, name=playerName))
+
     def run(self):
-        self.players = []
         self.maxPlayers = 3
         self.minPlayers = 2
         self.totalRounds = 2 # TODO: Review self.totalRounds
@@ -63,8 +80,10 @@ class Game(QThread):
 
         self.currentPlayerIndex = None
         self.wheel_map = None
-        self.enrollPlayers()
-        self.currentPlayerIndex = self.selectRandomFirstPlayer()
+        if not self.use_predetermined_players:
+            self.enrollPlayers()
+        #self.logger.debug(self.players)
+        #self.currentPlayerIndex = self.selectRandomFirstPlayer()
 
         # Once players are registered, agree upon game terms
         self.configureGame()
@@ -96,6 +115,7 @@ class Game(QThread):
     def enrollPlayers(self):
         """Determine number of users playing"""
         # TODO: find num_players
+        self.logger.debug("got here")
         num_players = 0
         done = False
         while done is False:
@@ -157,7 +177,7 @@ class Game(QThread):
             raise Exception("The length of the current trivia db is not sufficient")
 
         self.round += 1
-        self.logger.info("Changing round from " + str(self.round-1) + " to " +  str(self.round))
+        self.logger.info("Changing round from " + str(self.round-1) + " to " + str(self.round))
         self.spins = 0
         for each in [x for x in self.current_trivia]:
             self.logger.debug("new category:", each)
@@ -183,6 +203,7 @@ class Game(QThread):
 
     def gameLoop(self):
         self.logger.info("Start Game Loop")
+        self.currentPlayerIndex = self.selectRandomFirstPlayer()
         spinMap = {
 
             # borrowed idea for switch from
@@ -269,7 +290,9 @@ class Game(QThread):
 
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""
+
         while self.MSG_controller.clientqueue.empty():
+
             QtTest.QTest.qWait(100)
         response = self.MSG_controller.clientqueue.get()
         if json.loads(response)['action'] != 'userInitiatedSpin':
@@ -279,7 +302,33 @@ class Game(QThread):
         message['arguments'] = "ACK"
         self.MSG_controller.send_message(json.dumps(message))
 
-        random_int = random.randrange(0, self.geometry_width + 6)
+
+        if self.predetermined_spins.empty():
+            random_int = random.randrange(0, self.geometry_width + 6)
+        else:
+            function_to_index_map = {
+                "pickLoseTurn": 0,
+                "pickAccumulateFreeTurnToken": 1,
+                "pickBecomeBankrupt": 2,
+                "pickPlayersChoice": 3,
+                "pickOpponentsChoice": 4,
+                "pickDoublePlayerRoundScore": 5,
+                "pickRandomCategory": 6,
+                "pickRandomCategory": 7,
+                "pickRandomCategory": 8,
+                "pickRandomCategory": 9,
+                "pickRandomCategory": 10,
+                "pickRandomCategory": 11,
+            }
+            #roll 9
+            #wheel_map = [5, 1, ** 9 **, 7, 0]
+            #spinMap = {... 2: loseturnfunc, ...}
+            desired_function = self.predetermined_spins.get()
+            try:
+                function_index = function_to_index_map[desired_function]
+            except:
+                raise Exception("Provided function call does not exist")
+            random_int = self.wheel_map[function_index]
 
         message = dict()
         message['action'] = "spinWheel"

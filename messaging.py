@@ -58,6 +58,7 @@ class MessageController(QThread):
         self.msg_controller_name = msg_controller_name
         self.listen_port = listen_port
         self.target_port = target_port
+        self.ready = False
 
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clientqueue = queue.Queue()
@@ -65,6 +66,7 @@ class MessageController(QThread):
                                                                                 loglevel=self.loglevel,
                                                                                 name=self.msg_controller_name)
         self.built = True
+
 
     def build_listener(self):
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
@@ -85,6 +87,7 @@ class MessageController(QThread):
                 self.logger.error(e)
                 QtTest.QTest.qWait(1000)
                 continue
+        self.ready = True
 
     def run(self):
         self.build_listener()
@@ -93,6 +96,8 @@ class MessageController(QThread):
 
     @pyqtSlot(str)
     def send_message(self, msg):
+        while not self.ready:
+            QtTest.QTest.qWait(50)
         self.msg_controller.send_string(self.sender, msg)
 
 
