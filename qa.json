@@ -56,27 +56,27 @@
     "answer": "New York",
     "question": "America's smallest county in area"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Calvin Coolidge",
     "question": "Only president born on the 4th of July"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Social justice",
     "question": "Since Franklin D. Roosevelt and his New Deal coalition in the 1930s, the Democratic Party has also promoted a social liberal platform, supporting what?"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Abraham Lincoln",
     "question": "Who ran for president with the campaign slogan 'Vote yourself a Farm'?"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Grover Cleveland",
     "question": "Who was the first US president to be married in the White House?"},
      {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Martin Van Buren",
     "question": "Who was the first US president to be born an American Citizen? "},
      {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Franklin D. Roosevelt",
     "question": "Who was the first president to have a state car built to secret service standards"},
   {
@@ -271,5 +271,155 @@
     "category": "Beatles Lyrics",
     "answer": "With diamonds",
     "question": "What lyric follows `Lucy in the Sky`?"
+  },
+  {
+    "category": "Halo",
+    "answer": "The Forerunners",
+    "question": "Who did the Covenant worship?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Number 117",
+    "question": "There were 150 spartan candidates. Which one reached the rank of Master Chief Petty Officer?"
+  },
+  {
+    "category": "Halo",
+    "answer": "The Precursors",
+    "question": "Who did the Forerunners overthrow?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Harvest",
+    "question": "On what planet was the first contact between humans and the Covenant?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Reach",
+    "question": "What planet was the human's military headquarters?"
+  },
+  {
+    "category": "Halo",
+    "answer": "The Prophets",
+    "question": "What alien race was the head of the governance of the Covenant?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Eden",
+    "question": "The Librarian made a garden to save humans from the Flood. What did she name it?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "Metal Oxide Semiconducting Field Effect Transistor",
+    "question": "What does MOSFET stand for?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "Very High Speed Integrated Circuit Hardware Design Language",
+    "question": "What does VHDL stand for?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "A Wheatstone Bridge",
+    "question": "What four resistor circuit do loadcells use to measure force?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "The number of coils",
+    "question": "What aspect of a transformer determines if the circuit will step up or step down voltage?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "8",
+    "question": "How many wires are in a 100 mbps ethernet cable?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "60",
+    "question": "What frequency is the AC power in the U.S. powergrid?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Woodrow Wilson",
+    "question": "What US President went to JHU?"
+  },
+  {
+    "category": "JHU",
+    "answer": "He became the president of Princeton University",
+    "question": "One US President went to JHU. What did he do after the presidency?"
+  },
+  {
+    "category": "JHU",
+    "answer": "The US Navy",
+    "question": "MIT Lincoln Laboratory is the official FFRDC of the Air Force. JPL is the FFRDC of NASA. What government entity does the JHU APL support?"
+  },
+  {
+    "category": "JHU",
+    "answer": "2.5 billion dollars",
+    "question": "Harvard is the second largest research university at an annual research budget of 1.7 billion dollars a year. How much research money does JHU spend annually, not including APL?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Baltimore, Maryland",
+    "question": "Where is JHU's Homewood Campus?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Dr. Lanier Watkins",
+    "question": "Who is the currect head of the JHU EP Computer Science Program?"
+  },
+  {
+    "category": "JHU",
+    "answer": "0",
+    "question": "How many kids did Johns Hopkins have?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Medicine",
+    "question": "What was the first college of Johns Hopkins University?"
+  },
+  {
+    "category": "JHU",
+    "answer": "His cousin",
+    "question": "Johns Hopkins fell in love and wanted to marry a girl in his teens. His family forbade it. Who was she?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "A feather of a pheonix",
+    "question": "What is inside Harry's wand?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Beedle the Bard",
+    "question": "Who wrote the fairy tale 'The Tale of the Three Brothers?'"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Nothing",
+    "question": "What is inside the Elder Wand?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "He attacked three muggle boys after they assaulted his daughter",
+    "question": "Why was Albus Dumbledore's father sentenced to Azkaban?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Magical Beasts and Where to Find Them",
+    "question": "What was the name of the textbook for Hagrid's class in Harry's first year at Hogwarts?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "1",
+    "question": "How many true prophecies did Professor Trelawney have in her life?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Neville Longbottom",
+    "question": "Two children met all the criteria for the prophecy about Lord Voldemort: Harry Potter and ____________"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "His mouth",
+    "question": "What did Harry use to catch his very first golden snitch?"
   }
 ]
