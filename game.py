@@ -25,7 +25,8 @@ class Game(QThread):
                  hmi_port=None,
                  game_port=None,
                  predetermined_spins=None,
-                 predetermined_players=None):
+                 predetermined_players=None,
+                 predetermined_startingplayer=None):
         super(Game, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
@@ -45,6 +46,8 @@ class Game(QThread):
             for playerName in predetermined_players:
                 playerIndex = len(self.players)
                 self.players.append(Player(id=playerIndex, name=playerName))
+        self.use_predetermined_startingplayer = predetermined_startingplayer
+        self.logger.debug("predetermined_startingplayer = %s" % predetermined_startingplayer)
 
     def run(self):
         self.maxPlayers = 3
@@ -83,7 +86,10 @@ class Game(QThread):
         if not self.use_predetermined_players:
             self.enrollPlayers()
         #self.logger.debug(self.players)
-        #self.currentPlayerIndex = self.selectRandomFirstPlayer()
+        if self.use_predetermined_startingplayer is None:
+            self.currentPlayerIndex = self.selectRandomFirstPlayer()
+        else:
+            self.currentPlayerIndex = self.use_predetermined_startingplayer
 
         # Once players are registered, agree upon game terms
         self.configureGame()
@@ -203,7 +209,7 @@ class Game(QThread):
 
     def gameLoop(self):
         self.logger.info("Start Game Loop")
-        self.currentPlayerIndex = self.selectRandomFirstPlayer()
+        #self.currentPlayerIndex = self.selectRandomFirstPlayer()
         spinMap = {
 
             # borrowed idea for switch from
@@ -313,12 +319,12 @@ class Game(QThread):
                 "pickPlayersChoice": 3,
                 "pickOpponentsChoice": 4,
                 "pickDoublePlayerRoundScore": 5,
-                "pickRandomCategory": 6,
-                "pickRandomCategory": 7,
-                "pickRandomCategory": 8,
-                "pickRandomCategory": 9,
-                "pickRandomCategory": 10,
-                "pickRandomCategory": 11,
+                "pickRandomCategory1": 6,
+                "pickRandomCategory2": 7,
+                "pickRandomCategory3": 8,
+                "pickRandomCategory4": 9,
+                "pickRandomCategory5": 10,
+                "pickRandomCategory6": 11,
             }
             #roll 9
             #wheel_map = [5, 1, ** 9 **, 7, 0]

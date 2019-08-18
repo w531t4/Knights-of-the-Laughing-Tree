@@ -9,28 +9,25 @@ import commsettings
 import json
 import argparse
 
-
-def main(loglevel=logging.INFO, target_scenario: str = ""):
-
-    start_port = 10000
+def build_args(loglevel, initial_port, target_scenario):
+    start_port = initial_port
     HMI_PORT = commsettings.get_port(start_port)
     GAME_PORT = commsettings.get_port(HMI_PORT)
+    hmi_args = dict()
+    game_args = dict()
 
-    app = QtWidgets.QApplication(sys.argv)
-    if target_scenario == "":
-        game_thread = Game(
-                           loglevel=loglevel,
-                           hmi_port=HMI_PORT,
-                           game_port=GAME_PORT,
-                           )
+    hmi_args['loglevel'] = loglevel
+    game_args['loglevel'] = loglevel
 
-        form = HMI(
-                   ui_file="ui.ui",
-                   loglevel=loglevel,
-                   hmi_port=HMI_PORT,
-                   game_port=GAME_PORT,
-                   )
-    else:
+    hmi_args['hmi_port'] = HMI_PORT
+    game_args['hmi_port'] = HMI_PORT
+
+    hmi_args['game_port'] = GAME_PORT
+    game_args['game_port'] = GAME_PORT
+
+    hmi_args['ui_file'] = "ui.ui"
+
+    if target_scenario is not None:
         try:
             spins = json.loads(target_scenario)['spins']
         except:
@@ -44,22 +41,28 @@ def main(loglevel=logging.INFO, target_scenario: str = ""):
         except:
             options = None
 
+        game_args['predetermined_spins'] = spins
+        game_args['predetermined_players'] = players
+        game_args['predetermined_startingplayer'] = options['setStartingPlayer'] if "setStartingPlayer" in options.keys() else None
 
-        # Using QT-Designer 5.12.4
-        game_thread = Game(loglevel=loglevel,
-                           hmi_port=HMI_PORT,
-                           game_port=GAME_PORT,
-                           predetermined_spins=spins,
-                           predetermined_players=players)
-        form = HMI(ui_file="ui.ui",
-                   loglevel=loglevel,
-                   hmi_port=HMI_PORT,
-                   game_port=GAME_PORT,
-                   skip_userreg=options['skipUserRegistrationWizard'] if "skipUserRegistrationWizard" in options.keys() else False,
-                   skip_spinanimation=options['skipSpinAction'] if "skipSpinAction" in options.keys() else False)
+        hmi_args['skip_userreg'] = options['skipUserRegistrationWizard'] if "skipUserRegistrationWizard" in options.keys() else False
+        hmi_args['skip_spinanimation'] = options['skipSpinAction'] if "skipSpinAction" in options.keys() else False
 
-    game_thread.start()
-    form.show()
+    args = dict()
+    args['hmi'] = hmi_args
+    args['game'] = game_args
+    return args
+
+def main(loglevel=logging.INFO, target_scenario: str = ""):
+    start_port = 10000
+    args = build_args(loglevel,start_port, target_scenario)
+
+    app = QtWidgets.QApplication(sys.argv)
+    game_obj = Game(**args['game'])
+    hmi_obj = HMI(**args['hmi'])
+
+    game_obj.start()
+    hmi_obj.show()
     sys.exit(app.exec_())
 
 def banner():

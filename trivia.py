@@ -35,10 +35,10 @@ class Trivia:
         """Consolidate JSON-oriented Quester/Answer File into a Dictionary"""
         # rather than read the file multiple times, we convert to a dictionary first
         db = {}
-        self.logger.debug("type(self.raw)=" + str(type(self.raw)))
+        #self.logger.debug("type(self.raw)=" + str(type(self.raw)))
         for item in self.raw:
-            self.logger.debug("type(item)=" + str(type(item)))
-            self.logger.debug("item=" + str(item))
+            #self.logger.debug("type(item)=" + str(type(item)))
+            #self.logger.debug("item=" + str(item))
             if item['category'] not in db.keys():
                 db[item['category']] = []
             db[item['category']].append(item)
