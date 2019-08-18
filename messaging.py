@@ -1,26 +1,29 @@
 #!/bin/env python3
 
-import threading
 import sys
+import logging
+import logs
+from PyQt5.QtCore import QThread, pyqtSignal
 
 
-class Messaging:
-    def __init__(self, breaker, sock, q,  debug=False, name="empty"):
+class Messaging(QThread):
+    signal = pyqtSignal(str)
+
+    def __init__(self, breaker, sock, q, loglevel=logging.INFO, name="empty"):
+        QThread.__init__(self)
+        self.logger = logs.build_logger(name +".msg", loglevel)
         self.name = name
         self.breaker = breaker
-        self.debug = debug
-        self.logprefix = "Messaging:" + self.name + ":"
+        self.logprefix = self.name + ":"
         self.q = q
         self.sock = sock
-        self.thread = threading.Thread(target=self.handleInboundConnection)
-        self.thread.start()
 
-    def handleInboundConnection(self):
+    def run(self):
         """Responsible for handling new TCP connections and facilitating the reception of messages"""
         client, src = self.sock.accept()
         while True:
             message = self.recv_string(client)
-            if (self.debug): print(self.logprefix, "received message (" + str(message) + ")")
+            self.logger.debug("Received Message (" + str(message) + ")")
             self.q.put(message)
 
     def recv_string(self, sock):
@@ -31,9 +34,10 @@ class Messaging:
             if command:
                 message += bytearray(command).decode()
             else:
-                print(self.logprefix, "Client Disconnected")
+                self.logger.warn("Client Disconnected")
                 sys.exit(1)
         return message.split(self.breaker)[0]
 
     def send_string(self, sock, message):
+        self.logger.debug("    Sent Message (" + str(message) + ")")
         sock.sendall("".join([message, self.breaker]).encode())

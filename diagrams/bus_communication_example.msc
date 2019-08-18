@@ -1,0 +1,70 @@
+msc {
+
+ arcgradient="5", hscale="3.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMIWheel   [label="HMIWheel"],
+  HMIStats   [label="HMIStats"],
+  HMIBoard   [label="HMIBoard"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="Game"];
+  
+  HMI => HMILog	[label="button_press(spin)"];
+  HMILog => HMILog 	[label="askToSpin()"];
+  HMILog => Game [label="userInitiatedSpin"];
+  Game >> HMILog [label="ack"];
+  HMILog => HMI    [label="disable(spin button)"];
+ HMILog => HMI    [label="disable(correct button)"];
+  HMILog => HMI    [label="disable(incorrect button)"];
+  HMILog => HMI    [label="disable(reveal button)"];
+  HMILog => HMI    [label="disable(timer)"];
+  HMILog => HMI    [label="disable(question_field)"];
+  HMILog => HMI    [label="clear(question_field)"];
+  HMILog => HMI    [label="disable(answer_field)"];
+  HMILog => HMI    [label="clear(answer_field)"];
+  Game -> HMILog [label="spinWheel(int)"];
+  HMILog => HMIWheel    [label="start(spin_action)"];
+  HMILog >> Game [label="ack"];
+  ---		[label="Just one of many outcomes"];
+  
+  Game => HMILog [label="promptCategorySelectByUser(list)"];
+  HMILog >> Game [label="ack"];
+
+  HMILog => HMI	[label="open_dialog(select category)"];
+  HMI => HMILog	[label="button_press(selected_category)"];
+  HMILog => Game [label="responseCategorySelect(str)"];
+  Game >> HMILog [label="ack"];
+  Game => HMILog [label="displayQuestion(dict)"];
+  Game >> Game [label="startTimer()"];
+  HMILog => HMI	[label="enable(question_field)"];
+  HMILog => HMI	[label="populate(question_field)"];
+  HMILog => HMI	[label="enable(timer)"];
+  HMILog => HMI	[label="populate(timer)"];
+  HMILog => HMI	[label="enable(reveal_button)"];
+  HMILog => HMI	[label="start_countdown(timer)"];
+  HMI >> HMI	[label="async_countdown(timer)"];
+
+  HMILog >> Game [label="ack"];
+  Game -> Game [label="checkTimer()"];
+  HMI => HMILog	[label="button_press(reveal)"];
+  HMILog => Game [label="revealAnswer"];
+  Game -> Game [label="checkTimer()"];
+  Game >> HMILog [label="ack"];
+  HMILog => HMI 	[label="disable(button_reveal)"];
+  HMILog => HMI 	[label="clear(timer)"];
+  HMILog => HMI 	[label="disable(timer)"];
+  Game => HMILog [label="displayAnswer(dict)"];
+  HMILog => HMI	[label="enable(answer_field)"];
+  HMILog => HMI	[label="populate(answer_field)"];
+  HMILog => HMI	[label="enable(button_correct)"];
+  HMILog => HMI	[label="enable(button_incorrect)"];
+  HMILog >> Game [label="ack"];
+  HMI => HMILog	[label="button_press(correct_or_incorrect)"];
+  HMILog => Game [label="responseQuestion(bool)"];
+  Game >> HMILog [label="ack"];
+  HMILog => HMI	[label="disable(button_correct)"];
+  HMILog => HMI	[label="disable(button_incorrect)"];
+  HMILog => HMI	[label="enable(button_spin)"];
+}

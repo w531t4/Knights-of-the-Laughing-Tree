@@ -1,11 +1,27 @@
 #!/bin/env python3
 
 import sys
-from game import WOJ
+import logging
+import threading
+from hmi import HMI
+from game import Game
+from PyQt5 import QtWidgets
 
 
-def main(debug_status):
-    WOJ(debug_status)
+
+def main(loglevel=logging.INFO):
+
+    game_thread = threading.Thread(target=Game, kwargs={"loglevel": loglevel, })
+    game_thread.daemon = True
+    game_thread.start()
+    #Inspired by:
+    #https://kushaldas.in/posts/pyqt5-thread-example.html
+    app = QtWidgets.QApplication(sys.argv)
+    # Using QT-Designer 5.12.4
+
+    form = HMI(ui_file="ui.ui", loglevel=loglevel)
+    form.show()
+    sys.exit(app.exec_())
 
 def banner():
 
@@ -25,10 +41,9 @@ def banner():
 
 if __name__ == "__main__":
     banner()
-    try:
-        if "debug" in sys.argv[1]:
-            main(True)
-        else:
-            main(False)
-    except:
-        main(False)
+    if len(sys.argv) > 1 and "debug" in sys.argv[1:]:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+    main(loglevel=level)
+

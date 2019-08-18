@@ -9,8 +9,14 @@ test_logs/*
 *.xml
 *.txt
 
+# Ignore venv
+venv/*
+
 # Ignore formal documentation
 docs/*
 
 # Ignore tmpFile
 tmpFile
+
+# But keep requirements.txt
+!requirements.txt
