@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1396</width>
-    <height>1162</height>
+    <width>1352</width>
+    <height>656</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,12 +54,18 @@
        <property name="text">
         <string/>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
      <item row="2" column="2">
       <widget class="QLabel" name="player1FT">
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -68,12 +74,18 @@
        <property name="text">
         <string/>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="player1Name">
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -82,12 +94,18 @@
        <property name="text">
         <string/>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
      <item row="3" column="2">
       <widget class="QLabel" name="player2FT">
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -96,12 +114,18 @@
        <property name="text">
         <string/>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="player2Name">
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -110,12 +134,18 @@
        <property name="text">
         <string>Player</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
      <item row="0" column="1">
       <widget class="QLabel" name="headerScore">
        <property name="text">
         <string>Score</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -124,12 +154,18 @@
        <property name="text">
         <string>FreeTurns</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
      <item row="2" column="1">
       <widget class="QLabel" name="player1Score">
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -138,7 +174,7 @@
    <widget class="QLabel" name="labelRoundTitle">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>140</x>
       <y>20</y>
       <width>54</width>
       <height>14</height>
@@ -151,7 +187,7 @@
    <widget class="QLabel" name="roundNumber">
     <property name="geometry">
      <rect>
-      <x>170</x>
+      <x>190</x>
       <y>20</y>
       <width>54</width>
       <height>14</height>
@@ -159,6 +195,9 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="labelNumSpins">
@@ -185,6 +224,9 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="labelWinner">
@@ -984,7 +1026,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Bankrupt</string>
+     <string/>
     </property>
    </widget>
   </widget>
@@ -993,7 +1035,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1396</width>
+     <width>1352</width>
      <height>26</height>
     </rect>
    </property>

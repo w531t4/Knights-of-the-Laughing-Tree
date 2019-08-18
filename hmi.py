@@ -294,22 +294,6 @@ class HMILogicController(QObject):
         self.signal_send_message.emit(json.dumps(response))
 
 
-# class WheelLabel(QWidget):
-#     def __init__(self, text, x, y):
-#         super(self.__class__, self).__init__()
-#         self.text = text
-#         self.x = x;
-#         self.y = y;
-#
-#     def paintEvent(self, event):
-#         painter = QtGui.QPainter(self)
-#         painter.setPen(Qt.black)
-#         # painter.translate(20, 100)
-#         # painter.rotate(36)
-#         if self.text:
-#             painter.drawText(self.x, self.y, self.text)
-#         painter.end()
-
 class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     signal_send_message = pyqtSignal(str)
@@ -337,50 +321,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Bankrupt" : QSound("Bankrupt.wav"),
             "Double" : QSound("Double.wav")
         }
-
-        # self.wheel_labels = []
-        # self.wheel_labels.append(WheelLabel("Bankrupt", 200, 530))
-        # self.wheel_labels.append(WheelLabel("Hello", 200, 560))
-        # self.wheel_labels.append(WheelLabel("World", 200, 590))
-        # self.wheel_labels.append(WheelLabel("YAY", 200, 620))
-
-        # # Create wheel image
-        # self.image = QImage.fromData(open("Wheel.png", 'rb').read(), "png")
-        # self.image.convertToFormat(QImage.Format_ARGB32)
-        # self.image_size = min(self.image.width(), self.image.height())
-        # rect = QRect(
-        #     (self.image.width()-self.image_size),
-        #     (self.image.height()-self.image_size),
-        #     self.image_size,
-        #     self.image_size
-        #     )
-        # self.image = self.image.copy(rect)
-        #
-        # # Create transparent background image
-        # self.output_image = QImage(self.image_size, self.image_size, QImage.Format_ARGB32)
-        # self.output_image.fill(Qt.transparent)
-        #
-        # self.brush = QBrush(self.image)
-        # self.painter = QPainter(self.output_image)
-        # self.painter.setBrush(self.brush)
-        # self.painter.setPen(Qt.NoPen)
-        # self.painter.setRenderHint(QPainter.Antialiasing, True)
-        # self.painter.drawEllipse(0, 0, self.image_size, self.image_size)
-        # self.painter.end()
-        #
-        # self.pixel_ratio = QWindow().devicePixelRatio()
-        # self.pixel_map = QPixmap.fromImage(self.output_image)
-        # self.pixel_map.setDevicePixelRatio(self.pixel_ratio)
-        # self.size = 64 * self.pixel_ratio
-        # self.pixel_map = self.pixel_map.scaled(self.size, self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        #
-        # self.image_label = QLabel()
-        # self.image_label.setPixmap(self.pixel_map)
-        #
-        # # self.QtWidgets.QMainWindow.
-        #
-
-
 
         self.MSG_controller = HMIMessageController(loglevel=loglevel)
 
@@ -483,11 +423,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.rotation_angle = 0;
         # for i in range(1,13):
-        #     getattr(self, "wheel_label_" + str(i)).setFont(QtGui.QFont("Times", 8))
-        getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
-
-# newfont = QtGui.QFont("Times", 8, QtGui.QFont.Bold)
-#         self.Voltage_Label[i].setFont(newfont)
+        #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
+        #     getattr(self, "wheel_label_1").setText("Bankrupt")
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
@@ -542,43 +479,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
         self.image = QImage.fromData(open("Wheel_12.png", 'rb').read(), "png")
-        # for item in self.wheel_labels:
-        #     item.update()
-
-        def cycle_wheel(image_data, rot_angle):
-            new_pixel_map = QPixmap(image_data)
-            rot_angle = ((rot_angle + 30) % 360)
-
-            transform = QtGui.QTransform().rotate(rot_angle)
-            new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
-
-            my_wheel_gui = getattr(self, "wheel_gui")
-            my_wheel_gui.setPixmap(new_pixel_map)
-
-            print(rot_angle)
-            return rot_angle
-
-        # for i in range(0,1):
-        #     self.rotation_angle = cycle_wheel(self.image, self.rotation_angle)
-            # time.sleep(.1)
-
-        # Create wheel image
-
-
-        # self.image.convertToFormat(QImage.Format_ARGB32)
-        # self.image_size = min(self.image.width(), self.image.height())
-        # rect = QRect(
-        #     (self.image.width()-self.image_size),
-        #     (self.image.height()-self.image_size),
-        #     self.image_size,
-        #     self.image_size
-        #     )
-        # self.image = self.image.copy(rect)
-        #
-        # # Create transparent background image
-        # self.output_image = QImage(self.image_size, self.image_size, QImage.Format_ARGB32)
-        # self.output_image.fill(Qt.transparent)
-
+        
         num_sectors = 0
         for each in range(0, 12):
             if getattr(self, "label_wheel_" + str(each)).isEnabled():
