@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>706</width>
-    <height>459</height>
+    <width>1035</width>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,8 +23,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>388</y>
+      <x>160</x>
+      <y>450</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -36,10 +36,10 @@
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>30</y>
       <width>301</width>
-      <height>81</height>
+      <height>87</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="playerData">
@@ -138,7 +138,7 @@
    <widget class="QLabel" name="labelRoundTitle">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>10</y>
       <width>54</width>
       <height>14</height>
@@ -151,7 +151,7 @@
    <widget class="QLabel" name="roundNumber">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>70</x>
       <y>10</y>
       <width>54</width>
       <height>14</height>
@@ -164,7 +164,7 @@
    <widget class="QLabel" name="labelNumSpins">
     <property name="geometry">
      <rect>
-      <x>140</x>
+      <x>150</x>
       <y>10</y>
       <width>101</width>
       <height>16</height>
@@ -177,7 +177,7 @@
    <widget class="QLabel" name="numSpins">
     <property name="geometry">
      <rect>
-      <x>240</x>
+      <x>250</x>
       <y>10</y>
       <width>54</width>
       <height>14</height>
@@ -193,8 +193,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>396</y>
+      <x>280</x>
+      <y>450</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -206,8 +206,8 @@
    <widget class="QLabel" name="winnerName">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>396</y>
+      <x>350</x>
+      <y>450</y>
       <width>111</width>
       <height>16</height>
      </rect>
@@ -219,10 +219,10 @@
    <widget class="QWidget" name="gridLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>124</y>
       <width>301</width>
-      <height>236</height>
+      <height>271</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="wheel_categories">
@@ -317,218 +317,476 @@
      <rect>
       <x>320</x>
       <y>50</y>
-      <width>371</width>
-      <height>191</height>
+      <width>641</width>
+      <height>231</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout_4">
-     <item row="3" column="1">
-      <widget class="QLabel" name="label_board_col2_row4">
+     <item row="0" column="4">
+      <widget class="QLabel" name="label_board_col5_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_board_col1_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
-      </widget>
-     </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="label_board_col5_row1">
-       <property name="text">
-        <string/>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QLabel" name="label_board_col2_row2">
+     <item row="3" column="1">
+      <widget class="QLabel" name="label_board_col2_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_board_col1_row1">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QLabel" name="label_board_col2_row3">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLabel" name="label_board_col3_row1">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLabel" name="label_board_col2_row5">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
-      <widget class="QLabel" name="label_board_col4_row1">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="label_board_col2_row1">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLabel" name="label_board_col2_row6">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_board_col1_row3">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_board_col1_row4">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_board_col1_row5">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_board_col1_row6">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QLabel" name="label_board_col3_row2">
-       <property name="text">
-        <string/>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="2" column="2">
       <widget class="QLabel" name="label_board_col3_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="3" column="2">
       <widget class="QLabel" name="label_board_col3_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
-      </widget>
-     </item>
-     <item row="4" column="2">
-      <widget class="QLabel" name="label_board_col3_row5">
-       <property name="text">
-        <string/>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
-     <item row="5" column="2">
-      <widget class="QLabel" name="label_board_col3_row6">
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_board_col3_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QLabel" name="label_board_col4_row2">
-       <property name="text">
-        <string/>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QLabel" name="label_board_col5_row2">
+     <item row="5" column="1">
+      <widget class="QLabel" name="label_board_col2_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
-     <item row="2" column="3">
-      <widget class="QLabel" name="label_board_col4_row3">
+     <item row="0" column="3">
+      <widget class="QLabel" name="label_board_col4_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="label_board_col2_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_board_col1_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_board_col1_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_board_col1_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_board_col1_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="label_board_col2_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_board_col1_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="label_board_col2_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="label_board_col3_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLabel" name="label_board_col2_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="2" column="4">
       <widget class="QLabel" name="label_board_col5_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QLabel" name="label_board_col4_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="3" column="3">
       <widget class="QLabel" name="label_board_col4_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
        </property>
-      </widget>
-     </item>
-     <item row="3" column="4">
-      <widget class="QLabel" name="label_board_col5_row4">
-       <property name="text">
-        <string/>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="4" column="3">
       <widget class="QLabel" name="label_board_col4_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="4">
+      <widget class="QLabel" name="label_board_col5_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="5" column="3">
       <widget class="QLabel" name="label_board_col4_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="4" column="4">
       <widget class="QLabel" name="label_board_col5_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLabel" name="label_board_col4_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QLabel" name="label_board_col3_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QLabel" name="label_board_col5_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QLabel" name="label_board_col3_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="5" column="4">
       <widget class="QLabel" name="label_board_col5_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="5">
+      <widget class="QLabel" name="label_board_col6_row6">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="5">
+      <widget class="QLabel" name="label_board_col6_row5">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="5">
+      <widget class="QLabel" name="label_board_col6_row4">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="5">
+      <widget class="QLabel" name="label_board_col6_row3">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="5">
+      <widget class="QLabel" name="label_board_col6_row2">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5">
+      <widget class="QLabel" name="label_board_col6_row1">
+       <property name="styleSheet">
+        <string notr="true">background-color:rgb(6,12,233)</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -540,8 +798,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>315</x>
-      <y>250</y>
+      <x>460</x>
+      <y>294</y>
       <width>371</width>
       <height>41</height>
      </rect>
@@ -553,8 +811,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>315</x>
-      <y>296</y>
+      <x>460</x>
+      <y>340</y>
       <width>371</width>
       <height>41</height>
      </rect>
@@ -566,8 +824,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>530</x>
-      <y>386</y>
+      <x>621</x>
+      <y>450</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -582,8 +840,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>386</y>
+      <x>701</x>
+      <y>450</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -595,8 +853,8 @@
    <widget class="QLCDNumber" name="timer">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>387</y>
+      <x>90</x>
+      <y>450</y>
       <width>64</width>
       <height>23</height>
      </rect>
@@ -608,8 +866,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>439</x>
-      <y>386</y>
+      <x>530</x>
+      <y>450</y>
       <width>91</width>
       <height>22</height>
      </rect>
@@ -624,8 +882,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>440</x>
-      <y>350</y>
+      <x>585</x>
+      <y>394</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -640,8 +898,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>350</y>
+      <x>665</x>
+      <y>394</y>
       <width>80</width>
       <height>22</height>
      </rect>
@@ -653,8 +911,8 @@
    <widget class="QLabel" name="freeTurnLabel">
     <property name="geometry">
      <rect>
-      <x>375</x>
-      <y>356</y>
+      <x>520</x>
+      <y>400</y>
       <width>54</width>
       <height>10</height>
      </rect>
@@ -669,8 +927,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>706</width>
-     <height>19</height>
+     <width>1035</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
