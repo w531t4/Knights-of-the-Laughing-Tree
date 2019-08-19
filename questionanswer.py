@@ -1,11 +1,12 @@
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5 import uic, QtWidgets
-
+from PyQt5 import QtCore
 import logging
 import logs
 from HoverButton import HoverButton
-
+from CategoryLabel import CategoryLabel
+from QuestionLabel import QuestionLabel
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -43,13 +44,32 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
             uic.loadUi(ui_file, self)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        #a = self.verticalLayout_2.takeAt(0)
+        #sizePolicy_Control = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        #sizePolicy_Control.setVerticalStretch(1)
+        #self.frameControls.setSizePolicy(sizePolicy_Control)
+        #sizePolicy_Question = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        #sizePolicy_Question.setVerticalStretch(2)
+        #self.frameQuestion.setSizePolicy(sizePolicy_Question)
+        self.vstackLayout.setStretchFactor(self.contextLayout, 1)
+        self.vstackLayout.setStretchFactor(self.headerLayout, 2)
+        self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
+        self.vstackLayout.setStretchFactor(self.controlLayout, 2)
 
 
     def set_question(self, question: str) -> None:
-        self.labelQuestionName.setText(question)
+        self.labelQuestionNameNew = QuestionLabel(self)
+        self.labelQuestionNameNew.setText(question)
+        self.labelQuestionNameNew.setAlignment(Qt.AlignCenter)
+        self.bodyLayout.replaceWidget(self.labelQuestionName, self.labelQuestionNameNew)
+        self.labelQuestionName.hide()
 
     def set_category(self, category: str) -> None:
-        self.labelCategoryName.setText(category)
+        self.labelCategoryNameNew = CategoryLabel(self)
+        self.labelCategoryNameNew.setText(category)
+        self.labelCategoryNameNew.setAlignment(Qt.AlignCenter)
+        self.headerLayout.replaceWidget(self.labelCategoryName, self.labelCategoryNameNew)
+        self.labelCategoryName.hide()
 
     def set_answer(self, answer: str) -> None:
         self.labelQuestionName.setText(answer)
@@ -59,43 +79,45 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.buttonReveal.clicked.connect(self.somethingClicked)
         self.buttonReveal.setText("Reveal Answer")
         self.buttonReveal.setAlignment(Qt.AlignCenter)
-        self.controlsLayout.addWidget(self.buttonReveal)
+        self.controlLayout.addWidget(self.buttonReveal)
 
     def render_controls_correct_incorrect(self) -> None:
-        #self.buttonReveal.setParent(None)
-        #self.buttonReveal.hide()
-        for i in reversed(range(self.controlsLayout.count())):
-            self.controlsLayout.itemAt(i).widget().hide()
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
 
         self.buttonCorrect = HoverButton(self)
         self.buttonCorrect.setText("Correct")
         self.buttonCorrect.setAlignment(Qt.AlignCenter)
         self.buttonCorrect.clicked.connect(self.action_correct)
-        self.controlsLayout.addWidget(self.buttonCorrect)
+        self.controlLayout.addWidget(self.buttonCorrect)
+
 
         self.buttonIncorrect = HoverButton(self)
         self.buttonIncorrect.setText("Incorrect")
         self.buttonIncorrect.setAlignment(Qt.AlignCenter)
         self.buttonIncorrect.clicked.connect(self.action_incorrect)
-        self.controlsLayout.addWidget(self.buttonIncorrect)
+        self.controlLayout.addWidget(self.buttonIncorrect)
+
+        self.controlLayout.setStretchFactor(self.buttonCorrect, 2)
+        self.controlLayout.setStretchFactor(self.buttonIncorrect, 5)
 
     def render_controls_freeturn(self) -> None:
         # self.buttonReveal.setParent(None)
         # self.buttonReveal.hide()
-        for i in reversed(range(self.controlsLayout.count())):
-            self.controlsLayout.itemAt(i).widget().hide()
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
 
         self.buttonFreeTurnSpend = HoverButton(self)
         self.buttonFreeTurnSpend.setText("Spend FreeTurn Token")
         self.buttonFreeTurnSpend.setAlignment(Qt.AlignCenter)
         self.buttonFreeTurnSpend.clicked.connect(self.action_spendfreeturn)
-        self.controlsLayout.addWidget(self.buttonFreeTurnSpend)
+        self.controlLayout.addWidget(self.buttonFreeTurnSpend)
 
         self.buttonFreeTurnSkip = HoverButton(self)
         self.buttonFreeTurnSkip.setText("Skip")
         self.buttonFreeTurnSkip.setAlignment(Qt.AlignCenter)
         self.buttonFreeTurnSkip.clicked.connect(self.action_skipfreeturn)
-        self.controlsLayout.addWidget(self.buttonFreeTurnSkip)
+        self.controlLayout.addWidget(self.buttonFreeTurnSkip)
 
     @pyqtSlot(str)
     def action_reveal(self, s: str) -> None:

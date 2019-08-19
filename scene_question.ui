@@ -15,40 +15,44 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QHBoxLayout" name="contextLayout">
+    <layout class="QVBoxLayout" name="vstackLayout">
      <item>
-      <widget class="QLabel" name="labelCurrentPlayer">
-       <property name="text">
-        <string>currentPlayer</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="contextLayout">
+       <item>
+        <widget class="QLabel" name="labelCurrentPlayer">
+         <property name="text">
+          <string>currentPlayer</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="headerLayout">
+       <item>
+        <widget class="QLabel" name="labelCategoryName">
+         <property name="text">
+          <string>categoryName</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="bodyLayout">
+       <item>
+        <widget class="QLabel" name="labelQuestionName">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;questionText&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="controlLayout"/>
      </item>
     </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="labelCategoryName">
-       <property name="text">
-        <string>categoryName</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QLabel" name="labelQuestionName">
-       <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;questionText&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="controlsLayout"/>
    </item>
   </layout>
  </widget>
