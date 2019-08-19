@@ -55,6 +55,8 @@ class HMILogicController(QObject):
     signal_play_incorrect_sound = pyqtSignal()
     signal_play_bankrupt_sound = pyqtSignal()
     signal_play_double_sound = pyqtSignal()
+    #signal_scene_change_to_wheel = pyqtSignal()
+    signal_scene_change_to_main = pyqtSignal()
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -91,6 +93,7 @@ class HMILogicController(QObject):
             perform_ack_at_end = False
             self.signal_display_question.emit(message['arguments'])
             # TODO: static value set here, needs to be sent in message
+            self.signal_scene_change_to_main.emit()
             self.signal_start_timer.emit(30)
         elif message['action'] == "responsePlayerRegistration":
             # cover ACK and NACK variants
@@ -105,6 +108,7 @@ class HMILogicController(QObject):
         elif message['action'] == "spinWheel":
             perform_ack_at_end = False
             self.signal_spin_wheel.emit(message['arguments'])
+           # self.signal_scene_change_to_wheel.emit()
         elif message['action'] == "displayAnswer":
             self.signal_display_answer.emit(message['arguments'])
         elif message['action'] == "displayWinner":
@@ -366,7 +370,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         #help from https://stackoverflow.com/questions/46174073/open-a-new-window-after-finish-button-has-been-clicked-on-qwizard-pyqt5?rq=1
         self.registration_wizard.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.shiftToComboWheelBoardScore)
-
+        #self.logic_controller.signal_scene_change_to_wheel.connect(self.shiftToWheelScene)
+        self.logic_controller.signal_scene_change_to_main.connect(self.shiftToComboWheelBoardScore)
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -394,6 +399,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         # for i in range(1,13):
         #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
         #     getattr(self, "wheel_label_1").setText("Bankrupt")
+
+    #@pyqtSlot()
+    #def shiftToWheelScene(self):
+    #    self.main = self.takeCentralWidget()
+    #    self.setCentralWidget(self.wheel_obj)
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
@@ -451,7 +461,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         with open("Wheel_12.png", 'rb') as f:
             data = f.read()
         self.image = QImage.fromData(data, "png")
-        
+
         num_sectors = 0
         for each in range(0, 12):
             if getattr(self, "label_wheel_" + str(each)).isEnabled():
