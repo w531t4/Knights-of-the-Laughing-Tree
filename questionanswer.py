@@ -7,6 +7,10 @@ import logs
 from HoverButton import HoverButton
 from CategoryLabel import CategoryLabel
 from QuestionLabel import QuestionLabel
+from ValueLabel import ValueLabel
+from ScoreBar import ScoreBar
+
+from PyQt5 import QtTest
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -55,7 +59,19 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.vstackLayout.setStretchFactor(self.headerLayout, 1)
         self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
         self.vstackLayout.setStretchFactor(self.controlLayout, 1)
+        self.scorebar = ScoreBar(self)
 
+    def set_context(self, player="", value="") -> None:
+        self.logger.debug("at set_context")
+        self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
+        self.labelCurrentPlayer.hide()
+
+    def set_value(self, value: str) -> None:
+        self.labelValueName = ValueLabel(self)
+        self.labelValueName.setText(value)
+        self.labelValueName.setAlignment(Qt.AlignCenter)
+        self.bodyLayout.replaceWidget(self.labelQuestionName, self.labelValueName)
+        self.labelQuestionName.hide()
 
     def set_question(self, question: str) -> None:
         self.labelQuestionNameNew = QuestionLabel(self)
@@ -72,7 +88,8 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.labelCategoryName.hide()
 
     def set_answer(self, answer: str) -> None:
-        self.labelQuestionName.setText(answer)
+        self.labelQuestionNameNew.setText(answer)
+        #self.labelQuestionName.setText(answer)
 
     def render_controls_reveal(self) -> None:
         self.buttonReveal = HoverButton()

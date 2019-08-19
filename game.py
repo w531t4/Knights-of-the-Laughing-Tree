@@ -405,6 +405,7 @@ class Game(QThread):
         message['action'] = "displayQuestion"
         question_answer = self.current_triviaDB.getQuestion(category)
         question_answer['timeout'] = ANSWER_TIMEOUT
+        question_answer['player'] = self.getCurrentPlayer().getName()
         question_only = dict(question_answer)
         question_only.pop("answer")
         message['arguments'] = question_only

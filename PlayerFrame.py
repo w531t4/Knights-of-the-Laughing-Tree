@@ -1,18 +1,75 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSignal
 import logs
 import logging
 
 
-class CategoryLabel(QtWidgets.QLabel):
+# We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
+# If this is set to False, ui.py must be manually updated by issuing pyuic5
+IMPORT_UI_ONTHEFLY = True
+# END
+
+if not IMPORT_UI_ONTHEFLY:
+    from playerframe import Ui_PlayerFrame
+else:
+    class Ui_PlayerFrame:
+        pass
+
+
+class PlayerFrame(QtWidgets.QFrame, Ui_PlayerFrame):
 
     clicked = pyqtSignal(str)
 
     #Help from https://stackoverflow.com/questions/9384305/hover-issue-in-pyqt
-    def __init__(self, parent=None, loglevel=logging.DEBUG):
-        super(CategoryLabel, self).__init__(parent)
+    def __init__(self, parent=None,
+                 loglevel=logging.DEBUG,
+                 ui_file=None,
+                 gamescore=0,
+                 roundscore=0,
+                 freeturns=0,
+                 name="",
+                 active=False):
+        super(PlayerFrame, self).__init__(parent)
+        if not IMPORT_UI_ONTHEFLY:
+            self.setupUi(self)
+        else:
+            # used for on-the-fly compilation of ui xml
+            if ui_file is None:
+                raise Exception("Did not specify a .ui file")
+            uic.loadUi(ui_file, self)
+
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.playerName = name
+        self.setName(self.playerName)
+        self.setScore(str(gamescore + roundscore))
+        self.setFreeTurnTokens(freeturns)
+        if active:
+            self.setActive()
+        else:
+            self.setInactive()
+
+    def setActive(self):
+        pass
+
+    def setInactive(self):
+        pass
+
+    def getName(self):
+        return self.playerName
+
+    def setName(self, name, max_length=8):
+        if len(name) > max_length:
+            name = name[0:max_length] + ".."
+        self.label_playername.setText(name)
+
+    def setScore(self, score: int):
+        self.label_gamescore.setText(str(score))
+
+    def setFreeTurnTokens(self, num_tokens: int):
+        self.label_freeturns.setText(str(num_tokens))
+
+    def blah(self):
         self.setMouseTracking(True)
         self.setStyleSheet('''
                             font-family: Arial, Helvetica, sans-serif;
@@ -63,4 +120,4 @@ class CategoryLabel(QtWidgets.QLabel):
 
     def hide(self) -> None:
         self.logger.debug("actioning hide")
-        super(CategoryLabel, self).hide()
+        super(PlayerFrame, self).hide()

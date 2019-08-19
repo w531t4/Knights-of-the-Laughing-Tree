@@ -11,6 +11,7 @@ import wizard
 import catselect
 import questionanswer
 from functools import partial
+from ScoreBar import ScoreBar
 
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
@@ -59,7 +60,8 @@ class HMILogicController(QObject):
     #signal_scene_change_to_wheel = pyqtSignal()
     signal_scene_change_to_questionanwer = pyqtSignal()
     signal_scene_change_to_main = pyqtSignal()
-
+    signal_update_question_score_bar_player = pyqtSignal(list)
+    signal_update_main_score_bar_player = pyqtSignal(list)
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -139,8 +141,9 @@ class HMILogicController(QObject):
                                                     str(person['name']),
                                                     str((person['gameScore'] + person['roundScore'])),
                                                     str(person['freeTurnTokens']),
-                                                    str(message['arguments']['currentPlayer'])
-                                  )
+                                                    str(message['arguments']['currentPlayer']))
+            self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
+            self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
             self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
                                                str(message['arguments']['maxSpins']),
                                                str(message['arguments']['round']),
@@ -390,6 +393,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.registration_wizard.signal_close.connect(self.close)
 
+        self.main_scorebar = ScoreBar(self)
+
+        self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
+
         self.logic_controller_thread.start()
         self.MSG_controller.start()
         self.main = self.takeCentralWidget()
@@ -444,13 +451,17 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         """Render provided question to display"""
 
         self.scene_question = questionanswer.MyQuestionScene(
+                                                            parent=self,
                                                             ui_file="scene_question.ui",
                                                             loglevel=self.loglevel,
                                                              )
         self.scene_question.set_category(question_dict['category'])
+        self.scene_question.set_context()
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
         self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
+        self.logic_controller.signal_update_question_score_bar_player.connect(
+                                                    self.scene_question.scorebar.updatePlayers)
         self.textbox_question.setEnabled(True)
         self.textbox_question.setText(question_dict['question'])
         self.button_reveal.setEnabled(True)

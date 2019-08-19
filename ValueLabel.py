@@ -4,13 +4,13 @@ import logs
 import logging
 
 
-class CategoryLabel(QtWidgets.QLabel):
+class ValueLabel(QtWidgets.QLabel):
 
     clicked = pyqtSignal(str)
 
     #Help from https://stackoverflow.com/questions/9384305/hover-issue-in-pyqt
     def __init__(self, parent=None, loglevel=logging.DEBUG):
-        super(CategoryLabel, self).__init__(parent)
+        super(ValueLabel, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
         self.setMouseTracking(True)
@@ -63,4 +63,4 @@ class CategoryLabel(QtWidgets.QLabel):
 
     def hide(self) -> None:
         self.logger.debug("actioning hide")
-        super(CategoryLabel, self).hide()
+        super(ValueLabel, self).hide()
