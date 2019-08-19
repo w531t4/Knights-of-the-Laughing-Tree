@@ -15,15 +15,17 @@ class CategoryLabel(QtWidgets.QLabel):
         self.loglevel = loglevel
         self.setMouseTracking(True)
         self.setStyleSheet('''
-                            background-color: blue;
-                            font-family: "Lucida Console", Monaco, monospace;
-                            font-size: 22px;
-                            color: white;
-                            font-weight: 400;
+                            font-family: Arial, Helvetica, sans-serif;
+                            background-color: rgb(6,12,233);
+                            font-size: 45px;
+                            letter-spacing: 2px;
+                            word-spacing: 2px;
+                            color: #FFFFFF;
+                            font-weight: 700;
                             text-decoration: none;
                             font-style: normal;
                             font-variant: normal;
-                            text-transform: none;
+                            text-transform: uppercase;
                             ''')
 
     # Help from https://stackoverflow.com/questions/9384305/hover-issue-in-pyqt

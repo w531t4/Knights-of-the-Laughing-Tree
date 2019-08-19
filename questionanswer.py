@@ -52,9 +52,9 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         #sizePolicy_Question.setVerticalStretch(2)
         #self.frameQuestion.setSizePolicy(sizePolicy_Question)
         self.vstackLayout.setStretchFactor(self.contextLayout, 1)
-        self.vstackLayout.setStretchFactor(self.headerLayout, 2)
+        self.vstackLayout.setStretchFactor(self.headerLayout, 1)
         self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
-        self.vstackLayout.setStretchFactor(self.controlLayout, 2)
+        self.vstackLayout.setStretchFactor(self.controlLayout, 1)
 
 
     def set_question(self, question: str) -> None:
@@ -99,7 +99,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.controlLayout.addWidget(self.buttonIncorrect)
 
         self.controlLayout.setStretchFactor(self.buttonCorrect, 2)
-        self.controlLayout.setStretchFactor(self.buttonIncorrect, 5)
+        self.controlLayout.setStretchFactor(self.buttonIncorrect, 2)
 
     def render_controls_freeturn(self) -> None:
         # self.buttonReveal.setParent(None)
