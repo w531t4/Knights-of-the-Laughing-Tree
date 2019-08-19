@@ -26,7 +26,9 @@ class Game(QThread):
                  game_port=None,
                  predetermined_spins=None,
                  predetermined_players=None,
-                 predetermined_startingplayer=None):
+                 predetermined_startingplayer=None,
+                 number_spins=8,
+                 ):
         super(Game, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
@@ -49,6 +51,8 @@ class Game(QThread):
         self.use_predetermined_startingplayer = predetermined_startingplayer
         self.logger.debug("predetermined_startingplayer = %s" % predetermined_startingplayer)
 
+        self.maxSpins = number_spins # TODO: Change back to 50
+
     def run(self):
         self.maxPlayers = 3
         self.minPlayers = 2
@@ -56,7 +60,7 @@ class Game(QThread):
         self.round = 0
         self.spins = 0
 
-        self.maxSpins = 8 # TODO: Change back to 50
+
         # game config
         # TODO: Alter Geometry
         self.geometry_width = 6

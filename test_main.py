@@ -27,6 +27,7 @@ class WOJTest(unittest.TestCase):
         scenario['options']['skipSpinAction'] = True
         scenario['options']['skipUserRegistrationWizard'] = True
         scenario['options']['setStartingPlayer'] = 0
+        scenario['options']['maxSpins'] = 12
         self.scenario = scenario
         #self.args = build_args(logging.DEBUG, 10000, json.dumps(scenario))
 

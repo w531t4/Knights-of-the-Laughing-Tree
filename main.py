@@ -45,6 +45,7 @@ def build_args(loglevel, initial_port, target_scenario):
         game_args['predetermined_players'] = players
         if options is not None:
             game_args['predetermined_startingplayer'] = options['setStartingPlayer'] if "setStartingPlayer" in options.keys() else None
+            game_args['number_spins'] = options['maxSpins'] if "maxSpins" in options.keys() else None
 
             hmi_args['skip_userreg'] = options['skipUserRegistrationWizard'] if "skipUserRegistrationWizard" in options.keys() else False
             hmi_args['skip_spinanimation'] = options['skipSpinAction'] if "skipSpinAction" in options.keys() else False
