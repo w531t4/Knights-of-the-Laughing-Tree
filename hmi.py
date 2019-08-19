@@ -62,11 +62,13 @@ class HMILogicController(QObject):
     signal_scene_change_to_main = pyqtSignal()
     signal_update_question_score_bar_player = pyqtSignal(list)
     signal_update_main_score_bar_player = pyqtSignal(list)
+    signal_retain_player_data = pyqtSignal(list)
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.playerData = None
 
     @pyqtSlot(str)
     def processMessage(self, incoming_message):
@@ -97,6 +99,8 @@ class HMILogicController(QObject):
         elif message['action'] == "displayQuestion":
             perform_ack_at_end = False
             self.signal_display_question.emit(message['arguments'])
+            self.signal_update_question_score_bar_player.emit(self.playerData)
+            self.signal_update_main_score_bar_player.emit(self.playerData)
             # TODO: static value set here, needs to be sent in message
             #self.signal_scene_change_to_main
             self.signal_start_timer.emit(30)
@@ -131,11 +135,13 @@ class HMILogicController(QObject):
             self.signal_determine_freeturn_spend.emit()
         elif message['action'] == "updateGameState":
             # Update Player Data
+
             if "players" not in message['arguments'].keys():
                 raise Exception("Missing player information in update data")
             if len(message['arguments']['players']) == 0:
                 raise Exception("Player entry in update data is empty")
 
+            self.playerData=message['arguments']['players']
             for person in message['arguments']['players']:
                 self.signal_update_player_data.emit(str(person['id']),
                                                     str(person['name']),
@@ -143,6 +149,7 @@ class HMILogicController(QObject):
                                                     str(person['freeTurnTokens']),
                                                     str(message['arguments']['currentPlayer']))
             self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
+            self.signal_retain_player_data.emit(message['arguments']['players'])
             self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
             self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
                                                str(message['arguments']['maxSpins']),
@@ -380,6 +387,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         #self.logic_controller.signal_scene_change_to_wheel.connect(self.shiftToWheelScene)
         self.logic_controller.signal_scene_change_to_main.connect(self.shiftToComboWheelBoardScore)
 
+        self.main_scorebar = ScoreBar(self)
+
+        self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
+        self.logic_controller.signal_retain_player_data.connect(self.retainPlayerData)
+
         self.logic_controller_thread.start()
         self.MSG_controller.start()
 
@@ -393,9 +405,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.registration_wizard.signal_close.connect(self.close)
 
-        self.main_scorebar = ScoreBar(self)
 
-        self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -456,12 +466,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                             loglevel=self.loglevel,
                                                              )
         self.scene_question.set_category(question_dict['category'])
-        self.scene_question.set_context()
+        self.scene_question.set_context(self.playerData)
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
         self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
-        self.logic_controller.signal_update_question_score_bar_player.connect(
-                                                    self.scene_question.scorebar.updatePlayers)
+        #self.logic_controller.signal_update_question_score_bar_player.connect(
+         #                                           self.scene_question.updatePlayers)
         self.textbox_question.setEnabled(True)
         self.textbox_question.setText(question_dict['question'])
         self.button_reveal.setEnabled(True)
@@ -695,6 +705,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.MSG_controller.quit()
         super(HMI, self).close()
 
+    @pyqtSlot(list)
+    def retainPlayerData(self, playerData):
+        self.playerData = playerData
 class MyTimer(QObject):
 
     signal_update_timer = pyqtSignal(str)

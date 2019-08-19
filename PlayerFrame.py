@@ -62,6 +62,16 @@ class PlayerFrame(QtWidgets.QFrame, Ui_PlayerFrame):
         if len(name) > max_length:
             name = name[0:max_length] + ".."
         self.label_playername.setText(name)
+        self.label_playername.setStyleSheet('''
+                                    font-family: Verdana, Geneva, sans-serif;
+                                    font-size: 25px;
+                                    color: black;
+                                    font-weight: 700;
+                                    text-decoration: none;
+                                    font-style: normal;
+                                    font-variant: normal;
+                                    text-transform: capitalize;
+                                    ''')
 
     def setScore(self, score: int):
         self.label_gamescore.setText(str(score))

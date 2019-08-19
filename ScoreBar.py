@@ -10,9 +10,9 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
         super(ScoreBar, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.baseLayout = QtWidgets.QHBoxLayout()
+        #self.horizontalLayout = QtWidgets.QHBoxLayout(self)
+        #self.horizontalLayout.setObjectName("horizontalLayout")
+        self.baseLayout = QtWidgets.QHBoxLayout(self)
         self.baseLayout.setObjectName("baseLayout")
 
         self.show()
@@ -33,11 +33,11 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
 
         for i, each in enumerate(playerList):
             #update widgets
-            self.player0.setName(each['name'])
+            #self.player0.setName(each['name'])
             self.logger.debug("set playername = %s" % each['name'])
-            # getattr(self, "player%s" % (i)).setName(each['name'])
-            # getattr(self, "player%s" % (i)).setScore(each['gameScore'] + each['roundScore'])
-            # getattr(self, "player%s" % (i)).setFreeTurnTokens(each['freeTurnTokens'])
+            getattr(self, "player%s" % (i)).setName(each['name'])
+            getattr(self, "player%s" % (i)).setScore(each['gameScore'] + each['roundScore'])
+            getattr(self, "player%s" % (i)).setFreeTurnTokens("FreeTurns: %s" % each['freeTurnTokens'])
         for each in playerList:
             pass
             # self.signal_update_player_data.emit(str(person['id']),

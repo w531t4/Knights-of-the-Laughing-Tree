@@ -9,6 +9,7 @@ from CategoryLabel import CategoryLabel
 from QuestionLabel import QuestionLabel
 from ValueLabel import ValueLabel
 from ScoreBar import ScoreBar
+from PlayerFrame import PlayerFrame
 
 from PyQt5 import QtTest
 
@@ -59,11 +60,13 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.vstackLayout.setStretchFactor(self.headerLayout, 1)
         self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
         self.vstackLayout.setStretchFactor(self.controlLayout, 1)
-        self.scorebar = ScoreBar(self)
 
-    def set_context(self, player="", value="") -> None:
+    def set_context(self, data) -> None:
+        self.scorebar = ScoreBar(self)
+        self.scorebar.updatePlayers(data)
+        self.contextLayout.addWidget(self.scorebar)
         self.logger.debug("at set_context")
-        self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
+        #self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
         self.labelCurrentPlayer.hide()
 
     def set_value(self, value: str) -> None:
