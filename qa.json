@@ -423,6 +423,61 @@
     "question": "What did Harry use to catch his very first golden snitch?"
   },
   {
+    "category": "Military",
+    "answer": "Captain",
+    "question": "What the US Navy's rank that is equivalent to an Army Colonel?"
+  },
+  {
+    "category": "Military",
+    "answer": "Battleship",
+    "question": "What the most common type of ship in the US Navy?"
+  },
+  {
+    "category": "Military",
+    "answer": "Zumwalt",
+    "question": "What the class of the US Navy's new 'stealth ship'?"
+  },
+  {
+    "category": "Military",
+    "answer": "O-7 or Rear Admiral",
+    "question": "What is the minimum rank in the US Navy to be considered a flag officer?"
+  },
+  {
+    "category": "Military",
+    "answer": "Russian pipeline",
+    "question": "The largest non-nuclear explosion was caused by US malware. What did they blow up?"
+  },
+  {
+    "category": "Military",
+    "answer": "Air Force",
+    "question": "What branch of the US military has produced the most astronauts?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Subabro",
+    "question": "What is a slang term for a bachelor that drives a Subaru?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Coupe",
+    "question": "What term is used to describe a model of car with only two doors?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Lamborghini",
+    "question": "Out of Ferrari, McLaren, and Lamborghini, which company does not have a Formula 1 team?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Tesla",
+    "question": "What US company makes the fastest production sedan?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Germany",
+    "question": "What country is BMW headquartered?"
+  },
+  {
     "category": "Triathlon",
     "answer": "140.6 miles",
     "question": "The longest triathlon is called the Iron Man. How many miles is it?"
