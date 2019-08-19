@@ -25,7 +25,7 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
             self.logger.debug("self.baseLayout.count()=%s" % (self.baseLayout.count()))
             if self.baseLayout.count() <= i:
                 # create widget
-                setattr(self, "player%s" % (i), PlayerFrame(parent=self, name=each['name']))
+                setattr(self, "player%s" % (i), PlayerFrame(parent=self, ui_file="playerframe.ui", name=each['name']))
                 getattr(self, "player%s" % (i)).setName(each['name'])
                 getattr(self, "player%s" % (i)).setScore(each['gameScore'] + each['roundScore'])
                 getattr(self, "player%s" % (i)).setFreeTurnTokens(each['freeTurnTokens'])
