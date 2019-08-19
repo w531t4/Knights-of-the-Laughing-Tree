@@ -11,9 +11,11 @@ import wizard
 import catselect
 from functools import partial
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.QtMultimedia import QSound
+from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -252,7 +254,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     signal_temp_select_category = pyqtSignal(str)
     signal_start_timer = pyqtSignal(int)
 
-    def __init__(self, ui_file=None, loglevel=logging.INFO, hmi_port=None, game_port=None):
+    def __init__(self, ui_file=None,
+                 loglevel=logging.INFO,
+                 hmi_port=None,
+                 game_port=None,
+                 skip_userreg=False,
+                 skip_spinanimation=False):
         QtWidgets.QMainWindow.__init__(self)
         if not IMPORT_UI_ONTHEFLY:
             self.setupUi(self)
@@ -268,6 +275,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.game_port = game_port
         self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
         self.logger.debug("selected game_port=%s" % (self.game_port))
+        self.skip_spinanimation = skip_spinanimation
 
         self.setWindowTitle("Wheel of Jeopardy")
 
@@ -374,11 +382,18 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
-
-        #self.registration_wizard.show()
         self.main = self.takeCentralWidget()
-        self.setCentralWidget(self.registration_wizard)
-        #self.setCentralWidget(self.main)
+        if not skip_userreg:
+            #self.registration_wizard.show()
+            self.setCentralWidget(self.registration_wizard)
+            #self.setCentralWidget(self.main)
+        else:
+            self.setCentralWidget(self.main)
+
+        self.rotation_angle = 0;
+        # for i in range(1,13):
+        #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
+        #     getattr(self, "wheel_label_1").setText("Bankrupt")
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
@@ -432,7 +447,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
-
+        self.image = QImage.fromData(open("Wheel_12.png", 'rb').read(), "png")
+        
         num_sectors = 0
         for each in range(0, 12):
             if getattr(self, "label_wheel_" + str(each)).isEnabled():
@@ -442,7 +458,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_resting_place = 0
         last = self.wheel_resting_place
 
-        def cycle(start_number, delay_ms, num_switches, sectors, target=None):
+        def cycle(start_number, delay_ms, num_switches, sectors, image_data, rot_angle, target=None):
             number = start_number
             delay_ms = delay_ms/5
             if start_number > 0:
@@ -454,26 +470,42 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 # betterspin.wav from
                 # https://freesound.org/people/door15studio/sounds/244774/
                 QSound.play("betterspin.wav")
+
+                new_pixel_map = QPixmap(image_data)
+                rot_angle = ((rot_angle + 30) % 360)
+                transform = QtGui.QTransform().rotate(rot_angle)
+                new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
+                my_wheel_gui = getattr(self, "wheel_gui")
+                my_wheel_gui.setPixmap(new_pixel_map)
+
                 if last is not None:
                     getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
                 getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
                 number = each
                 last = each
                 if number == target and target is not None:
-                    return number
+                    return number, rot_angle
                 QtTest.QTest.qWait(delay_ms)
-            return number
 
+            return number, rot_angle
 
-        self.wheel_resting_place = cycle(last, 190, num_sectors*3, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, target=int(destination))
+        if self.skip_spinanimation:
+            for each in range(0, num_sectors):
+                if each != int(destination):
+                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
+                else:
+                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+        else:
+            self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
+
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
         spinString = spinsExecuted + "/" + maxSpins
@@ -611,6 +643,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 #    @pyqtSlot()
 #    def determineFreeTurnSpend(self):
 
+    def close(self):
+        self.logger.debug("closing")
+        self.MSG_controller.quit()
+        super(HMI, self).close()
 
 class MyTimer(QObject):
 

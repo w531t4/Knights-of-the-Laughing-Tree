@@ -7,34 +7,64 @@ from game import Game
 from PyQt5 import QtWidgets
 import commsettings
 
-def main(loglevel=logging.INFO):
-    start_port = 10000
+import json
+import argparse
 
-    HMI_PORT = None
-    GAME_PORT = None
-    while HMI_PORT is None:
-        start_port += 1
+def build_args(loglevel, initial_port, target_scenario):
+    start_port = initial_port
+    HMI_PORT = commsettings.get_port(start_port)
+    GAME_PORT = commsettings.get_port(HMI_PORT)
+    hmi_args = dict()
+    game_args = dict()
+
+    hmi_args['loglevel'] = loglevel
+    game_args['loglevel'] = loglevel
+
+    hmi_args['hmi_port'] = HMI_PORT
+    game_args['hmi_port'] = HMI_PORT
+
+    hmi_args['game_port'] = GAME_PORT
+    game_args['game_port'] = GAME_PORT
+
+    hmi_args['ui_file'] = "ui.ui"
+
+    if target_scenario is not None:
         try:
-            commsettings.is_port_in_use(start_port)
+            spins = json.loads(target_scenario)['spins']
         except:
-            pass
-        else:
-            HMI_PORT = start_port
-    while GAME_PORT is None:
-        start_port += 1
+            spins = None
         try:
-            commsettings.is_port_in_use(start_port)
+            players = json.loads(target_scenario)['players']
         except:
-            pass
-        else:
-            GAME_PORT = start_port
+            players = None
+        try:
+            options = json.loads(target_scenario)['options']
+        except:
+            options = None
+
+        game_args['predetermined_spins'] = spins
+        game_args['predetermined_players'] = players
+        if options is not None:
+            game_args['predetermined_startingplayer'] = options['setStartingPlayer'] if "setStartingPlayer" in options.keys() else None
+
+            hmi_args['skip_userreg'] = options['skipUserRegistrationWizard'] if "skipUserRegistrationWizard" in options.keys() else False
+            hmi_args['skip_spinanimation'] = options['skipSpinAction'] if "skipSpinAction" in options.keys() else False
+
+    args = dict()
+    args['hmi'] = hmi_args
+    args['game'] = game_args
+    return args
+
+def main(loglevel=logging.INFO, target_scenario: str = ""):
+    start_port = 10000
+    args = build_args(loglevel,start_port, target_scenario)
 
     app = QtWidgets.QApplication(sys.argv)
-    # Using QT-Designer 5.12.4
-    game_thread = Game(loglevel=loglevel, hmi_port=HMI_PORT, game_port=GAME_PORT)
-    game_thread.start()
-    form = HMI(ui_file="ui.ui", loglevel=loglevel, hmi_port=HMI_PORT, game_port=GAME_PORT)
-    form.show()
+    game_obj = Game(**args['game'])
+    hmi_obj = HMI(**args['hmi'])
+
+    game_obj.start()
+    hmi_obj.show()
     sys.exit(app.exec_())
 
 def banner():
@@ -54,10 +84,23 @@ def banner():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Wheel of Jeopardy')
+    parser.add_argument('--debug', action="store_true", default=False, help="Turn on debug verbosity")
+    parser.add_argument('--scenariofile',
+                        action="store",
+                        help="specify a file containing a json scenario (see example_scenario.json)")
+
+    args = parser.parse_args()
     banner()
-    if len(sys.argv) > 1 and "debug" in sys.argv[1:]:
+    if args.debug:
         level = logging.DEBUG
     else:
         level = logging.INFO
-    main(loglevel=level)
+    if args.scenariofile:
+        with open(args.scenariofile, 'r') as f:
+            scenario = f.read()
+    else:
+        scenario = ""
+
+    main(loglevel=level, target_scenario=scenario)
 

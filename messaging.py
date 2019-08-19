@@ -22,11 +22,17 @@ class Messaging(QThread):
         self.logprefix = self.name + ":"
         self.q = q
         self.sock = sock
+        self.doRun = True
 
     def run(self):
         """Responsible for handling new TCP connections and facilitating the reception of messages"""
-        client, src = self.sock.accept()
         while True:
+            try:
+                client, src = self.sock.accept()
+                break
+            except:
+                self.logger.debug("failed to open socket, retry")
+        while self.doRun:
             message = self.recv_string(client)
             self.logger.debug("Received Message (" + str(message) + ")")
             self.q.put(message)
@@ -47,6 +53,12 @@ class Messaging(QThread):
         self.logger.debug("    Sent Message (" + str(message) + ")")
         sock.sendall("".join([message, self.breaker]).encode())
 
+    def quit(self):
+        self.doRun = False
+        self.logger.debug("quitting")
+        self.sock.close()
+        super(Messaging, self).quit()
+
 
 class MessageController(QThread):
 
@@ -58,6 +70,7 @@ class MessageController(QThread):
         self.msg_controller_name = msg_controller_name
         self.listen_port = listen_port
         self.target_port = target_port
+        self.ready = False
 
         self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clientqueue = queue.Queue()
@@ -66,6 +79,11 @@ class MessageController(QThread):
                                                                                 name=self.msg_controller_name)
         self.built = True
 
+    def quit(self):
+        self.logger.debug("quitting")
+        self.msg_controller.quit()
+        super(MessageController, self).quit()
+        
     def build_listener(self):
         # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
         # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
@@ -80,11 +98,14 @@ class MessageController(QThread):
         while True:
             try:
                 self.sender = socket.create_connection(("127.0.0.1", self.target_port))
+
                 break
             except Exception as e:
                 self.logger.error(e)
                 QtTest.QTest.qWait(1000)
-                continue
+
+        self.logger.debug("successfully built connection to %s" % self.target_port)
+        self.ready = True
 
     def run(self):
         self.build_listener()
@@ -93,6 +114,9 @@ class MessageController(QThread):
 
     @pyqtSlot(str)
     def send_message(self, msg):
+        while not self.ready:
+            self.logger.debug("not ready to send_message")
+            QtTest.QTest.qWait(50)
         self.msg_controller.send_string(self.sender, msg)
 
 
