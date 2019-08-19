@@ -129,7 +129,7 @@
     "question": "Maryland" },
     {
     "category": "State Capitals",
-    "answer": "New York",
+    "answer": "Albany",
     "question": "New York" },
     {
     "category": "State Capitals",
@@ -421,5 +421,40 @@
     "category": "Harry Potter",
     "answer": "His mouth",
     "question": "What did Harry use to catch his very first golden snitch?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "140.6 miles",
+    "question": "The longest triathlon is called the Iron Man. How many miles is it?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Swimming",
+    "question": "In a triathlon, what event is first?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "1.5 kilometers",
+    "question": "How long is the swim in an Olympic length triathlon?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Kona, Hawaii",
+    "question": "Where is the Iron Man World Championship held?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Transition",
+    "question": "In a triathlon, what is the time between events called?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Super Sprint",
+    "question": "What is the shortest triathlon length recognized by USA Triathlon?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "16 hours 50 minutes",
+    "question": "How long do you have to complete an Iron Man triathlon before you are disqualified?"
   }
 ]
