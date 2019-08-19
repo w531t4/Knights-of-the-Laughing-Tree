@@ -447,7 +447,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
-        self.image = QImage.fromData(open("Wheel_12.png", 'rb').read(), "png")
+        data = None
+        with open("Wheel_12.png", 'rb') as f:
+            data = f.read()
+        self.image = QImage.fromData(data, "png")
         
         num_sectors = 0
         for each in range(0, 12):
