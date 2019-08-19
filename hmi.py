@@ -9,6 +9,7 @@ import logs
 from timeit import default_timer as timer
 import wizard
 import catselect
+import questionanswer
 from functools import partial
 
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
@@ -56,7 +57,9 @@ class HMILogicController(QObject):
     signal_play_bankrupt_sound = pyqtSignal()
     signal_play_double_sound = pyqtSignal()
     #signal_scene_change_to_wheel = pyqtSignal()
+    signal_scene_change_to_questionanwer = pyqtSignal()
     signal_scene_change_to_main = pyqtSignal()
+
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
@@ -93,7 +96,7 @@ class HMILogicController(QObject):
             perform_ack_at_end = False
             self.signal_display_question.emit(message['arguments'])
             # TODO: static value set here, needs to be sent in message
-            self.signal_scene_change_to_main.emit()
+            #self.signal_scene_change_to_main
             self.signal_start_timer.emit(30)
         elif message['action'] == "responsePlayerRegistration":
             # cover ACK and NACK variants
@@ -118,11 +121,12 @@ class HMILogicController(QObject):
             local_action['unlock'] = ["doSpin"]
             local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
             self.signal_lock_unlock.emit(local_action)
+            self.signal_scene_change_to_main.emit()
         elif message['action'] == "promptSpendFreeTurnToken":
             local_action = dict()
             local_action['unlock'] = ["freeTurnSkip", "freeTurnSpend"]
             self.signal_lock_unlock.emit(local_action)
-            #self.signal_determine_freeturn_spend.emit()
+            self.signal_determine_freeturn_spend.emit()
         elif message['action'] == "updateGameState":
             # Update Player Data
             if "players" not in message['arguments'].keys():
@@ -202,7 +206,7 @@ class HMILogicController(QObject):
         r = random.randrange(0, len(test_names))
         return test_names[r]
 
-    def issueAck(self, action):
+    def issueAck(self, action: str) -> None:
         response = dict()
         response['action'] = action
         response['arguments'] = "ACK"
@@ -364,7 +368,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_play_bankrupt_sound.connect(self.playBankrupt)
         self.logic_controller.signal_play_double_sound.connect(self.playDouble)
 
-        #self.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
+        self.logic_controller.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
         self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
         self.freeTurnSpend.clicked.connect(self.logic_controller.notifyFreeTurnSpend)
 
@@ -380,6 +384,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.button_incorrect.clicked.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.button_correct.clicked.connect(self.logic_controller.notifySuccesfullOutcome)
+
         self.button_reveal.clicked.connect(self.logic_controller.notifyNeedAnswer)
         self.wheel_resting_place = None
 
@@ -389,11 +394,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.MSG_controller.start()
         self.main = self.takeCentralWidget()
         if not skip_userreg:
-            #self.registration_wizard.show()
             self.setCentralWidget(self.registration_wizard)
-            #self.setCentralWidget(self.main)
         else:
             self.setCentralWidget(self.main)
+
+
 
         self.rotation_angle = 0;
         # for i in range(1,13):
@@ -438,14 +443,30 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def displayQuestion(self, question_dict):
         """Render provided question to display"""
 
+        self.scene_question = questionanswer.MyQuestionScene(
+                                                            ui_file="scene_question.ui",
+                                                            loglevel=self.loglevel,
+                                                             )
+        self.scene_question.set_category(question_dict['category'])
+        self.scene_question.set_question(question_dict['question'])
+        self.scene_question.render_controls_reveal()
+        self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
         self.textbox_question.setEnabled(True)
         self.textbox_question.setText(question_dict['question'])
         self.button_reveal.setEnabled(True)
+
+        self.main = self.takeCentralWidget()
+        self.setCentralWidget(self.scene_question)
+        self.logger.debug("shift scene to question/answer")
         self.logic_controller.issueAck("displayQuestion")
 
     @pyqtSlot(dict)
     def displayAnswer(self, question_dict):
         """Render provided question to display"""
+        self.scene_question.set_answer(question_dict['answer'])
+        self.scene_question.render_controls_correct_incorrect()
+        self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
+        self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
         self.textbox_answer.setText(question_dict['answer'])
         self.textbox_answer.setEnabled(True)
         self.timer.setEnabled(False)
@@ -653,9 +674,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def playDouble(self):
         self.sounds["Double"].play()
 
-#    @pyqtSlot()
-#    def determineFreeTurnSpend(self):
-
+    @pyqtSlot()
+    def determineFreeTurnSpend(self):
+        self.scene_question.render_controls_freeturn()
+        self.scene_question.signal_skipfreeturn.connect(self.logic_controller.notifyFreeTurnSkip)
+        self.scene_question.signal_spendfreeturn.connect(self.logic_controller.notifyFreeTurnSpend)
     def close(self):
         self.logger.debug("closing")
         self.MSG_controller.quit()

@@ -54,10 +54,11 @@ def build_args(loglevel, initial_port, target_scenario):
     args['game'] = game_args
     return args
 
+
 def main(loglevel=logging.INFO, target_scenario: str = ""):
     start_port = 10000
-    args = build_args(loglevel,start_port, target_scenario)
-
+    args = build_args(loglevel, start_port, target_scenario)
+    print("args=%s" % args)
     app = QtWidgets.QApplication(sys.argv)
     game_obj = Game(**args['game'])
     hmi_obj = HMI(**args['hmi'])
@@ -65,6 +66,7 @@ def main(loglevel=logging.INFO, target_scenario: str = ""):
     game_obj.start()
     hmi_obj.show()
     sys.exit(app.exec_())
+
 
 def banner():
 
@@ -97,7 +99,7 @@ if __name__ == "__main__":
         level = logging.INFO
     if args.scenariofile:
         with open(args.scenariofile, 'r') as f:
-            scenario = f.read()
+            scenario = json.dumps(json.loads(f.read()))
     else:
         scenario = ""
 
