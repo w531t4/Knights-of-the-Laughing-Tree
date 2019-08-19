@@ -391,9 +391,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.setCentralWidget(self.main)
 
         self.rotation_angle = 0;
-        # for i in range(1,13):
-        #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
-        #     getattr(self, "wheel_label_1").setText("Bankrupt")
+        self.wheel_sectors = []
+        for i in range(0,12):
+            self.wheel_sectors.append("PLACEHOLDER")
+        getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 11, QtGui.QFont.Bold))
+
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
@@ -447,15 +449,14 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
-        data = None
-        with open("Wheel_12.png", 'rb') as f:
-            data = f.read()
-        self.image = QImage.fromData(data, "png")
-        
-        num_sectors = 0
-        for each in range(0, 12):
-            if getattr(self, "label_wheel_" + str(each)).isEnabled():
-                num_sectors += 1
+        self.image = QImage.fromData(open("Wheel_12_Bigger.png", 'rb').read(), "png")
+
+        # num_sectors = 0
+        # for each in range(0, 12):
+        #     if getattr(self, "label_wheel_" + str(each)).isEnabled():
+        #         num_sectors += 1
+
+        num_sectors = 12
 
         if self.wheel_resting_place is None:
             self.wheel_resting_place = 0
@@ -481,9 +482,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 my_wheel_gui = getattr(self, "wheel_gui")
                 my_wheel_gui.setPixmap(new_pixel_map)
 
-                if last is not None:
-                    getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
-                getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                # if last is not None:
+                #     getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
+                # getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                getattr(self, "wheel_label_1").setText(self.wheel_sectors[each])
                 number = each
                 last = each
                 if number == target and target is not None:
@@ -493,11 +495,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             return number, rot_angle
 
         if self.skip_spinanimation:
-            for each in range(0, num_sectors):
-                if each != int(destination):
-                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
-                else:
-                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+            getattr(self, "wheel_label_1").setText(self.wheel_sectors[destination])
+                # if each != int(destination):
+                #     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
+                # else:
+                #     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
         else:
             self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
             self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
@@ -535,23 +537,25 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(list)
     def updateWheel(self, sector_list):
         for i, each in enumerate(sector_list):
-            sector_alias = getattr(self, "label_wheel_" + str(i))
-            # TODO: This breaks the rules. hmi shouldn't know anything about the protocol
-            if each == "bankrupt":
-                sector_alias.setStyleSheet('background-color: black; color: white')
-            elif each == "loseturn":
-                sector_alias.setStyleSheet("")
-            elif each == "accumulatefreeturn":
-                sector_alias.setStyleSheet("")
-            elif each == 'playerschoice':
-                sector_alias.setStyleSheet("")
-            elif each == "opponentschoice":
-                sector_alias.setStyleSheet("")
-            elif each == "doublescore":
-                sector_alias.setStyleSheet("")
-                #sector_alias.setStylesheet("background-color:#ff0000;")
-            sector_alias.setText(each)
-        num_sectors = len(sector_list)
+            self.wheel_sectors[i] = each
+            # sector_alias = getattr(self, "label_wheel_" + str(i))
+            # # TODO: This breaks the rules. hmi shouldn't know anything about the protocol
+            # if each == "bankrupt":
+            #     sector_alias.setStyleSheet('background-color: black; color: white')
+            # elif each == "loseturn":
+            #     sector_alias.setStyleSheet("")
+            # elif each == "accumulatefreeturn":
+            #     sector_alias.setStyleSheet("")
+            # elif each == 'playerschoice':
+            #     sector_alias.setStyleSheet("")
+            # elif each == "opponentschoice":
+            #     sector_alias.setStyleSheet("")
+            # elif each == "doublescore":
+            #     sector_alias.setStyleSheet("")
+            #     #sector_alias.setStylesheet("background-color:#ff0000;")
+            # sector_alias.setText(each)
+        # num_sectors = len(sector_list)
+        num_sectors = 12
         if num_sectors != 12:
             for each in range(num_sectors, 12):
                 getattr(self, "label_wheel_" + str(each)).setDisabled(True)
