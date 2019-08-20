@@ -1,30 +1,24 @@
 from PyQt5.QtWidgets import QLabel, QGraphicsScene, QGraphicsItemGroup, QApplication, QGraphicsView, QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsProxyWidget
 from PyQt5.Qt import QColor, QFont, QPointF, QTransform
 from PyQt5 import QtTest, QtGui
-from PyQt5.QtCore import QRectF
+from PyQt5.QtCore import QRectF, Qt
+import math
 
 import sys, random
 import textwrap
 
 
-class TestWheel(QGraphicsEllipseItem):
-    def __init__(self, w, x, y, z):
-        super(TestWheel, self).__init__(w, x, y, z, parent=None)
-
-    def boundingRect(self) -> QRectF:
-        return QRectF(-1.*(self.rect().width()/2.),
-                      -1.*(self.rect().height()/2.),
-                      self.rect().width(),
-                      self.rect().height())
-
-
-class TestWheelScene(QGraphicsScene):
-    def __init__(self, radius=200, parent=None):
-        super(TestWheelScene, self).__init__(parent)
+class WheelScene(QGraphicsScene):
+    def __init__(self, radius=200, parent=None, categories=[]):
+        QGraphicsScene.__init__(self)
+        #super(TestWheelScene, self).__init__(parent)
         families = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        sector_names = ["freespin", "bankruptcy", "dogs", "cats",
+        if len(categories) == 0:
+            sector_names = ["freespin", "bankruptcy", "dogs", "cats",
                         "PC", "OP", "loseturn", "colors", "numbers",
                         "states", "countries", "people"]
+        else:
+            sector_names = categories
         self.radius = radius
         total = 0
         set_angle = 0
@@ -73,21 +67,22 @@ class TestWheelScene(QGraphicsScene):
             text.setPlainText(textwrap.fill(sector_names[i], width=1))
             text.setFont(self.font)
 
-            print("render_piece textangle=%s sub_angle=%s, set_angle=%s, angle=%s" %
-                                    (((set_angle+subangle)/5760)*360,
-                                     subangle,
-                                     set_angle,
-                                     angle))
+            # print("render_piece label=%s, textangle=%s sub_angle=%s, set_angle=%s, angle=%s" %
+            #                         (sector_names[i],
+            #                          ((set_angle+subangle)/5760)*360,
+            #                          subangle,
+            #                          set_angle,
+            #                          angle))
             #print("textpos=%s" % ellipse.rect().center())
 
             reduction_factor = 0
-            while text.boundingRect().height() > self.radius-(self.radius*.2):
+            while text.boundingRect().height() > self.radius-(self.radius*.01):
 
-                print("category=%s, real_height=%s, radius=%s" % (sector_names[i],
-                                                                  text.boundingRect().height(),
-                                                                  self.radius))
-                print("trying changing reduction factor from %s to %s" % (reduction_factor,
-                                                                          reduction_factor + 1))
+                # print("category=%s, real_height=%s, radius=%s" % (sector_names[i],
+                #                                                   text.boundingRect().height(),
+                #                                                   self.radius))
+                # print("trying changing reduction factor from %s to %s" % (reduction_factor,
+                #                                                           reduction_factor + 1))
                 reduction_factor += 1
                 self.font.setPointSize(self.default_font_size - reduction_factor)
                 text.deleteLater()
@@ -99,11 +94,49 @@ class TestWheelScene(QGraphicsScene):
                 text.setFont(self.font)
 
             text.setZValue(2)
-            text.setRotation(((set_angle+subangle)/5760)*360)
-            print("ellipse center=%s" % ellipse.rect().center())
+
+            if sector_names[i] == False:
+                #scrap this part for now until we can figure out how to safely offset titles.
+                # print("ellipse center=%s" % ellipse.rect().center())
+                hypotenuse = self.radius*.01
+                degree_subangle = (((set_angle + subangle)/5760)*360)
+                degree_subangle += 90
+                degree_subangle = degree_subangle % 360
+                doTranslate = True
+                if doTranslate:
+                    #math.cos(degree_subangle) = adjacent/hypotenuse
+                    x = math.cos(degree_subangle) * hypotenuse
+                    y = math.sin(degree_subangle) * hypotenuse
+                    extra = True
+                    if extra:
+                        if degree_subangle > 0. and degree_subangle < 90.:
+                            pass
+                        elif degree_subangle > 90 and degree_subangle < 180:
+                            pass
+                        elif degree_subangle > 180 and degree_subangle < 270:
+                            pass
+                            #y = -y
+                        elif degree_subangle > 270:
+                            pass
+                    target = ellipse.rect().center()
+                    target.setX(x + target.x())
+                    target.setY(y + target.y())
+                    # print("target=%s" % target)
+                    print("do_move_text_offset cat=%s, offset=%s degree_subangle=%s, x=%s, y=%s" % (
+                                                sector_names[i],
+                                        target,
+                        degree_subangle,
+                        x,
+                        y
+                    ))
+                    text.setPos(target)
+                else:
+                    text.setPos(ellipse.rect().center())
             text.setPos(ellipse.rect().center())
+            print("ellipse rect: %s" % ellipse.rect())
 
-
+            text.setRotation((((set_angle + subangle)/5760)*360))
+            #text.setRotation(30)
             # set_angle+=1
             set_angle += angle
             count1 += 1
@@ -113,33 +146,35 @@ class TestWheelScene(QGraphicsScene):
         print("scenesize= %s" % self.sceneRect())
 
 
-# written/taken from  https://www.codesd.com/item/how-to-create-a-pie-chart-with-pyqt-in-python.html
-app = QApplication(sys.argv)
-radius=200
-scene = TestWheelScene(radius=radius)
+if __name__ == "__main__":
+    # written/taken from  https://www.codesd.com/item/how-to-create-a-pie-chart-with-pyqt-in-python.html
+    app = QApplication(sys.argv)
+    radius=200
+    scene = WheelScene(radius=radius)
 
-view = QGraphicsView(scene)
-view.setSceneRect(0,0,radius*2,radius*2)
-group = scene.createItemGroup(scene.items())
-print("view: sceneRect=%s" %view.sceneRect())
-#print("view: rect=%s" %view.cen)
-view.show()
+    view = QGraphicsView(scene)
+    view.setStyleSheet("background: transparent")
+    view.setSceneRect(0,0,radius*2,radius*2)
+    group = scene.createItemGroup(scene.items())
+    print("view: sceneRect=%s" %view.sceneRect())
+    #print("view: rect=%s" %view.cen)
+    view.show()
 
 
-i = 0
-while True:
-    transform = QTransform()
-    offset = group.boundingRect().center()
-    # print("group.sceneBoundingRect()=%s" % group.sceneBoundingRect())
-    # print("offset=%s" % offset)
-    transform.translate(offset.x(), offset.y())
-    transform.rotate(i)
-    transform.translate(-offset.x(), -offset.y())
-    group.setTransform(transform)
-    #scene.destroyItemGroup(group)
-    scene.update()
-    view.transform()
-    QtTest.QTest.qWait(10)
-    #i += 5
-app.exec_()
+    i = 0
+    while True:
+        transform = QTransform()
+        offset = group.boundingRect().center()
+        # print("group.sceneBoundingRect()=%s" % group.sceneBoundingRect())
+        # print("offset=%s" % offset)
+        transform.translate(offset.x(), offset.y())
+        transform.rotate(i)
+        transform.translate(-offset.x(), -offset.y())
+        group.setTransform(transform)
+        #scene.destroyItemGroup(group)
+        #scene.update()
+        view.transform()
+        QtTest.QTest.qWait(50)
+        i += 1
+    app.exec_()
 
