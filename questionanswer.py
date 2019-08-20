@@ -81,12 +81,32 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.timer.setDigitCount(2)
         self.contextLayout.addWidget(self.timer)
 
-    def set_value(self, value: str) -> None:
+        self.qvalueLayout = QtWidgets.QVBoxLayout()
+        self.qvalueLayout.setObjectName("qvalueLayout")
+
+        self.labelValueUpper = QtWidgets.QLabel(self)
+        self.labelValueUpper.setText("For")
+        self.labelValueUpper.setAlignment(Qt.AlignCenter)
+        self.labelValueLower = QtWidgets.QLabel(self)
+        self.labelValueLower.setText("Points")
+        self.labelValueLower.setAlignment(Qt.AlignCenter)
+
         self.labelValueName = ValueLabel(self)
-        self.labelValueName.setText(value)
         self.labelValueName.setAlignment(Qt.AlignCenter)
-        self.bodyLayout.replaceWidget(self.labelQuestionName, self.labelValueName)
-        self.labelQuestionName.hide()
+        self.qvalueLayout.addWidget(self.labelValueUpper)
+        self.qvalueLayout.addWidget(self.labelValueName)
+        self.qvalueLayout.addWidget(self.labelValueLower)
+        self.qvalueLayout.setStretchFactor(self.labelValueUpper, 1)
+        self.qvalueLayout.setStretchFactor(self.labelValueName,100)
+        self.qvalueLayout.setStretchFactor(self.labelValueLower, 1)
+
+        self.contextLayout.addLayout(self.qvalueLayout)
+        self.contextLayout.setStretchFactor(self.scorebar, 5)
+        self.contextLayout.setStretchFactor(self.timer, 1)
+        self.contextLayout.setStretchFactor(self.qvalueLayout, 1)
+
+    def set_value(self, value: str) -> None:
+        self.labelValueName.setText(value)
 
     def set_question(self, question: str) -> None:
         self.labelQuestionNameNew = QuestionLabel(self)

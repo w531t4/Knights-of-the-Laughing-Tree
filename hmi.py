@@ -505,6 +505,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer.setDigitCount(2)
 
         self.scene_question.set_category(question_dict['category'])
+        self.scene_question.set_value(question_dict['score'])
         self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
