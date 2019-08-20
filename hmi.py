@@ -302,7 +302,7 @@ class HMI(QtWidgets.QMainWindow):
         self.skip_spinanimation = skip_spinanimation
 
         self.setWindowTitle("Wheel of Jeopardy")
-
+        self.setStyleSheet("background-color: gray;")
         self.sounds = {
             "Correct" : QSound("Correct.wav"),
             "Incorrect" : QSound("Incorrect.wav"),
