@@ -364,12 +364,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         # Pass requests from the logic controller to ask HMI to adjust various items
         self.logic_controller.signal_lock_unlock.connect(self.setUIState)
 
-        # connect indicator to star timer
-        #self.logic_controller.signal_start_timer.connect(self.startTimer)
-
-
-        # connect indicator to stop timer
-        #self.logic_controller.signal_stop_timer.connect(self.stopTimer)
 
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
@@ -452,6 +446,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def shiftToComboWheelBoardScore(self):
         self.logger.debug("Shifting focus to combo-wheel-board-score panel")
         self.setCentralWidget(self.main)
+        self.setStyleSheet("background-color: gray;")
 
     @pyqtSlot(list)
     def selectCategory(self, categories, target="player"):
