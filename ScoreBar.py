@@ -29,6 +29,12 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
                 getattr(self, "player%s" % (i)).setName(each['name'])
                 getattr(self, "player%s" % (i)).setScore(each['gameScore'] + each['roundScore'])
                 getattr(self, "player%s" % (i)).setFreeTurnTokens(each['freeTurnTokens'])
+                if each['active']:
+                    self.logger.debug("setting %s active" % each['name'])
+                    getattr(self, "player%s" % (i)).setActive()
+                else:
+                    self.logger.debug("setting %s inactive" % each['name'])
+                    getattr(self, "player%s" % (i)).setInactive()
                 self.baseLayout.addWidget(getattr(self, "player%s" % (i)))
 
         for i, each in enumerate(playerList):

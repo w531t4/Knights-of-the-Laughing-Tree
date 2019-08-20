@@ -90,7 +90,7 @@ class Game(QThread):
             self.currentPlayerIndex = self.selectRandomFirstPlayer()
         else:
             self.currentPlayerIndex = self.use_predetermined_startingplayer
-
+        self.players[self.currentPlayerIndex].setActive()
         # Once players are registered, agree upon game terms
         self.configureGame()
 
@@ -113,10 +113,13 @@ class Game(QThread):
         """Alter player state """
         numPlayers = len(self.players)
         prev_player = self.currentPlayerIndex
+        self.players[self.currentPlayerIndex].setInactive()
         if self.currentPlayerIndex == numPlayers - 1:
                 self.currentPlayerIndex = 0
         else:
                 self.currentPlayerIndex += 1
+        self.players[self.currentPlayerIndex].setActive()
+
         self.logger.debug("Changed player from %s (%s) to %s (%s)" % (self.players[prev_player].getName(),
                                                                       prev_player,
                                                                       self.players[self.currentPlayerIndex].getName(),
