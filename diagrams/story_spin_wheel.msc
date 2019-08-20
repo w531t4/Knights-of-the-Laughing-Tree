@@ -1,0 +1,33 @@
+msc {
+
+ arcgradient="5", hscale="1.5";
+
+
+
+  HMI 		[label="HMI"],
+  HMILog     [label="HMILogicController"],
+  Game 		[label="GameController"];
+
+  HMI => HMILog	[label="button_press(spin)"];
+
+  HMILog => Game [label="userInitiatedSpin"];
+  Game >> HMILog [label="ack"];
+   Game => Game      [label="select_sector()"];
+  HMILog => HMI    [label="disable(spin button)"];
+ HMILog => HMI    [label="disable(correct button)"];
+  HMILog => HMI    [label="disable(incorrect button)"];
+  HMILog => HMI    [label="disable(reveal button)"];
+  HMILog => HMI    [label="disable(timer)"];
+  HMILog => HMI    [label="disable(question_field)"];
+  HMILog => HMI    [label="clear(question_field)"];
+  HMILog => HMI    [label="disable(answer_field)"];
+  HMILog => HMI    [label="clear(answer_field)"];
+
+  Game => HMILog [label="spinWheel(int)"];
+  HMILog => HMI    [label="start(spin_action)"];
+
+  HMILog => HMILog 	[label="predetermined_wait"];
+  HMILog >> Game [label="ack"];
+  Game box Game [label="Different outcomes based\non sector chosen"];
+
+ }
