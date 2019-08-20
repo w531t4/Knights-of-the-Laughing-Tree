@@ -10,7 +10,7 @@ import textwrap
 
 class WheelScene(QGraphicsScene):
     def __init__(self, radius=200, parent=None, categories=[]):
-        QGraphicsScene.__init__(self)
+        super(WheelScene, self).__init__(parent)
         #super(TestWheelScene, self).__init__(parent)
         families = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         if len(categories) == 0:
@@ -160,19 +160,14 @@ if __name__ == "__main__":
     #print("view: rect=%s" %view.cen)
     view.show()
 
-
     i = 0
     while True:
         transform = QTransform()
         offset = group.boundingRect().center()
-        # print("group.sceneBoundingRect()=%s" % group.sceneBoundingRect())
-        # print("offset=%s" % offset)
         transform.translate(offset.x(), offset.y())
         transform.rotate(i)
         transform.translate(-offset.x(), -offset.y())
         group.setTransform(transform)
-        #scene.destroyItemGroup(group)
-        #scene.update()
         view.transform()
         QtTest.QTest.qWait(50)
         i += 1
