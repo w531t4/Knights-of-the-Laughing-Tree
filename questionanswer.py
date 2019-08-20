@@ -1,8 +1,9 @@
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QObject, QThread
 from PyQt5 import uic, QtWidgets
 from PyQt5 import QtCore
 import logging
+from timeit import default_timer as timer
 import logs
 from HoverButton import HoverButton
 from CategoryLabel import CategoryLabel
@@ -37,6 +38,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
     signal_spendfreeturn = pyqtSignal()
     signal_skipfreeturn = pyqtSignal()
     signal_shift_scene = pyqtSignal()
+    signal_start_timer = pyqtSignal(int)
 
     def __init__(self, parent=None, ui_file=None, loglevel=logging.INFO):
         super(MyQuestionScene, self).__init__(parent)
@@ -49,6 +51,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
             uic.loadUi(ui_file, self)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+
         #a = self.verticalLayout_2.takeAt(0)
         #sizePolicy_Control = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         #sizePolicy_Control.setVerticalStretch(1)
@@ -68,6 +71,10 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.logger.debug("at set_context")
         #self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
         self.labelCurrentPlayer.hide()
+        self.timer = QtWidgets.QLCDNumber(self)
+        self.timer.setGeometry(QtCore.QRect(130, 387, 64, 23))
+        self.timer.setObjectName("timer")
+        self.contextLayout.addWidget(self.timer)
 
     def set_value(self, value: str) -> None:
         self.labelValueName = ValueLabel(self)
@@ -92,6 +99,8 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
 
     def set_answer(self, answer: str) -> None:
         self.labelQuestionNameNew.setText(answer)
+        self.timer.setEnabled(False)
+        self.timer.setDigitCount(2)
         #self.labelQuestionName.setText(answer)
 
     def render_controls_reveal(self) -> None:
@@ -169,3 +178,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.logger.debug("Captured the selection of %s" % (s))
         self.signal_reveal.emit()
 
+    @pyqtSlot(str)
+    def updateTimer(self, string):
+        self.timer.setDigitCount(len(str(float(string))))
+        self.timer.display(string)

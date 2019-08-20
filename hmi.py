@@ -314,6 +314,15 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller = HMILogicController(loglevel=loglevel)
         self.logic_controller_thread = QThread(self)
 
+        self.timer_obj = MyTimer(self, loglevel=self.loglevel)
+
+        self.timer_thread = QThread()
+        self.timer_thread.start()
+
+
+        self.logic_controller.signal_start_timer.connect(self.startTimer)
+        self.logic_controller.signal_stop_timer.connect(self.stopTimer)
+
         # Pass messages received to the logic controller
         self.MSG_controller.signal_recieve_message.connect(self.logic_controller.processMessage)
 
@@ -359,10 +368,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_lock_unlock.connect(self.setUIState)
 
         # connect indicator to star timer
-        self.logic_controller.signal_start_timer.connect(self.startTimer)
+        #self.logic_controller.signal_start_timer.connect(self.startTimer)
+
 
         # connect indicator to stop timer
-        self.logic_controller.signal_stop_timer.connect(self.stopTimer)
+        #self.logic_controller.signal_stop_timer.connect(self.stopTimer)
 
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
@@ -465,11 +475,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                             ui_file="scene_question.ui",
                                                             loglevel=self.loglevel,
                                                              )
+        self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
         self.scene_question.set_category(question_dict['category'])
         self.scene_question.set_context(self.playerData)
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
         self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
+
         #self.logic_controller.signal_update_question_score_bar_player.connect(
          #                                           self.scene_question.updatePlayers)
         self.textbox_question.setEnabled(True)
@@ -655,20 +667,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(int)
     def startTimer(self, i):
         self.logger.debug("Start")
-        self.timer_obj = MyTimer(loglevel=self.loglevel)
-        self.timer_thread = QThread(self)
+
         self.timer.setEnabled(True)
         # Pass messages received to the logic controller
         self.signal_start_timer.connect(self.timer_obj.count_down)
-        self.timer_obj.signal_update_timer.connect(self.updateTimer)
         self.timer_obj.moveToThread(self.timer_thread)
-        self.timer_thread.start()
-        self.signal_start_timer.emit(i)
 
-    @pyqtSlot(str)
-    def updateTimer(self, string):
-        self.timer.setDigitCount(len(str(float(string))))
-        self.timer.display(string)
+        self.signal_start_timer.emit(i)
 
     @pyqtSlot()
     def stopTimer(self):
@@ -708,12 +713,14 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(list)
     def retainPlayerData(self, playerData):
         self.playerData = playerData
-class MyTimer(QObject):
 
+
+
+class MyTimer(QObject):
     signal_update_timer = pyqtSignal(str)
 
-    def __init__(self, loglevel=logging.INFO):
-        QObject.__init__(self)
+    def __init__(self, parent=None, loglevel=logging.INFO):
+        super(MyTimer, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
         self._running = True
@@ -729,7 +736,7 @@ class MyTimer(QObject):
             after = delta.split(".")[1][0]
             new_time = str(before) + "." + str(after)
             self.signal_update_timer.emit(new_time)
-            #TODO: Magic Number
+            # TODO: Magic Number
             QtTest.QTest.qWait(50)
 
     def stop(self):
