@@ -121,5 +121,48 @@ class WOJTest(unittest.TestCase):
         self.hmi.close()
         QTest.qWait(1000)
         app.exit()
+
+    def test_0multipledirectcategories(self):
+        app = QApplication(sys.argv)
+        self.scenario['spins'] = [
+            "pickRandomCategory1",
+            "pickRandomCategory2",
+            "pickRandomCategory3",
+        ]
+        self.scenario['options']['skipSpinAction'] = False
+        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario))
+        self.game = None
+        self.game = game.Game(**self.args['game'])
+        self.game.start()
+        self.hmi = None
+        self.hmi = hmi.HMI(**self.args['hmi'])
+        self.hmi.show()
+        QTest.qWait(2000)
+
+        spinWidget = self.hmi.doSpin
+
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(10000)
+        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        QTest.qWait(1000)
+        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.qWait(1000)
+
+        self.assertEqual(self.hmi.player0Score.text(), str(100))
+
+
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(10000)
+        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        QTest.qWait(1000)
+        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.qWait(1000)
+
+        self.assertEqual(self.hmi.player1Score.text(), str(100))
+        self.game.quit()
+        self.hmi.close()
+        QTest.qWait(1000)
+        app.exit()
+
 if __name__ == "__main__":
     unittest.main()

@@ -63,16 +63,16 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.vstackLayout.setStretchFactor(self.headerLayout, 1)
         self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
         self.vstackLayout.setStretchFactor(self.controlLayout, 1)
+        self.timer = QtWidgets.QLCDNumber(self)
+        self.scorebar = ScoreBar(self)
 
     def set_context(self, data) -> None:
-        self.scorebar = ScoreBar(self)
         self.scorebar.updatePlayers(data)
         self.contextLayout.addWidget(self.scorebar)
         self.logger.debug("at set_context")
         #self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
         self.labelCurrentPlayer.hide()
 
-        self.timer = QtWidgets.QLCDNumber(self)
         self.timer.setGeometry(QtCore.QRect(130, 387, 64, 23))
         self.timer.setObjectName("timer")
         self.timer.setEnabled(True)

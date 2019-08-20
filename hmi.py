@@ -106,8 +106,6 @@ class HMILogicController(QObject):
             #self.signal_scene_change_to_main
             self.logger.debug("triggering start_timer")
             self.signal_start_timer.emit(30)
-            self.logger.debug("triggering start_timer")
-            self.signal_start_timer.emit(30)
         elif message['action'] == "responsePlayerRegistration":
             # cover ACK and NACK variants
             perform_ack_at_end = False
@@ -364,7 +362,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         # Pass requests from the logic controller to ask HMI to adjust various items
         self.logic_controller.signal_lock_unlock.connect(self.setUIState)
 
-
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
         #connect logic controller to wizard success/fail
@@ -484,11 +481,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                              )
         self.scene_question.set_context(self.playerData)
         if not self.timer_obj._running:
-            self.timer_obj = MyTimer(loglevel=self.loglevel)
-
-            self.timer_thread = QThread()
-            self.timer_thread.start()
-            self.timer_obj.moveToThread(self.timer_thread)
             self.signal_start_timer.connect(self.timer_obj.count_down)
 
             self.logger.debug("building connection to start timer")
@@ -745,6 +737,7 @@ class MyTimer(QObject):
 
     @pyqtSlot(int)
     def count_down(self, i):
+        self._running = True
         t = timer()
         self.logger.debug("timer = " + str(t))
         self.logger.debug("timer - t=" + str(timer() - t))
