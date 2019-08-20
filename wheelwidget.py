@@ -6,11 +6,15 @@ import math
 
 import sys, random
 import textwrap
+import logging
+import logs
 
 
 class WheelScene(QGraphicsScene):
-    def __init__(self, radius=200, parent=None, categories=[]):
+    def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
         super(WheelScene, self).__init__(parent)
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
         #super(TestWheelScene, self).__init__(parent)
         families = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         if len(categories) == 0:
@@ -133,7 +137,7 @@ class WheelScene(QGraphicsScene):
                 else:
                     text.setPos(ellipse.rect().center())
             text.setPos(ellipse.rect().center())
-            print("ellipse rect: %s" % ellipse.rect())
+            self.logger.debug("ellipse rect: %s" % ellipse.rect())
 
             text.setRotation((((set_angle + subangle)/5760)*360))
             #text.setRotation(30)
@@ -143,7 +147,7 @@ class WheelScene(QGraphicsScene):
             self.addItem(ellipse)
             self.addItem(text)
         self.setSceneRect(0, 0, self.radius*2, self.radius*2)
-        print("scenesize= %s" % self.sceneRect())
+        self.logger.debug("scenesize= %s" % self.sceneRect())
 
 
 if __name__ == "__main__":
