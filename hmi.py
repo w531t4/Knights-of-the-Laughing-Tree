@@ -311,19 +311,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.baseLayout.setStretchFactor(self.contextLayout, 1)
         self.baseLayout.setStretchFactor(self.bodyLayout, 5)
         self.baseLayout.setStretchFactor(self.controlLayout, 1)
-        # self.baseLayout = QtWidgets.QVBoxLayout()
-        # self.baseLayout.setObjectName("baseLayout")
-        # self.contextLayout = QtWidgets.QHBoxLayout(self)
-        # self.contextLayout.setObjectName("contextLayout")
-        # self.bodyLayout = QtWidgets.QHBoxLayout(self)
-        # self.bodyLayout.setObjectName("bodyLayout")
-        # self.controlLayout = QtWidgets.QHBoxLayout(self)
-        # self.controlLayout.setObjectName("controlLayout")
-
-        # self.baseLayout.addLayout(self.contextLayout)
-        # self.baseLayout.addLayout(self.bodyLayout)
-        # self.baseLayout.addLayout(self.controlLayout)
-
 
         self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
                                                           msg_controller_name="HMILogic",
@@ -410,7 +397,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.main_scorebar = ScoreBar(self)
         self.contextLayout.addWidget(self.main_scorebar)
 
-        self.wheel_radius = 200
+        self.wheel_radius = 125
         self.wheel_scene = WheelScene(parent=self, radius=self.wheel_radius)
 
         self.wheel_view = QtWidgets.QGraphicsView(parent=self)
@@ -682,8 +669,52 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(str)
     def displayWinner(self, playername):
-        self.labelWinner.setEnabled(True)
-        self.winnerName.setText(playername)
+        for i in reversed(range(self.bodyLayout.count())):
+            self.bodyLayout.itemAt(i).widget().hide()
+        self.winnerLayout = QtWidgets.QVBoxLayout(self)
+        self.winnerLayout.setObjectName("winnerLayout")
+        self.bodyLayout.addLayout(self.winnerLayout)
+        self.winnerTitle= QLabel(self)
+        self.winnerTitle.setAlignment(Qt.AlignCenter)
+        self.winnerTitle.setText("WINNER IS")
+        self.winnerTitle.setStyleSheet('''
+                            font-family: Arial, Helvetica, sans-serif;
+                            background-color: rgb(6,12,233);
+                            font-size: 45px;
+                            color: #FFFFFF;
+                            font-weight: 700;
+                            text-decoration: none;
+                            font-style: normal;
+                            font-variant: normal;
+                            text-transform: uppercase;
+                            ''')
+        self.winnerLabel = QLabel(self)
+        self.winnerLabel.setAlignment(Qt.AlignCenter)
+        self.winnerLabel.setText(playername)
+        self.winnerLabel.setWordWrap(True)
+        self.winnerLabel.setStyleSheet('''
+                            font-family: Arial, Helvetica, sans-serif;
+                            background-color: rgb(6,12,233);
+                            font-size: 120px;
+                            color: #FFFFFF;
+                            font-weight: 700;
+                            text-decoration: none;
+                            font-style: normal;
+                            font-variant: normal;
+                            text-transform: uppercase;
+                            ''')
+        self.winnerLayout.setStretchFactor(self.winnerTitle,1)
+        self.winnerLayout.setStretchFactor(self.winnerLabel,5)
+        self.winnerLayout.addWidget(self.winnerTitle)
+        self.winnerLayout.addWidget(self.winnerLabel)
+
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
+        self.exitButton = HoverButton(self)
+        self.exitButton.setText("Quit")
+        self.exitButton.setAlignment(Qt.AlignCenter)
+        self.exitButton.clicked.connect(self.close)
+        self.controlLayout.addWidget(self.exitButton)
 
     @pyqtSlot(dict)
     def setUIState(self, state):
