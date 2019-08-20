@@ -579,12 +579,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
         else:
-            self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
+            self.wheel_resting_place, self.rotation_angle = cycle(last, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 190, num_sectors, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
