@@ -38,7 +38,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
     signal_spendfreeturn = pyqtSignal()
     signal_skipfreeturn = pyqtSignal()
     signal_shift_scene = pyqtSignal()
-    signal_start_timer = pyqtSignal(int)
+    #signal_start_timer = pyqtSignal(int)
 
     def __init__(self, parent=None, ui_file=None, loglevel=logging.INFO):
         super(MyQuestionScene, self).__init__(parent)
@@ -71,9 +71,14 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.logger.debug("at set_context")
         #self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
         self.labelCurrentPlayer.hide()
+
         self.timer = QtWidgets.QLCDNumber(self)
         self.timer.setGeometry(QtCore.QRect(130, 387, 64, 23))
         self.timer.setObjectName("timer")
+        self.timer.setEnabled(True)
+        self.timer.setDigitCount(len(str(float("1"))))
+        self.timer.display("1")
+        self.timer.setDigitCount(2)
         self.contextLayout.addWidget(self.timer)
 
     def set_value(self, value: str) -> None:
@@ -99,8 +104,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
 
     def set_answer(self, answer: str) -> None:
         self.labelQuestionNameNew.setText(answer)
-        self.timer.setEnabled(False)
-        self.timer.setDigitCount(2)
+
         #self.labelQuestionName.setText(answer)
 
     def render_controls_reveal(self) -> None:
