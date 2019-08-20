@@ -25,11 +25,11 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
 # If this is set to False, ui.py must be manually updated by issuing pyuic5
-IMPORT_UI_ONTHEFLY = True
+IMPORT_UI_ONTHEFLY = False
 # END
 
 if not IMPORT_UI_ONTHEFLY:
-    from newui import Ui_Frame
+    from newui import Ui_MainWindow
 else:
     class Ui_Frame:
         pass
@@ -269,8 +269,7 @@ class HMILogicController(QObject):
         self.signal_send_message.emit(json.dumps(response))
 
 
-#class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
-class HMI(QtWidgets.QMainWindow):
+class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     signal_send_message = pyqtSignal(str)
     signal_temp_select_category = pyqtSignal(str)
     signal_start_timer = pyqtSignal(int)
@@ -309,7 +308,9 @@ class HMI(QtWidgets.QMainWindow):
             "Bankrupt" : QSound("Bankrupt.wav"),
             "Double" : QSound("Double.wav")
         }
-
+        self.baseLayout.setStretchFactor(self.contextLayout, 1)
+        self.baseLayout.setStretchFactor(self.bodyLayout, 5)
+        self.baseLayout.setStretchFactor(self.controlLayout, 1)
         # self.baseLayout = QtWidgets.QVBoxLayout()
         # self.baseLayout.setObjectName("baseLayout")
         # self.contextLayout = QtWidgets.QHBoxLayout(self)
