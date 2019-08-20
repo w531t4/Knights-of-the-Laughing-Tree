@@ -17,6 +17,10 @@ from PyQt5.QtMultimedia import QSound
 from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
+
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
 # If this is set to False, ui.py must be manually updated by issuing pyuic5
@@ -396,7 +400,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_sectors.append("PLACEHOLDER")
         getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 11, QtGui.QFont.Bold))
 
-
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
         self.logger.debug("Shifting focus to combo-wheel-board-score panel")
@@ -449,7 +452,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
-        self.image = QImage.fromData(open("Wheel_12_Bigger.png", 'rb').read(), "png")
+        self.image = QImage.fromData(open("Wheel_12_Populated.png", 'rb').read(), "png")
 
         # num_sectors = 0
         # for each in range(0, 12):
@@ -485,7 +488,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 # if last is not None:
                 #     getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
                 # getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
-                getattr(self, "wheel_label_1").setText(self.wheel_sectors[each])
+                # getattr(self, "wheel_label_1").setText(self.wheel_sectors[each])
                 number = each
                 last = each
                 if number == target and target is not None:
@@ -495,7 +498,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             return number, rot_angle
 
         if self.skip_spinanimation:
-            getattr(self, "wheel_label_1").setText(self.wheel_sectors[destination])
+            pass
+            # getattr(self, "wheel_label_1").setText(self.wheel_sectors[destination])
                 # if each != int(destination):
                 #     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
                 # else:
@@ -556,6 +560,14 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             # sector_alias.setText(each)
         # num_sectors = len(sector_list)
         num_sectors = 12
+
+        image = Image.open("Wheel_12_Bigger.png")
+        for i in range(0, num_sectors):
+            new_wheel = ImageDraw.Draw(image)
+            new_wheel.text((20, 180), self.wheel_sectors[i], (255,255,255))
+            image = image.rotate(-30)
+        image.save("Wheel_12_Populated.png")
+
         if num_sectors != 12:
             for each in range(num_sectors, 12):
                 getattr(self, "label_wheel_" + str(each)).setDisabled(True)
