@@ -21,6 +21,7 @@ from PyQt5.Qt import QTransform
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from RoundSpinFrame import RoundSpinFrame
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -146,7 +147,7 @@ class HMILogicController(QObject):
             if len(message['arguments']['players']) == 0:
                 raise Exception("Player entry in update data is empty")
 
-            self.playerData=message['arguments']['players']
+            self.playerData = message['arguments']['players']
             # for person in message['arguments']['players']:
             #     self.signal_update_player_data.emit(str(person['id']),
             #                                         str(person['name']),
@@ -156,10 +157,10 @@ class HMILogicController(QObject):
             self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
             self.signal_retain_player_data.emit(message['arguments']['players'])
             self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
-            # self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
-            #                                    str(message['arguments']['maxSpins']),
-            #                                    str(message['arguments']['round']),
-            #                                    str(message['arguments']['totalRounds']))
+            self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
+                                               str(message['arguments']['maxSpins']),
+                                               str(message['arguments']['round']),
+                                               str(message['arguments']['totalRounds']))
             if "wheelboard" in message['arguments'].keys():
                 self.signal_update_wheel.emit([x['name'] for x in message['arguments']['wheelboard']])
                 cats = [x for x in message['arguments']['wheelboard'] if x['type'] == "category"]
@@ -397,6 +398,13 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.main_scorebar = ScoreBar(self)
         self.contextLayout.addWidget(self.main_scorebar)
 
+
+        self.round_spin_frame = RoundSpinFrame(self)
+        self.main_scorebar.resized.connect(self.round_spin_frame.setMaxHeight)
+        self.contextLayout.addWidget(self.round_spin_frame)
+        self.contextLayout.setStretchFactor(self.main_scorebar, 15)
+        self.contextLayout.setStretchFactor(self.round_spin_frame, 2)
+
         self.use_textwheel = False
         self.use_qgraphics_wheel = False
 
@@ -615,10 +623,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
-        spinString = spinsExecuted + "/" + maxSpins
-        roundString = currentRound + "/" + totalRounds
-        self.numSpins.setText(spinString)
-        self.roundNumber.setText(roundString)
+        self.round_spin_frame.setSpinsOccurred(spinsExecuted)
+        self.round_spin_frame.setSpinsMax(maxSpins)
+        self.round_spin_frame.setRound(currentRound)
+        self.round_spin_frame.setRoundTotal(totalRounds)
 
     @pyqtSlot(str, str, str, str, str)
     def updatePlayer(self, playerid, name, score, tokens, currentPlayer):

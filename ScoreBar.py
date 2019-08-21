@@ -6,6 +6,9 @@ from PlayerFrame import PlayerFrame
 
 
 class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
+
+    resized = pyqtSignal(float)
+
     def __init__(self, parent=None, loglevel=logging.DEBUG):
         super(ScoreBar, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
@@ -15,7 +18,9 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
         self.baseLayout = QtWidgets.QHBoxLayout(self)
         self.baseLayout.setObjectName("baseLayout")
 
+
         self.show()
+
     def getplayer(self, index: int) -> PlayerFrame:
         return getattr(self, "player%s" % (index))
 
@@ -51,4 +56,6 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
                 self.logger.debug("setting %s inactive" % each['name'])
                 getattr(self, "player%s" % (i)).setInactive()
 
-
+    def resizeEvent(self, event):
+        self.resized.emit(self.height())
+        return super(ScoreBar, self).resizeEvent(event)
