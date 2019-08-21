@@ -203,20 +203,6 @@
     "question": "First Animated TV show made for prime-time television?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-  {
-    "category": "Animals",
-    "answer": "Giraffe ",
-    "question": "What animal has the highest blood pressure? "},
-
-  {
-    "category": "Animals",
-    "answer": "Three-toed sloth ",
-    "question": "What is the slowest animal? "},
-
-  {
-    "category": "Animals",
-    "answer": "Three-toed sloth ",
-    "question": "What is the slowest animal? "},
 
   {
     "category": "Animals",
@@ -237,6 +223,21 @@
     "category": "Animals",
     "answer": "Mountain Gorilla",
     "question": "Which mammal has the longest lifespan? "},
+
+  {
+    "category": "Animals",
+    "answer": "Giraffe ",
+    "question": "What animal has the highest blood pressure? "},
+
+  {
+    "category": "Animals",
+    "answer": "Three-toed sloth ",
+    "question": "What is the slowest animal? "},
+
+  {
+    "category": "Animals",
+    "answer": "Bullfrog ",
+    "question": "What animal never sleeps? "},
 
   {
     "category": "Movies",
