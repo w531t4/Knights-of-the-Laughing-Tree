@@ -119,7 +119,7 @@ class TriviaDB:
         if category not in self.data.keys():
             raise Exception("Cannot find category='" + str(category) + "' in the self.data")
         remaining_questions = [x for x in self.data[category].keys()]
-        remaining_questions.sort()
+        remaining_questions.sort(key=int)
         if len(remaining_questions) == 0:
             raise Exception("Selected category contains no remaining questions to be asekd")
         to_return = self.data[category][str(remaining_questions[0])]
@@ -131,11 +131,11 @@ class TriviaDB:
         if category not in self.data.keys():
             raise Exception("Cannot find the category specified in the database")
         remaining_questions = [x for x in self.data[category].keys()]
-        remaining_questions.sort()
+        remaining_questions.sort(key=int)
         return remaining_questions
 
     def getListOfPrices(self):
         r = list(set(self.price_list))
-        r.sort()
+        r.sort(key=int)
         return r
 
