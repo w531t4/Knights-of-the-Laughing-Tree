@@ -158,10 +158,10 @@ class HMILogicController(QObject):
             self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
             self.signal_retain_player_data.emit(message['arguments']['players'])
             self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
-            # self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
-            #                                    str(message['arguments']['maxSpins']),
-            #                                    str(message['arguments']['round']),
-            #                                    str(message['arguments']['totalRounds']))
+            self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
+                                               str(message['arguments']['maxSpins']),
+                                               str(message['arguments']['round']),
+                                               str(message['arguments']['totalRounds']))
             if "wheelboard" in message['arguments'].keys():
                 self.signal_update_wheel.emit([x['name'] for x in message['arguments']['wheelboard']])
                 cats = [x for x in message['arguments']['wheelboard'] if x['type'] == "category"]
