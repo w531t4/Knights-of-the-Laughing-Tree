@@ -13,7 +13,7 @@ import questionanswer
 from functools import partial
 from ScoreBar import ScoreBar
 from HoverButton import HoverButton
-from wheelwidget import WheelScene, WheelPhoto
+from wheelwidget import WheelScene, WheelPhoto, ArrowPointer
 from board import Board
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
@@ -420,16 +420,19 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_group = self.wheel_scene.createItemGroup(self.wheel_scene.items())
             self.wheel_view.show()
             self.bodyLayout.addWidget(self.wheel_view)
-            self.bodyLayout.setStretchFactor(self.wheel_view, 2)
+            self.bodyLayout.setStretchFactor(self.wheel_view, 6)
         else:
             self.wheel_gui = WheelPhoto(self)
             self.bodyLayout.addWidget(self.wheel_gui)
-            self.bodyLayout.setStretchFactor(self.wheel_gui, 2)
+            self.bodyLayout.setStretchFactor(self.wheel_gui, 6)
 
 
+        self.arrowPointer = ArrowPointer(self)
+        self.bodyLayout.addWidget(self.arrowPointer)
+        self.bodyLayout.setStretchFactor(self.arrowPointer, 1)
         self.board = Board(self)
         self.bodyLayout.addWidget(self.board)
-        self.bodyLayout.setStretchFactor(self.board,5)
+        self.bodyLayout.setStretchFactor(self.board, 16)
 
 
 

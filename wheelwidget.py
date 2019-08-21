@@ -9,6 +9,21 @@ import textwrap
 import logging
 import logs
 
+class ArrowPointer(QLabel):
+    def __init__(self, parent=None, imageName: str="Arrow_90_Degrees_Left.png", loglevel=logging.DEBUG):
+        super(ArrowPointer, self).__init__(parent)
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
+        self.setText("")
+        self.setAlignment(Qt.AlignLeft)
+        self.setAlignment(Qt.AlignVCenter)
+        self.imageName = imageName
+        with open(self.imageName, 'rb') as f:
+                image_data = f.read()
+                self.image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
+        self.maximumHeight = self.image.height()
+        self.maximumWidth = self.image.width()
+        self.setPixmap(QtGui.QPixmap(self.image))
 
 class WheelPhoto(QLabel):
     def __init__(self, parent=None, imageName: str="Wheel_12.png", loglevel=logging.DEBUG):
@@ -34,10 +49,18 @@ class WheelPhoto(QLabel):
         with open(self.imageName, 'rb') as f:
             image_data = f.read()
             self.image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
-        self.setPixmap(QtGui.QPixmap(self.image))
+        self.image = self.image.scaledToHeight(self.height())
+        self.use_image = self.getRightHalfImage(QtGui.QPixmap(self.image))
+        #self.setPixmap(self.use_image)
+        # self.setPixmap(QtGui.QPixmap(self.image))
+        # self.setPixmap(QtGui.QPixmap(self.image))
 
+        self.setMinimumWidth(self.use_image.width()*1.1)
+        self.rotate(360/12/2)
 
-        self.setMinimumWidth(self.image.width()*1.1)
+    def getRightHalfImage(self, image: QtGui.QImage) -> QtGui.QImage:
+        current = QtGui.QPixmap(image)
+        return current.copy(current.width()/2, 0, current.width()/2, current.height())
 
     def rotate(self, angle: float, offset: int = 0) -> None:
         current_pixel_map = QtGui.QPixmap(self.image)
@@ -56,7 +79,7 @@ class WheelPhoto(QLabel):
                                                      current_pixel_map.height()
                                                      )
 
-        self.setPixmap(cropped_obj)
+        self.setPixmap(self.getRightHalfImage(cropped_obj))
         self.rotation_angle = rot_angle
 
     def getAngle(self):
