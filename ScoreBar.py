@@ -56,6 +56,7 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
                 self.logger.debug("setting %s inactive" % each['name'])
                 getattr(self, "player%s" % (i)).setInactive()
 
+
     def resizeEvent(self, event):
         self.resized.emit(self.height())
         return super(ScoreBar, self).resizeEvent(event)
