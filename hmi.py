@@ -31,7 +31,7 @@ IMPORT_UI_ONTHEFLY = True
 if not IMPORT_UI_ONTHEFLY:
     from newui import Ui_MainWindow
 else:
-    class Ui_Frame:
+    class Ui_MainWindow:
         pass
 
 
