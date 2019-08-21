@@ -623,6 +623,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
+        self.logger.debug("enter updateGameStats")
         self.round_spin_frame.setSpinsOccurred(spinsExecuted)
         self.round_spin_frame.setSpinsMax(maxSpins)
         self.round_spin_frame.setRound(currentRound)
