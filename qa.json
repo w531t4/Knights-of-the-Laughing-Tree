@@ -264,6 +264,41 @@
     "category": "Animals",
     "answer": "Bullfrog ",
     "question": "What animal never sleeps? "},
+  
+  {
+    "category": "Movies",
+    "answer": "Bride of Frankenstein",
+    "question": "Who was the first female monster to appear in a movie? "},
+
+  {
+    "category": "Movies",
+    "answer": "Psycho",
+    "question": "What classic film was called production 9401 during filming? "},
+
+  {
+    "category": "Movies",
+    "answer": "Peter Finch",
+    "question": "Who won an Oscar posthumously for Network?"},
+
+    {
+    "category": "Movies",
+    "answer": "Francois Trudeau",
+    "question": "Who directed the movie of Ray Bradbury's Fahrenheit 451? "},
+    {
+    "category": "Movies",
+    "answer": "Palpatine",
+    "question": "In the movie Star Wars, what is the Emperors last name"},
+
+    {
+    "category": "Movies",
+    "answer": "Silence of the Lambs",
+    "question": "What film was the last sequel to win the best picture award"},
+
+    {
+    "category": "Movies",
+    "answer": "Police getting beaten",
+    "question": "In South Dakota what is illegal to show in movies? "},
+  
   {
     "category": "Beatles Lyrics",
     "answer": "So far away",
