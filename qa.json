@@ -1,122 +1,149 @@
 [
   {
-    "category": "algebra",
+    "category": "Algebra",
     "answer": "4",
-    "question": "2+2"},
+    "question": "What is 2+2?"
+  },
   {
-    "category": "algebra",
+    "category": "Algebra",
     "answer": "16",
-    "question": "4*4"},
+    "question": "What is 4*4?"
+  },
   {
-    "category": "trigonometry",
+    "category": "Algebra",
+    "answer": "49",
+    "question": "What is 7*7?"
+  },
+  {
+    "category": "Algebra",
+    "answer": "10",
+    "question": "What is 40/4?"
+  },
+  {
+    "category": "Algebra",
+    "answer": "1",
+    "question": "What is 3*1/3?"
+  },
+  {
+    "category": "Trigonometry",
     "answer": "0",
-    "question": "sin(pi)"},
+    "question": "What is sin(pi)?"},
   {
-    "category": "trigonometry",
+    "category": "Trigonometry",
     "answer": "-1",
-    "question": "cos(pi)"},
+    "question": "What is cos(pi)?"},
   {
-    "category": "trigonometry",
+    "category": "Trigonometry",
     "answer": "1",
-    "question": "cos(2pi)"},
+    "question": "What is cos(2pi)?"},
   {
-    "category": "calculus",
+    "category": "Trigonometry",
+    "answer": "1",
+    "question": "What is sin(0)?"
+  },
+  {
+    "category": "Trigonometry",
+    "answer": "1",
+    "question": "What is cos(0)?"
+  },
+  {
+    "category": "Calculus",
     "answer": "8x",
-    "question": "4(x^2)"},
+    "question": "What is 4(x^2)?"},
   {
-    "category": "calculus",
+    "category": "Calculus",
     "answer": "1/x",
-    "question": "ln(x)"},
+    "question": "What is the derivative of ln(x)?"},
   {
-    "category": "calculus",
+    "category": "Calculus",
     "answer": "1",
-    "question": "x"},
+    "question": "What is the derivative of x?"},
    {
-    "category": "calculus",
+    "category": "Calculus",
     "answer": "9",
-    "question": "9x"},
+    "question": "What is the derivative of 9x?"},
+    {
+     "category": "Calculus",
+     "answer": "10",
+     "question": "What is the derivative of 10x?"},
   {
-    "category": "portmath",
+    "category": "Portmath",
     "answer": "105",
     "question": "http+smtp"},
   {
-    "category": "portmath",
+    "category": "Portmath",
     "answer": "1",
     "question": "telnet-ssh"},
    {
-    "category": "portmath",
+    "category": "Portmath",
     "answer": "421",
     "question": "https-ssh"},
     {
-    "category": "portmath",
+    "category": "Portmath",
     "answer": "465",
     "question": "https+ssh"},
   {
-    "category": "geography",
-    "answer": "New York",
-    "question": "America's smallest county in area"},
-  {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Calvin Coolidge",
     "question": "Only president born on the 4th of July"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Social justice",
     "question": "Since Franklin D. Roosevelt and his New Deal coalition in the 1930s, the Democratic Party has also promoted a social liberal platform, supporting what?"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Abraham Lincoln",
     "question": "Who ran for president with the campaign slogan 'Vote yourself a Farm'?"},
   {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Grover Cleveland",
     "question": "Who was the first US president to be married in the White House?"},
      {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Martin Van Buren",
     "question": "Who was the first US president to be born an American Citizen? "},
      {
-    "category": "politics",
+    "category": "Politics",
     "answer": "Franklin D. Roosevelt",
     "question": "Who was the first president to have a state car built to secret service standards"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "lion",
     "question": "House Lannister Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "direwolf",
     "question": "House Stark Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "rose",
     "question": "House Tyrell Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "trout",
     "question": "House Tully Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "stag",
     "question": "House Baratheon Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "flayed man",
     "question": "House Bolton Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "kraken",
     "question": "House Greyjoy Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "falcon",
     "question": "House Arryn Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "sun and spear",
     "question": "House Martell Sigil"},
   {
-    "category": "Game of Thrones Sigils",
+    "category": "GoT Sigils",
     "answer": "bear",
     "question": "House Mormont Sigil"},
   {
@@ -129,7 +156,7 @@
     "question": "Maryland" },
     {
     "category": "State Capitals",
-    "answer": "New York",
+    "answer": "Albany",
     "question": "New York" },
     {
     "category": "State Capitals",
@@ -161,37 +188,37 @@
     "question": "Every Episode of Seinfeld mentions which superhero at least once?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-    {
+  {
     "category": "TV",
     "answer": "I want to Believe",
     "question": "What is the phrase of the UFO poster in Fox Mulders office in X-Files?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-    {
+  {
     "category": "TV",
     "answer": "Kathleen Turner",
     "question": "Who played Chandler's father on Friends?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-      {
+  {
     "category": "TV",
     "answer": "Survivor",
     "question": "What reality TV show debuted a Pontiac Aztec as their Season 1 Grand Prize?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-        {
+  {
     "category": "TV",
     "answer": "Drew Barrymore",
     "question": "Youngest person to host Saturday Night Live?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-          {
+  {
     "category": "TV",
     "answer": "Orange & Green",
     "question": "What colors is the Brady Bunch kitchen?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-          {
+  {
     "category": "TV",
     "answer": "Creed",
     "question": "What character becomes a wanted fugitive in the final season of The Office?",
@@ -203,7 +230,6 @@
     "question": "First Animated TV show made for prime-time television?",
     "citation": "https://www.usefultrivia.com/tv_trivia/"
   },
-
   {
     "category": "Animals",
     "answer": "Bowhead whales",
@@ -238,7 +264,7 @@
     "category": "Animals",
     "answer": "Bullfrog ",
     "question": "What animal never sleeps? "},
-
+  
   {
     "category": "Movies",
     "answer": "Bride of Frankenstein",
@@ -271,8 +297,281 @@
     {
     "category": "Movies",
     "answer": "Police getting beaten",
-    "question": "In South Dakota what is illegal to show in movies? "}
-
-
+    "question": "In South Dakota what is illegal to show in movies? "},
+  
+  {
+    "category": "Beatles Lyrics",
+    "answer": "So far away",
+    "question": "What lyric follows `Yesterday, all my troubles seemed`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Twist and shout",
+    "question": "What lyric follows `Well, shake it up, baby, now`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Let it Be",
+    "question": "What lyric follows `Mother Mary comes to me, speaking words of wisdom`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Like a dog",
+    "question": "What lyric follows `It's been a hard day's night, and I've been working`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "Gently weeps",
+    "question": "What lyric follows `It's turning, while my guitar`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "And in my eyes",
+    "question": "What lyric follows `Penny Lane is in my ears`?"
+  },
+  {
+    "category": "Beatles Lyrics",
+    "answer": "With diamonds",
+    "question": "What lyric follows `Lucy in the Sky`?"
+  },
+  {
+    "category": "Halo",
+    "answer": "The Forerunners",
+    "question": "Who did the Covenant worship?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Number 117",
+    "question": "There were 150 spartan candidates. Which one reached the rank of Master Chief Petty Officer?"
+  },
+  {
+    "category": "Halo",
+    "answer": "The Precursors",
+    "question": "Who did the Forerunners overthrow?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Harvest",
+    "question": "On what planet was the first contact between humans and the Covenant?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Reach",
+    "question": "What planet was the human's military headquarters?"
+  },
+  {
+    "category": "Halo",
+    "answer": "The Prophets",
+    "question": "What alien race was the head of the governance of the Covenant?"
+  },
+  {
+    "category": "Halo",
+    "answer": "Eden",
+    "question": "The Librarian made a garden to save humans from the Flood. What did she name it?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "Metal Oxide Semiconducting Field Effect Transistor",
+    "question": "What does MOSFET stand for?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "Very High Speed Integrated Circuit Hardware Design Language",
+    "question": "What does VHDL stand for?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "A Wheatstone Bridge",
+    "question": "What four resistor circuit do loadcells use to measure force?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "The number of coils",
+    "question": "What aspect of a transformer determines if the circuit will step up or step down voltage?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "8",
+    "question": "How many wires are in a 100 mbps ethernet cable?"
+  },
+  {
+    "category": "Circuits",
+    "answer": "60",
+    "question": "What frequency is the AC power in the U.S. powergrid?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Woodrow Wilson",
+    "question": "What US President went to JHU?"
+  },
+  {
+    "category": "JHU",
+    "answer": "He became the president of Princeton University",
+    "question": "One US President went to JHU. What did he do after the presidency?"
+  },
+  {
+    "category": "JHU",
+    "answer": "The US Navy",
+    "question": "MIT Lincoln Laboratory is the official FFRDC of the Air Force. JPL is the FFRDC of NASA. What government entity does the JHU APL support?"
+  },
+  {
+    "category": "JHU",
+    "answer": "2.5 billion dollars",
+    "question": "Harvard is the second largest research university at an annual research budget of 1.7 billion dollars a year. How much research money does JHU spend annually, not including APL?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Baltimore, Maryland",
+    "question": "Where is JHU's Homewood Campus?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Dr. Lanier Watkins",
+    "question": "Who is the currect head of the JHU EP Computer Science Program?"
+  },
+  {
+    "category": "JHU",
+    "answer": "0",
+    "question": "How many kids did Johns Hopkins have?"
+  },
+  {
+    "category": "JHU",
+    "answer": "Medicine",
+    "question": "What was the first college of Johns Hopkins University?"
+  },
+  {
+    "category": "JHU",
+    "answer": "His cousin",
+    "question": "Johns Hopkins fell in love and wanted to marry a girl in his teens. His family forbade it. Who was she?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "A feather of a pheonix",
+    "question": "What is inside Harry's wand?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Beedle the Bard",
+    "question": "Who wrote the fairy tale 'The Tale of the Three Brothers?'"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Tail hair of a Thestral",
+    "question": "What is inside the Elder Wand?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "He attacked three muggle boys after they assaulted his daughter",
+    "question": "Why was Albus Dumbledore's father sentenced to Azkaban?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Magical Beasts and Where to Find Them",
+    "question": "What was the name of the textbook for Hagrid's class in Harry's first year at Hogwarts?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "2",
+    "question": "How many true prophecies did Professor Trelawney make in her life?"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "Neville Longbottom",
+    "question": "Two children met all the criteria for the prophecy about Lord Voldemort: Harry Potter and ____________"
+  },
+  {
+    "category": "Harry Potter",
+    "answer": "His mouth",
+    "question": "What did Harry use to catch his very first golden snitch?"
+  },
+  {
+    "category": "Military",
+    "answer": "Captain",
+    "question": "What the US Navy's rank that is equivalent to an Army Colonel?"
+  },
+  {
+    "category": "Military",
+    "answer": "Battleship",
+    "question": "What the most common type of ship in the US Navy?"
+  },
+  {
+    "category": "Military",
+    "answer": "Zumwalt",
+    "question": "What the class of the US Navy's new 'stealth ship'?"
+  },
+  {
+    "category": "Military",
+    "answer": "O-7 or Rear Admiral",
+    "question": "What is the minimum rank in the US Navy to be considered a flag officer?"
+  },
+  {
+    "category": "Military",
+    "answer": "Russian pipeline",
+    "question": "The largest non-nuclear explosion was caused by US malware. What did they blow up?"
+  },
+  {
+    "category": "Military",
+    "answer": "Air Force",
+    "question": "What branch of the US military has produced the most astronauts?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Subabro",
+    "question": "What is a slang term for a bachelor that drives a Subaru?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Coupe",
+    "question": "What term is used to describe a model of car with only two doors?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Lamborghini",
+    "question": "Out of Ferrari, McLaren, and Lamborghini, which company does not have a Formula 1 team?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Tesla",
+    "question": "What US company makes the fastest production sedan?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Germany",
+    "question": "What country is BMW headquartered?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "140.6 miles",
+    "question": "The longest triathlon is called the Iron Man. How many miles is it?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Swimming",
+    "question": "In a triathlon, what event is first?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "1.5 kilometers",
+    "question": "How long is the swim in an Olympic length triathlon?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Kona, Hawaii",
+    "question": "Where is the Iron Man World Championship held?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Transition",
+    "question": "In a triathlon, what is the time between events called?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Super Sprint",
+    "question": "What is the shortest triathlon length recognized by USA Triathlon?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "16 hours 50 minutes",
+    "question": "How long do you have to complete an Iron Man triathlon before you are disqualified?"
+  }
 ]
-

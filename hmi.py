@@ -1,10 +1,7 @@
 #!/bin/env python3
 
-import socket
 import commsettings
-import time
 import messaging
-import queue
 import json
 import random
 import logging
@@ -12,10 +9,15 @@ import logs
 from timeit import default_timer as timer
 import wizard
 import catselect
+import questionanswer
 from functools import partial
+from ScoreBar import ScoreBar
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
+from PyQt5.QtMultimedia import QSound
+from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
@@ -28,49 +30,6 @@ if not IMPORT_UI_ONTHEFLY:
 else:
     class Ui_MainWindow:
         pass
-
-
-class HMIMessageController(QThread):
-    signal_recieve_message = pyqtSignal(str)
-
-    def __init__(self, loglevel=logging.INFO):
-        QThread.__init__(self)
-        self.logger = logs.build_logger(__name__, loglevel)
-        self.loglevel = loglevel
-
-        self.receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clientqueue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER, self.receiver, self.clientqueue,
-                                                                                loglevel=self.loglevel, name="HMILogic")
-
-    def run(self):
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.receiver.bind(("127.0.0.1", commsettings.HMI_LISTEN))
-        self.receiver.listen(2)
-        self.logger.info("successfully opened port " + str(commsettings.HMI_LISTEN))
-        # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                self.sender = socket.create_connection(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
-                break
-            except Exception as e:
-                self.logger.error(e)
-                time.sleep(1)
-                continue
-
-        self.msg_controller.start()
-
-        while True:
-            if not self.clientqueue.empty():
-                self.signal_recieve_message.emit(self.clientqueue.get())
-            time.sleep(.1)
-
-    @pyqtSlot(str)
-    def send_message(self, msg):
-        self.msg_controller.send_string(self.sender, msg)
 
 
 class HMILogicController(QObject):
@@ -94,11 +53,22 @@ class HMILogicController(QObject):
     signal_feedback_registration_failmsg = pyqtSignal(str)
     signal_feedback_registration_success = pyqtSignal()
     signal_determine_freeturn_spend = pyqtSignal()
+    signal_play_correct_sound = pyqtSignal()
+    signal_play_incorrect_sound = pyqtSignal()
+    signal_play_bankrupt_sound = pyqtSignal()
+    signal_play_double_sound = pyqtSignal()
+    #signal_scene_change_to_wheel = pyqtSignal()
+    signal_scene_change_to_questionanwer = pyqtSignal()
+    signal_scene_change_to_main = pyqtSignal()
+    signal_update_question_score_bar_player = pyqtSignal(list)
+    signal_update_main_score_bar_player = pyqtSignal(list)
+    signal_retain_player_data = pyqtSignal(list)
 
     def __init__(self, loglevel=logging.INFO):
         QObject.__init__(self)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.playerData = None
 
     @pyqtSlot(str)
     def processMessage(self, incoming_message):
@@ -128,8 +98,13 @@ class HMILogicController(QObject):
             self.signal_determine_correctness.emit()
         elif message['action'] == "displayQuestion":
             perform_ack_at_end = False
+            self.logger.debug("triggering signal_display_question")
             self.signal_display_question.emit(message['arguments'])
+            self.signal_update_question_score_bar_player.emit(self.playerData)
+            self.signal_update_main_score_bar_player.emit(self.playerData)
             # TODO: static value set here, needs to be sent in message
+            #self.signal_scene_change_to_main
+            self.logger.debug("triggering start_timer")
             self.signal_start_timer.emit(30)
         elif message['action'] == "responsePlayerRegistration":
             # cover ACK and NACK variants
@@ -139,9 +114,12 @@ class HMILogicController(QObject):
             elif len(message['arguments']) > 3 and message['arguments'][0:4] == "NACK":
                 self.signal_feedback_registration_fail.emit()
                 self.signal_feedback_registration_failmsg.emit(message['arguments'].split(":")[1])
+        elif message['action'] == "playerBecomesBankrupt":
+            self.signal_play_bankrupt_sound.emit()
         elif message['action'] == "spinWheel":
             perform_ack_at_end = False
             self.signal_spin_wheel.emit(message['arguments'])
+           # self.signal_scene_change_to_wheel.emit()
         elif message['action'] == "displayAnswer":
             self.signal_display_answer.emit(message['arguments'])
         elif message['action'] == "displayWinner":
@@ -151,25 +129,30 @@ class HMILogicController(QObject):
             local_action['unlock'] = ["doSpin"]
             local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
             self.signal_lock_unlock.emit(local_action)
+            self.signal_scene_change_to_main.emit()
         elif message['action'] == "promptSpendFreeTurnToken":
             local_action = dict()
             local_action['unlock'] = ["freeTurnSkip", "freeTurnSpend"]
             self.signal_lock_unlock.emit(local_action)
-            #self.signal_determine_freeturn_spend.emit()
+            self.signal_determine_freeturn_spend.emit()
         elif message['action'] == "updateGameState":
             # Update Player Data
+
             if "players" not in message['arguments'].keys():
                 raise Exception("Missing player information in update data")
             if len(message['arguments']['players']) == 0:
                 raise Exception("Player entry in update data is empty")
 
+            self.playerData=message['arguments']['players']
             for person in message['arguments']['players']:
                 self.signal_update_player_data.emit(str(person['id']),
                                                     str(person['name']),
                                                     str((person['gameScore'] + person['roundScore'])),
                                                     str(person['freeTurnTokens']),
-                                                    str(message['arguments']['currentPlayer'])
-                                  )
+                                                    str(message['arguments']['currentPlayer']))
+            self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
+            self.signal_retain_player_data.emit(message['arguments']['players'])
+            self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
             self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
                                                str(message['arguments']['maxSpins']),
                                                str(message['arguments']['round']),
@@ -235,7 +218,7 @@ class HMILogicController(QObject):
         r = random.randrange(0, len(test_names))
         return test_names[r]
 
-    def issueAck(self, action):
+    def issueAck(self, action: str) -> None:
         response = dict()
         response['action'] = action
         response['arguments'] = "ACK"
@@ -246,6 +229,7 @@ class HMILogicController(QObject):
         response = dict()
         response['action'] = "responseQuestion"
         response['arguments'] = True
+        self.signal_play_correct_sound.emit()
         self.signal_send_message.emit(json.dumps(response))
 
     @pyqtSlot()
@@ -253,6 +237,7 @@ class HMILogicController(QObject):
         response = dict()
         response['action'] = "responseQuestion"
         response['arguments'] = False
+        self.signal_play_incorrect_sound.emit()
         self.signal_send_message.emit(json.dumps(response))
 
     @pyqtSlot()
@@ -289,7 +274,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     signal_temp_select_category = pyqtSignal(str)
     signal_start_timer = pyqtSignal(int)
 
-    def __init__(self, ui_file=None, loglevel=logging.INFO):
+    def __init__(self, ui_file=None,
+                 loglevel=logging.INFO,
+                 hmi_port=None,
+                 game_port=None,
+                 skip_userreg=False,
+                 skip_spinanimation=False):
         QtWidgets.QMainWindow.__init__(self)
         if not IMPORT_UI_ONTHEFLY:
             self.setupUi(self)
@@ -301,13 +291,32 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.hmi_port = hmi_port
+        self.game_port = game_port
+        self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
+        self.logger.debug("selected game_port=%s" % (self.game_port))
+        self.skip_spinanimation = skip_spinanimation
 
-        self.MSG_controller = HMIMessageController(loglevel=loglevel)
+        self.setWindowTitle("Wheel of Jeopardy")
+
+        self.sounds = {
+            "Correct" : QSound("Correct.wav"),
+            "Incorrect" : QSound("Incorrect.wav"),
+            "Bankrupt" : QSound("Bankrupt.wav"),
+            "Double" : QSound("Double.wav")
+        }
+
+        self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
+                                                          msg_controller_name="HMILogic",
+                                                          listen_port=self.hmi_port,
+                                                          target_port=self.game_port)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
 
         self.logic_controller = HMILogicController(loglevel=loglevel)
         self.logic_controller_thread = QThread(self)
+
+
 
         # Pass messages received to the logic controller
         self.MSG_controller.signal_recieve_message.connect(self.logic_controller.processMessage)
@@ -353,12 +362,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         # Pass requests from the logic controller to ask HMI to adjust various items
         self.logic_controller.signal_lock_unlock.connect(self.setUIState)
 
-        # connect indicator to star timer
-        self.logic_controller.signal_start_timer.connect(self.startTimer)
-
-        # connect indicator to stop timer
-        self.logic_controller.signal_stop_timer.connect(self.stopTimer)
-
         self.logic_controller.moveToThread(self.logic_controller_thread)
 
         #connect logic controller to wizard success/fail
@@ -367,9 +370,39 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_feedback_registration_success.connect(self.registration_wizard.pageUserEntry.signal_validation_response_success)
         self.registration_wizard.signal_submit_players.connect(self.logic_controller.notifyUserRegistration)
 
-        #self.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
+        #connect sounds
+        self.logic_controller.signal_play_correct_sound.connect(self.playCorrect)
+        self.logic_controller.signal_play_incorrect_sound.connect(self.playIncorrect)
+        self.logic_controller.signal_play_bankrupt_sound.connect(self.playBankrupt)
+        self.logic_controller.signal_play_double_sound.connect(self.playDouble)
+
+        self.logic_controller.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
         self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
         self.freeTurnSpend.clicked.connect(self.logic_controller.notifyFreeTurnSpend)
+
+        #help from https://stackoverflow.com/questions/46174073/open-a-new-window-after-finish-button-has-been-clicked-on-qwizard-pyqt5?rq=1
+        self.registration_wizard.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.shiftToComboWheelBoardScore)
+        #self.logic_controller.signal_scene_change_to_wheel.connect(self.shiftToWheelScene)
+        self.logic_controller.signal_scene_change_to_main.connect(self.shiftToComboWheelBoardScore)
+
+        self.main_scorebar = ScoreBar(self)
+
+
+        self.timer_obj = MyTimer(loglevel=self.loglevel)
+
+        self.timer_thread = QThread()
+        self.timer_thread.start()
+        self.timer_obj.moveToThread(self.timer_thread)
+        self.signal_start_timer.connect(self.timer_obj.count_down)
+
+        self.logger.debug("building connection to start timer")
+        self.logic_controller.signal_start_timer.connect(self.startTimer)
+        self.logger.debug("building connection to stop timer")
+        self.logic_controller.signal_stop_timer.connect(self.stopTimer)
+
+
+        self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
+        self.logic_controller.signal_retain_player_data.connect(self.retainPlayerData)
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -378,22 +411,39 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.button_incorrect.clicked.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.button_correct.clicked.connect(self.logic_controller.notifySuccesfullOutcome)
+
         self.button_reveal.clicked.connect(self.logic_controller.notifyNeedAnswer)
         self.wheel_resting_place = None
 
         self.registration_wizard.signal_close.connect(self.close)
 
+
+
         self.logic_controller_thread.start()
         self.MSG_controller.start()
-
-        self.registration_wizard.show()
-
-        # Ensure registration wizard is focused on at startup. Without this, mainUI is focused
-        # activateWindow() must be called first
-        self.registration_wizard.activateWindow()
-        self.registration_wizard.raise_()
+        self.main = self.takeCentralWidget()
+        if not skip_userreg:
+            self.setCentralWidget(self.registration_wizard)
+        else:
+            self.setCentralWidget(self.main)
 
 
+
+        self.rotation_angle = 0;
+        # for i in range(1,13):
+        #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
+        #     getattr(self, "wheel_label_1").setText("Bankrupt")
+
+    #@pyqtSlot()
+    #def shiftToWheelScene(self):
+    #    self.main = self.takeCentralWidget()
+    #    self.setCentralWidget(self.wheel_obj)
+
+    @pyqtSlot()
+    def shiftToComboWheelBoardScore(self):
+        self.logger.debug("Shifting focus to combo-wheel-board-score panel")
+        self.setCentralWidget(self.main)
+        self.setStyleSheet("background-color: gray;")
 
     @pyqtSlot(list)
     def selectCategory(self, categories, target="player"):
@@ -407,7 +457,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                         categories=categories,
                                                         audience=target)
                 self.cat_select.signal_submit_category.connect(self.logic_controller.returnCategory)
-                self.cat_select.show()
+                self.cat_select.signal_shift_scene.connect(self.shiftToComboWheelBoardScore)
+                self.main = self.takeCentralWidget()
+                self.setCentralWidget(self.cat_select)
+                #self.cat_select.show()
 
     @pyqtSlot()
     def selectOutcome(self):
@@ -420,14 +473,49 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def displayQuestion(self, question_dict):
         """Render provided question to display"""
 
+
+        self.scene_question = questionanswer.MyQuestionScene(
+                                                            parent=self,
+                                                            ui_file="scene_question.ui",
+                                                            loglevel=self.loglevel,
+                                                             )
+        self.scene_question.set_context(self.playerData)
+        if not self.timer_obj._running:
+            self.signal_start_timer.connect(self.timer_obj.count_down)
+
+            self.logger.debug("building connection to start timer")
+            self.logic_controller.signal_start_timer.connect(self.startTimer)
+            self.logger.debug("building connection to stop timer")
+            self.logic_controller.signal_stop_timer.connect(self.stopTimer)
+
+        self.timer.setEnabled(False)
+        self.timer.setDigitCount(2)
+
+        self.scene_question.set_category(question_dict['category'])
+        self.scene_question.set_value(question_dict['score'])
+        self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
+        self.scene_question.set_question(question_dict['question'])
+        self.scene_question.render_controls_reveal()
+        self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
+
+        #self.logic_controller.signal_update_question_score_bar_player.connect(
+         #                                           self.scene_question.updatePlayers)
         self.textbox_question.setEnabled(True)
         self.textbox_question.setText(question_dict['question'])
         self.button_reveal.setEnabled(True)
+
+        self.main = self.takeCentralWidget()
+        self.setCentralWidget(self.scene_question)
+        self.logger.debug("shift scene to question/answer")
         self.logic_controller.issueAck("displayQuestion")
 
     @pyqtSlot(dict)
     def displayAnswer(self, question_dict):
         """Render provided question to display"""
+        self.scene_question.set_answer(question_dict['answer'])
+        self.scene_question.render_controls_correct_incorrect()
+        self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
+        self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
         self.textbox_answer.setText(question_dict['answer'])
         self.textbox_answer.setEnabled(True)
         self.timer.setEnabled(False)
@@ -439,6 +527,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
         self.doSpin.setDisabled(True)
+        data = None
+        with open("Wheel_12.png", 'rb') as f:
+            data = f.read()
+        self.image = QImage.fromData(data, "png")
 
         num_sectors = 0
         for each in range(0, 12):
@@ -449,7 +541,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_resting_place = 0
         last = self.wheel_resting_place
 
-        def cycle(start_number, delay_ms, num_switches, sectors, target=None):
+        def cycle(start_number, delay_ms, num_switches, sectors, image_data, rot_angle, target=None):
             number = start_number
             delay_ms = delay_ms/5
             if start_number > 0:
@@ -458,26 +550,44 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 last = sectors - 1
             for each in range(number, num_switches):
                 each = each % sectors
+                # betterspin.wav from
+                # https://freesound.org/people/door15studio/sounds/244774/
+                QSound.play("betterspin.wav")
+
+                new_pixel_map = QPixmap(image_data)
+                rot_angle = ((rot_angle + 30) % 360)
+                transform = QtGui.QTransform().rotate(rot_angle)
+                new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
+                my_wheel_gui = getattr(self, "wheel_gui")
+                my_wheel_gui.setPixmap(new_pixel_map)
+
                 if last is not None:
                     getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
                 getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
                 number = each
                 last = each
                 if number == target and target is not None:
-                    return number
+                    return number, rot_angle
                 QtTest.QTest.qWait(delay_ms)
-            return number
 
-        #num_sectors = 8
-        self.wheel_resting_place = cycle(last, 15, num_sectors*10, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 30, num_sectors*5, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 45, num_sectors*3, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 70, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors)
-        self.wheel_resting_place = cycle(self.wheel_resting_place, 140, num_sectors*2, num_sectors, target=int(destination))
+            return number, rot_angle
+
+        if self.skip_spinanimation:
+            for each in range(0, num_sectors):
+                if each != int(destination):
+                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
+                else:
+                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+        else:
+            self.wheel_resting_place, self.rotation_angle = cycle(last, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 190, num_sectors, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors, self.image, self.rotation_angle)
+            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
+
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
         spinString = spinsExecuted + "/" + maxSpins
@@ -572,42 +682,61 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(int)
     def startTimer(self, i):
         self.logger.debug("Start")
-        self.timer_obj = MyTimer(loglevel=self.loglevel)
-        self.timer_thread = QThread(self)
-        self.timer.setEnabled(True)
-        # Pass messages received to the logic controller
-        self.signal_start_timer.connect(self.timer_obj.count_down)
-        self.timer_obj.signal_update_timer.connect(self.updateTimer)
-        self.timer_obj.moveToThread(self.timer_thread)
-        self.timer_thread.start()
         self.signal_start_timer.emit(i)
-
-    @pyqtSlot(str)
-    def updateTimer(self, string):
-        self.timer.setDigitCount(len(str(float(string))))
-        self.timer.display(string)
 
     @pyqtSlot()
     def stopTimer(self):
-        self.timer.setDisabled(True)
+        #self.timer.setDisabled(True)
         self.timer_obj.stop()
 
-#    @pyqtSlot()
-#    def determineFreeTurnSpend(self):
+    @pyqtSlot()
+    def playSpin(self):
+        self.sounds["Spin"].play()
+
+    @pyqtSlot()
+    def playCorrect(self):
+        self.sounds["Correct"].play()
+
+    @pyqtSlot()
+    def playIncorrect(self):
+        self.sounds["Incorrect"].play()
+
+    @pyqtSlot()
+    def playBankrupt(self):
+        self.sounds["Bankrupt"].play()
+
+    @pyqtSlot()
+    def playDouble(self):
+        self.sounds["Double"].play()
+
+    @pyqtSlot()
+    def determineFreeTurnSpend(self):
+        self.scene_question.render_controls_freeturn()
+        self.scene_question.signal_skipfreeturn.connect(self.logic_controller.notifyFreeTurnSkip)
+        self.scene_question.signal_spendfreeturn.connect(self.logic_controller.notifyFreeTurnSpend)
+    def close(self):
+        self.logger.debug("closing")
+        self.MSG_controller.quit()
+        super(HMI, self).close()
+
+    @pyqtSlot(list)
+    def retainPlayerData(self, playerData):
+        self.playerData = playerData
+
 
 
 class MyTimer(QObject):
-
     signal_update_timer = pyqtSignal(str)
 
-    def __init__(self, loglevel=logging.INFO):
-        QObject.__init__(self)
+    def __init__(self, parent=None, loglevel=logging.INFO):
+        super(MyTimer, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
         self._running = True
 
     @pyqtSlot(int)
     def count_down(self, i):
+        self._running = True
         t = timer()
         self.logger.debug("timer = " + str(t))
         self.logger.debug("timer - t=" + str(timer() - t))
@@ -617,7 +746,7 @@ class MyTimer(QObject):
             after = delta.split(".")[1][0]
             new_time = str(before) + "." + str(after)
             self.signal_update_timer.emit(new_time)
-            #TODO: Magic Number
+            # TODO: Magic Number
             QtTest.QTest.qWait(50)
 
     def stop(self):
