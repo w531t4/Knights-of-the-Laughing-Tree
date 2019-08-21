@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY
 # If this is set to False, ui.py must be manually updated by issuing pyuic5
-IMPORT_UI_ONTHEFLY = False
+IMPORT_UI_ONTHEFLY = True
 # END
 
 if not IMPORT_UI_ONTHEFLY:
