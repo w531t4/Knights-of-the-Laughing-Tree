@@ -36,27 +36,31 @@ class WheelPhoto(QLabel):
             self.image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
         self.setPixmap(QtGui.QPixmap(self.image))
 
-        #This is needed to prevent box resizing when the image is rotated between anywhere
-        #inbetween 0,90,180,270. It takes too much space!
-        diag = self.getDiagonal(self.image)
-        self.setMinimumSize(diag, diag)
+
+        self.setMinimumWidth(self.image.width()*1.1)
 
     def rotate(self, angle: float, offset: int = 0) -> None:
-        new_pixel_map = QtGui.QPixmap(self.image)
+        current_pixel_map = QtGui.QPixmap(self.image)
 
         rot_angle = ((self.rotation_angle + angle + offset) % 360)
-        #self.logger.debug("angle=%s offset=%s rot_angle=%s" % (angle, offset, rot_angle))
         transform = QtGui.QTransform().rotate(rot_angle)
-        self.transformed_new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
-        self.setPixmap(self.transformed_new_pixel_map)
+
+        transformed_new_pixel_map = current_pixel_map.transformed(transform, Qt.SmoothTransformation)
+        xoffset = (transformed_new_pixel_map.width() - current_pixel_map.width())/2
+        yoffset = (transformed_new_pixel_map.height() - current_pixel_map.height()) / 2
+
+        #help by goetz from https://forum.qt.io/topic/13421/how-to-rotate-a-content-of-qpixmap-without-changing-size/3
+        cropped_obj = transformed_new_pixel_map.copy(xoffset,
+                                                     yoffset,
+                                                     current_pixel_map.width(),
+                                                     current_pixel_map.height()
+                                                     )
+
+        self.setPixmap(cropped_obj)
         self.rotation_angle = rot_angle
 
     def getAngle(self):
         return self.rotation_angle
-
-    def getDiagonal(self, image: QtGui.QPixmap) -> float:
-        #help from https://stackoverflow.com/questions/31892557/rotating-a-pixmap-in-pyqt4-gives-undesired-translation
-        return (image.width() ** 2 + image.height() ** 2) ** 0.5
 
 class WheelLabel(QLabel):
     def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
