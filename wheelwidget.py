@@ -2,28 +2,20 @@ from PyQt5.QtWidgets import QLabel, QGraphicsScene, QGraphicsItemGroup, QApplica
 from PyQt5.Qt import QColor, QFont, QPointF, QTransform
 from PyQt5 import QtTest, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QRectF, QRect, Qt
-from PyQt5.QtMultimedia import QSound
 import math
-
-# from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
-# from PyQt5 import uic, QtGui, QtTest, QtWidgets
-# from PyQt5.Qt import QTransform
-# from PyQt5.QtMultimedia import QSound
-# from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
-# from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
-
-import sys, random
+import sys
+import random
 import textwrap
 import logging
 import logs
 
+
 class WheelPhoto(QLabel):
-    def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
+    def __init__(self, parent=None, imageName: str="Wheel_12.png", loglevel=logging.DEBUG):
         super(WheelPhoto, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
-        #super(TestWheelScene, self).__init__(parent)
-        # self.wheel_gui = QtWidgets.QLabel(self.centralwidget)
+
         self.setEnabled(True)
         self.setGeometry(QRect(100, 20, 375, 375))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -32,76 +24,39 @@ class WheelPhoto(QLabel):
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
         self.setSizePolicy(sizePolicy)
         self.setText("")
-        self.setPixmap(QtGui.QPixmap("Wheel_12_Bigger.png"))
-        self.setScaledContents(False)
         self.setAlignment(Qt.AlignCenter)
-        self.setObjectName("wheel_gui")
         self.wheel_resting_place = None
         self.rotation_angle = 0
-        self.image = QtGui.QImage.fromData(open("Wheel_12_Bigger.png", 'rb').read(), "png")
+        self.image = None
+        self.imageName = imageName
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
 
-    def spinWheel(self, destination):
-        """ Make the Wheel Spin. Ensure it lands on Destination"""
-        # self.doSpin.setDisabled(True)
+        with open(self.imageName, 'rb') as f:
+            image_data = f.read()
+            self.image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
+        self.setPixmap(QtGui.QPixmap(self.image))
 
-        # num_sectors = 0
-        # for each in range(0, 12):
-        #     if getattr(self, "label_wheel_" + str(each)).isEnabled():
-        #         num_sectors += 1
+        #This is needed to prevent box resizing when the image is rotated between anywhere
+        #inbetween 0,90,180,270. It takes too much space!
+        diag = self.getDiagonal(self.image)
+        self.setMinimumSize(diag, diag)
 
-        num_sectors = 12
+    def rotate(self, angle: float, offset: int = 0) -> None:
+        new_pixel_map = QtGui.QPixmap(self.image)
 
-        if self.wheel_resting_place is None:
-            self.wheel_resting_place = 0
-        last = self.wheel_resting_place
+        rot_angle = ((self.rotation_angle + angle + offset) % 360)
+        self.logger.debug("angle=%s offset=%s rot_angle=%s" % (angle, offset, rot_angle))
+        transform = QtGui.QTransform().rotate(rot_angle)
+        self.transformed_new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
+        self.setPixmap(self.transformed_new_pixel_map)
+        self.rotation_angle = rot_angle
 
-        def cycle(start_number, delay_ms, num_switches, sectors, image_data, rot_angle, target=None):
-            number = start_number
-            delay_ms = delay_ms/5
-            if start_number > 0:
-                last = start_number - 1
-            else:
-                last = sectors - 1
-            for each in range(number, num_switches):
-                each = each % sectors
-                # betterspin.wav from
-                # https://freesound.org/people/door15studio/sounds/244774/
-                QSound.play("betterspin.wav")
+    def getAngle(self):
+        return self.rotation_angle
 
-                new_pixel_map = QtGui.QPixmap(image_data)
-                rot_angle = ((rot_angle + 30) % 360)
-                transform = QtGui.QTransform().rotate(rot_angle)
-                new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
-                # my_wheel_gui = getattr(self, "wheel_gui")
-                self.setPixmap(new_pixel_map)
-
-                # getattr(self, "wheel_label_1").setText(self.wheel_sectors[each])
-                number = each
-                last = each
-                if number == target and target is not None:
-                    return number, rot_angle
-                QtTest.QTest.qWait(delay_ms)
-
-            return number, rot_angle
-
-        # if self.skip_spinanimation:
-        #     pass
-        #     # getattr(self, "wheel_label_1").setText(self.wheel_sectors[destination])
-        #         # if each != int(destination):
-        #         #     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
-        #         # else:
-        #         #     getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
-        # else:
-        self.wheel_resting_place, self.rotation_angle = cycle(last, 190, num_sectors*3, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 290, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 440, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 700, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-        self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 900, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
-
-        #TODO: The HMI interface shouldn't directly trigger ACK's
-        # self.logic_controller.issueAck("spinWheel")
-
+    def getDiagonal(self, image: QtGui.QPixmap) -> float:
+        #help from https://stackoverflow.com/questions/31892557/rotating-a-pixmap-in-pyqt4-gives-undesired-translation
+        return (image.width() ** 2 + image.height() ** 2) ** 0.5
 
 class WheelLabel(QLabel):
     def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):

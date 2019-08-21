@@ -13,7 +13,7 @@ import questionanswer
 from functools import partial
 from ScoreBar import ScoreBar
 from HoverButton import HoverButton
-from wheelwidget import WheelScene
+from wheelwidget import WheelScene, WheelPhoto
 from board import Board
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
@@ -397,22 +397,32 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.main_scorebar = ScoreBar(self)
         self.contextLayout.addWidget(self.main_scorebar)
 
-        self.wheel_radius = 125
-        self.wheel_scene = WheelScene(parent=self, radius=self.wheel_radius)
+        self.use_textwheel = False
+        self.use_qgraphics_wheel = False
 
-        self.wheel_view = QtWidgets.QGraphicsView(parent=self)
-        self.wheel_view.setScene(self.wheel_scene)
-        self.wheel_view.setStyleSheet("background: transparent")
-        self.wheel_view.setSceneRect(0, 0, self.wheel_radius * 2, self.wheel_radius * 2)
-        self.wheel_view.rotate((360/12)/2)
-        self.wheel_group = self.wheel_scene.createItemGroup(self.wheel_scene.items())
-        self.wheel_view.show()
-        self.bodyLayout.addWidget(self.wheel_view)
+        if self.use_qgraphics_wheel:
+            self.wheel_radius = 125
+            self.wheel_scene = WheelScene(parent=self, radius=self.wheel_radius)
+
+            self.wheel_view = QtWidgets.QGraphicsView(parent=self)
+            self.wheel_view.setScene(self.wheel_scene)
+            self.wheel_view.setStyleSheet("background: transparent")
+            self.wheel_view.setSceneRect(0, 0, self.wheel_radius * 2, self.wheel_radius * 2)
+            self.wheel_view.rotate((360/12)/2)
+            self.wheel_group = self.wheel_scene.createItemGroup(self.wheel_scene.items())
+            self.wheel_view.show()
+            self.bodyLayout.addWidget(self.wheel_view)
+            self.bodyLayout.setStretchFactor(self.wheel_view, 2)
+        else:
+            self.wheel_gui = WheelPhoto(self)
+            self.bodyLayout.addWidget(self.wheel_gui)
+            self.bodyLayout.setStretchFactor(self.wheel_gui, 2)
+
 
         self.board = Board(self)
         self.bodyLayout.addWidget(self.board)
         self.bodyLayout.setStretchFactor(self.board,5)
-        self.bodyLayout.setStretchFactor(self.wheel_view,2)
+
 
 
 
@@ -449,9 +459,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.setCentralWidget(self.main)
 
-
-
-        self.rotation_angle = 0;
+        #self.rotation_angle = 0;
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
@@ -528,8 +536,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(int)
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
-        moreBlah = False
-        if moreBlah:
+        if self.use_qgraphics_wheel:
             i = 0
             self.wheel_transform = QTransform()
             self.wheel_offset = self.wheel_group.boundingRect().center()
@@ -541,23 +548,27 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             QtTest.QTest.qWait(50)
             i += 1
 
-        blah = False
-        if blah:
-            data = None
-            with open("Wheel_12.png", 'rb') as f:
-                data = f.read()
-            self.image = QImage.fromData(data, "png")
+        else:
+            data =None
 
             num_sectors = 0
-            for each in range(0, 12):
-                if getattr(self, "label_wheel_" + str(each)).isEnabled():
-                    num_sectors += 1
+            if self.use_textwheel:
+                for each in range(0, 12):
+                    if getattr(self, "label_wheel_" + str(each)).isEnabled():
+                        num_sectors += 1
+            else:
+                num_sectors = 12
 
             if self.wheel_resting_place is None:
                 self.wheel_resting_place = 0
             last = self.wheel_resting_place
 
-            def cycle(start_number, delay_ms, num_switches, sectors, image_data, rot_angle, target=None):
+            def cycle(start_number: int,
+                      delay_ms: int,
+                      num_switches: int,
+                      sectors:int,
+                      target: int=None) -> None:
+
                 number = start_number
                 delay_ms = delay_ms/5
                 if start_number > 0:
@@ -569,37 +580,35 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                     # betterspin.wav from
                     # https://freesound.org/people/door15studio/sounds/244774/
                     QSound.play("betterspin.wav")
+                    rot_angle=15
+                    self.wheel_gui.rotate(rot_angle)
 
-                    new_pixel_map = QPixmap(image_data)
-                    rot_angle = ((rot_angle + 30) % 360)
-                    transform = QtGui.QTransform().rotate(rot_angle)
-                    new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
-                    my_wheel_gui = getattr(self, "wheel_gui")
-                    my_wheel_gui.setPixmap(new_pixel_map)
-
-                    if last is not None:
-                        getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
-                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                    if self.use_textwheel:
+                        if last is not None:
+                            getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
+                        getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
                     number = each
                     last = each
                     if number == target and target is not None:
-                        return number, rot_angle
+                        return number
                     QtTest.QTest.qWait(delay_ms)
-
-                return number, rot_angle
+                return number
 
             if self.skip_spinanimation:
-                for each in range(0, num_sectors):
-                    if each != int(destination):
-                        getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
-                    else:
-                        getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                if self.use_textwheel:
+                    for each in range(0, num_sectors):
+                        if each != int(destination):
+                            getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
+                        else:
+                            getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                else:
+                    pass
             else:
-                self.wheel_resting_place, self.rotation_angle = cycle(last, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-                self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 190, num_sectors, num_sectors, self.image, self.rotation_angle)
-                self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors, self.image, self.rotation_angle)
-                self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-                self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
+                self.wheel_resting_place = cycle(last, 170, num_sectors*2, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 190, num_sectors, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
