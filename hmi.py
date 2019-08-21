@@ -12,9 +12,12 @@ import catselect
 import questionanswer
 from functools import partial
 from ScoreBar import ScoreBar
-
+from HoverButton import HoverButton
+from wheelwidget import WheelScene, WheelPhoto
+from board import Board
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
+from PyQt5.Qt import QTransform
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -26,7 +29,7 @@ IMPORT_UI_ONTHEFLY = True
 # END
 
 if not IMPORT_UI_ONTHEFLY:
-    from ui import Ui_MainWindow
+    from newui import Ui_MainWindow
 else:
     class Ui_MainWindow:
         pass
@@ -126,13 +129,13 @@ class HMILogicController(QObject):
             self.signal_display_winner.emit(message['arguments'])
         elif message['action'] == "endSpin":
             local_action = dict()
-            local_action['unlock'] = ["doSpin"]
-            local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
+            local_action['unlock'] = ["buttonSpin"]
+            #local_action['lock'] = ['button_correct', 'button_incorrect', 'button_reveal']
             self.signal_lock_unlock.emit(local_action)
             self.signal_scene_change_to_main.emit()
         elif message['action'] == "promptSpendFreeTurnToken":
             local_action = dict()
-            local_action['unlock'] = ["freeTurnSkip", "freeTurnSpend"]
+            #local_action['unlock'] = ["freeTurnSkip", "freeTurnSpend"]
             self.signal_lock_unlock.emit(local_action)
             self.signal_determine_freeturn_spend.emit()
         elif message['action'] == "updateGameState":
@@ -144,19 +147,19 @@ class HMILogicController(QObject):
                 raise Exception("Player entry in update data is empty")
 
             self.playerData=message['arguments']['players']
-            for person in message['arguments']['players']:
-                self.signal_update_player_data.emit(str(person['id']),
-                                                    str(person['name']),
-                                                    str((person['gameScore'] + person['roundScore'])),
-                                                    str(person['freeTurnTokens']),
-                                                    str(message['arguments']['currentPlayer']))
+            # for person in message['arguments']['players']:
+            #     self.signal_update_player_data.emit(str(person['id']),
+            #                                         str(person['name']),
+            #                                         str((person['gameScore'] + person['roundScore'])),
+            #                                         str(person['freeTurnTokens']),
+            #                                         str(message['arguments']['currentPlayer']))
             self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
             self.signal_retain_player_data.emit(message['arguments']['players'])
             self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
-            self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
-                                               str(message['arguments']['maxSpins']),
-                                               str(message['arguments']['round']),
-                                               str(message['arguments']['totalRounds']))
+            # self.signal_update_game_stats.emit(str(message['arguments']['spinsExecuted']),
+            #                                    str(message['arguments']['maxSpins']),
+            #                                    str(message['arguments']['round']),
+            #                                    str(message['arguments']['totalRounds']))
             if "wheelboard" in message['arguments'].keys():
                 self.signal_update_wheel.emit([x['name'] for x in message['arguments']['wheelboard']])
                 cats = [x for x in message['arguments']['wheelboard'] if x['type'] == "category"]
@@ -170,30 +173,28 @@ class HMILogicController(QObject):
         if message['arguments'] == "ACK":
             if message['action'] == "responseQuestion":
                 local_action = dict()
-                local_action['unlock'] = ["doSpin"]
-                local_action['lock'] = ["button_incorrect", "button_correct"]
+                #local_action['unlock'] = ["button"]
+                #local_action['lock'] = ["button_incorrect", "button_correct"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "revealAnswer":
                 local_action = dict()
-                local_action['lock'] = ["button_reveal", "timer"]
-                local_action['clear_lcd'] = ["timer"]
+                #local_action['lock'] = ["button_reveal", "timer"]
+                #local_action['clear_lcd'] = ["timer"]
                 self.signal_lock_unlock.emit(local_action)
                 self.signal_stop_timer.emit()
             elif message['action'] == "userInitiatedFreeTurnTokenSkip":
                 local_action = dict()
-                local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
+                #local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "userInitiatedFreeTurnTokenSpend":
                 local_action = dict()
-                local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
+                #local_action['lock'] = ["freeTurnSkip", "freeTurnSpend"]
                 self.signal_lock_unlock.emit(local_action)
             elif message['action'] == "userInitiatedSpin":
                 self.logger.debug("Processing ACK of userInitiatedSpin")
                 local_action = dict()
-                local_action['lock'] = ["doSpin", "button_correct", "button_incorrect",
-                                        "button_reveal", "timer", "textbox_question",
-                                        "textbox_answer", "freeTurnSkip", "freeTurnSpend"]
-                local_action['clear_textbox'] = ["textbox_question", "textbox_answer"]
+                local_action['lock'] = ["buttonSpin"]
+                #local_action['clear_textbox'] = []
                 self.signal_lock_unlock.emit(local_action)
 
     @pyqtSlot()
@@ -269,18 +270,20 @@ class HMILogicController(QObject):
 
 
 class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
-
     signal_send_message = pyqtSignal(str)
     signal_temp_select_category = pyqtSignal(str)
     signal_start_timer = pyqtSignal(int)
 
-    def __init__(self, ui_file=None,
+    def __init__(self,
+                 parent=None,
+                 ui_file=None,
                  loglevel=logging.INFO,
                  hmi_port=None,
                  game_port=None,
                  skip_userreg=False,
                  skip_spinanimation=False):
-        QtWidgets.QMainWindow.__init__(self)
+        super(HMI, self).__init__(parent)
+        #QtWidgets.QMainWindow.__init__(self)
         if not IMPORT_UI_ONTHEFLY:
             self.setupUi(self)
         else:
@@ -298,13 +301,16 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.skip_spinanimation = skip_spinanimation
 
         self.setWindowTitle("Wheel of Jeopardy")
-
+        self.setStyleSheet("background-color: gray;")
         self.sounds = {
             "Correct" : QSound("Correct.wav"),
             "Incorrect" : QSound("Incorrect.wav"),
             "Bankrupt" : QSound("Bankrupt.wav"),
             "Double" : QSound("Double.wav")
         }
+        self.baseLayout.setStretchFactor(self.contextLayout, 1)
+        self.baseLayout.setStretchFactor(self.bodyLayout, 5)
+        self.baseLayout.setStretchFactor(self.controlLayout, 1)
 
         self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
                                                           msg_controller_name="HMILogic",
@@ -316,6 +322,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller = HMILogicController(loglevel=loglevel)
         self.logic_controller_thread = QThread(self)
 
+        self.buttonSpin = HoverButton(self)
+        self.buttonSpin.setText("Spin")
+        self.buttonSpin.setAlignment(Qt.AlignCenter)
+        self.buttonSpin.clicked.connect(self.logic_controller.askToSpin)
+        self.controlLayout.addWidget(self.buttonSpin)
 
 
         # Pass messages received to the logic controller
@@ -377,8 +388,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_play_double_sound.connect(self.playDouble)
 
         self.logic_controller.signal_determine_freeturn_spend.connect(self.determineFreeTurnSpend)
-        self.freeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
-        self.freeTurnSpend.clicked.connect(self.logic_controller.notifyFreeTurnSpend)
 
         #help from https://stackoverflow.com/questions/46174073/open-a-new-window-after-finish-button-has-been-clicked-on-qwizard-pyqt5?rq=1
         self.registration_wizard.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.shiftToComboWheelBoardScore)
@@ -386,6 +395,35 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_scene_change_to_main.connect(self.shiftToComboWheelBoardScore)
 
         self.main_scorebar = ScoreBar(self)
+        self.contextLayout.addWidget(self.main_scorebar)
+
+        self.use_textwheel = False
+        self.use_qgraphics_wheel = False
+
+        if self.use_qgraphics_wheel:
+            self.wheel_radius = 125
+            self.wheel_scene = WheelScene(parent=self, radius=self.wheel_radius)
+
+            self.wheel_view = QtWidgets.QGraphicsView(parent=self)
+            self.wheel_view.setScene(self.wheel_scene)
+            self.wheel_view.setStyleSheet("background: transparent")
+            self.wheel_view.setSceneRect(0, 0, self.wheel_radius * 2, self.wheel_radius * 2)
+            self.wheel_view.rotate((360/12)/2)
+            self.wheel_group = self.wheel_scene.createItemGroup(self.wheel_scene.items())
+            self.wheel_view.show()
+            self.bodyLayout.addWidget(self.wheel_view)
+            self.bodyLayout.setStretchFactor(self.wheel_view, 2)
+        else:
+            self.wheel_gui = WheelPhoto(self)
+            self.bodyLayout.addWidget(self.wheel_gui)
+            self.bodyLayout.setStretchFactor(self.wheel_gui, 2)
+
+
+        self.board = Board(self)
+        self.bodyLayout.addWidget(self.board)
+        self.bodyLayout.setStretchFactor(self.board,5)
+
+
 
 
         self.timer_obj = MyTimer(loglevel=self.loglevel)
@@ -407,12 +445,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller_thread.start()
         self.MSG_controller.start()
 
-        self.doSpin.clicked.connect(self.logic_controller.askToSpin)
-
-        self.button_incorrect.clicked.connect(self.logic_controller.notifyUnsuccesfullOutcome)
-        self.button_correct.clicked.connect(self.logic_controller.notifySuccesfullOutcome)
-
-        self.button_reveal.clicked.connect(self.logic_controller.notifyNeedAnswer)
         self.wheel_resting_place = None
 
         self.registration_wizard.signal_close.connect(self.close)
@@ -427,17 +459,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.setCentralWidget(self.main)
 
-
-
-        self.rotation_angle = 0;
-        # for i in range(1,13):
-        #     getattr(self, "wheel_label_1").setFont(QtGui.QFont("Times", 8))
-        #     getattr(self, "wheel_label_1").setText("Bankrupt")
-
-    #@pyqtSlot()
-    #def shiftToWheelScene(self):
-    #    self.main = self.takeCentralWidget()
-    #    self.setCentralWidget(self.wheel_obj)
+        #self.rotation_angle = 0;
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
@@ -465,9 +487,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def selectOutcome(self):
         """Prompt players to indicate whether a response was correct or incorrect"""
-        self.button_correct.setEnabled(True)
-        self.button_incorrect.setEnabled(True)
-
+        pass
 
     @pyqtSlot(dict)
     def displayQuestion(self, question_dict):
@@ -488,9 +508,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.logger.debug("building connection to stop timer")
             self.logic_controller.signal_stop_timer.connect(self.stopTimer)
 
-        self.timer.setEnabled(False)
-        self.timer.setDigitCount(2)
-
         self.scene_question.set_category(question_dict['category'])
         self.scene_question.set_value(question_dict['score'])
         self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
@@ -500,9 +517,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         #self.logic_controller.signal_update_question_score_bar_player.connect(
          #                                           self.scene_question.updatePlayers)
-        self.textbox_question.setEnabled(True)
-        self.textbox_question.setText(question_dict['question'])
-        self.button_reveal.setEnabled(True)
 
         self.main = self.takeCentralWidget()
         self.setCentralWidget(self.scene_question)
@@ -516,74 +530,85 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.render_controls_correct_incorrect()
         self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
-        self.textbox_answer.setText(question_dict['answer'])
-        self.textbox_answer.setEnabled(True)
-        self.timer.setEnabled(False)
-        self.timer.setDigitCount(2)
-        self.button_correct.setEnabled(True)
-        self.button_incorrect.setEnabled(True)
+
+
 
     @pyqtSlot(int)
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
-        self.doSpin.setDisabled(True)
-        data = None
-        with open("Wheel_12.png", 'rb') as f:
-            data = f.read()
-        self.image = QImage.fromData(data, "png")
+        if self.use_qgraphics_wheel:
+            i = 0
+            self.wheel_transform = QTransform()
+            self.wheel_offset = self.wheel_group.boundingRect().center()
+            self.wheel_transform.translate(self.wheel_offset.x(), self.wheel_offset.y())
+            self.wheel_transform.rotate(i)
+            self.wheel_transform.translate(-self.wheel_offset.x(), -self.wheel_offset.y())
+            self.wheel_group.setTransform(self.wheel_transform)
+            self.wheel_view.transform()
+            QtTest.QTest.qWait(50)
+            i += 1
 
-        num_sectors = 0
-        for each in range(0, 12):
-            if getattr(self, "label_wheel_" + str(each)).isEnabled():
-                num_sectors += 1
-
-        if self.wheel_resting_place is None:
-            self.wheel_resting_place = 0
-        last = self.wheel_resting_place
-
-        def cycle(start_number, delay_ms, num_switches, sectors, image_data, rot_angle, target=None):
-            number = start_number
-            delay_ms = delay_ms/5
-            if start_number > 0:
-                last = start_number - 1
-            else:
-                last = sectors - 1
-            for each in range(number, num_switches):
-                each = each % sectors
-                # betterspin.wav from
-                # https://freesound.org/people/door15studio/sounds/244774/
-                QSound.play("betterspin.wav")
-
-                new_pixel_map = QPixmap(image_data)
-                rot_angle = ((rot_angle + 30) % 360)
-                transform = QtGui.QTransform().rotate(rot_angle)
-                new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
-                my_wheel_gui = getattr(self, "wheel_gui")
-                my_wheel_gui.setPixmap(new_pixel_map)
-
-                if last is not None:
-                    getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
-                getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
-                number = each
-                last = each
-                if number == target and target is not None:
-                    return number, rot_angle
-                QtTest.QTest.qWait(delay_ms)
-
-            return number, rot_angle
-
-        if self.skip_spinanimation:
-            for each in range(0, num_sectors):
-                if each != int(destination):
-                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
-                else:
-                    getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
         else:
-            self.wheel_resting_place, self.rotation_angle = cycle(last, 170, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 190, num_sectors, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors, self.image, self.rotation_angle)
-            self.wheel_resting_place, self.rotation_angle = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, self.image, self.rotation_angle, target=int(destination))
+            data =None
+
+            num_sectors = 0
+            if self.use_textwheel:
+                for each in range(0, 12):
+                    if getattr(self, "label_wheel_" + str(each)).isEnabled():
+                        num_sectors += 1
+            else:
+                num_sectors = 12
+
+            if self.wheel_resting_place is None:
+                self.wheel_resting_place = 0
+            last = self.wheel_resting_place
+
+            def cycle(start_number: int,
+                      delay_ms: int,
+                      num_switches: int,
+                      sectors:int,
+                      target: int=None) -> None:
+
+                number = start_number
+                delay_ms = delay_ms/5
+                if start_number > 0:
+                    last = start_number - 1
+                else:
+                    last = sectors - 1
+                for each in range(number, num_switches):
+                    each = each % sectors
+                    # betterspin.wav from
+                    # https://freesound.org/people/door15studio/sounds/244774/
+                    QSound.play("betterspin.wav")
+                    rot_angle=15
+                    self.wheel_gui.rotate(rot_angle)
+
+                    if self.use_textwheel:
+                        if last is not None:
+                            getattr(self, "label_wheel_" + str(last)).setAlignment(Qt.AlignLeft)
+                        getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                    number = each
+                    last = each
+                    if number == target and target is not None:
+                        return number
+                    QtTest.QTest.qWait(delay_ms)
+                return number
+
+            if self.skip_spinanimation:
+                if self.use_textwheel:
+                    for each in range(0, num_sectors):
+                        if each != int(destination):
+                            getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignLeft)
+                        else:
+                            getattr(self, "label_wheel_" + str(each)).setAlignment(Qt.AlignRight)
+                else:
+                    pass
+            else:
+                self.wheel_resting_place = cycle(last, 170, num_sectors*2, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 190, num_sectors, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors)
+                self.wheel_resting_place = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, target=int(destination))
 
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
@@ -613,49 +638,92 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(list)
     def updateWheel(self, sector_list):
-        for i, each in enumerate(sector_list):
-            sector_alias = getattr(self, "label_wheel_" + str(i))
-            # TODO: This breaks the rules. hmi shouldn't know anything about the protocol
-            if each == "bankrupt":
-                sector_alias.setStyleSheet('background-color: black; color: white')
-            elif each == "loseturn":
-                sector_alias.setStyleSheet("")
-            elif each == "accumulatefreeturn":
-                sector_alias.setStyleSheet("")
-            elif each == 'playerschoice':
-                sector_alias.setStyleSheet("")
-            elif each == "opponentschoice":
-                sector_alias.setStyleSheet("")
-            elif each == "doublescore":
-                sector_alias.setStyleSheet("")
-                #sector_alias.setStylesheet("background-color:#ff0000;")
-            sector_alias.setText(each)
-        num_sectors = len(sector_list)
-        if num_sectors != 12:
-            for each in range(num_sectors, 12):
-                getattr(self, "label_wheel_" + str(each)).setDisabled(True)
+        skip = True
+        if not skip:
+            for i, each in enumerate(sector_list):
+                sector_alias = getattr(self, "label_wheel_" + str(i))
+                # TODO: This breaks the rules. hmi shouldn't know anything about the protocol
+                if each == "bankrupt":
+                    sector_alias.setStyleSheet('background-color: black; color: white')
+                elif each == "loseturn":
+                    sector_alias.setStyleSheet("")
+                elif each == "accumulatefreeturn":
+                    sector_alias.setStyleSheet("")
+                elif each == 'playerschoice':
+                    sector_alias.setStyleSheet("")
+                elif each == "opponentschoice":
+                    sector_alias.setStyleSheet("")
+                elif each == "doublescore":
+                    sector_alias.setStyleSheet("")
+                    #sector_alias.setStylesheet("background-color:#ff0000;")
+                sector_alias.setText(each)
+            num_sectors = len(sector_list)
+            if num_sectors != 12:
+                for each in range(num_sectors, 12):
+                    getattr(self, "label_wheel_" + str(each)).setDisabled(True)
 
     @pyqtSlot(list)
     def updateBoard(self, category_list):
         for xpos, each in enumerate(category_list, 1):
             valid_prices = each['valid_prices']
-            getattr(self, "label_board_col" + str(xpos) + "_row1").setText(str(each['name']))
+            getattr(self.board, "label_board_col" + str(xpos) + "_row1").setText(str(each['name']))
             #self.logger.debug("category_list=%s" % (category_list))
             for ypos, score in enumerate(valid_prices, 2):
                 #ypos == enumerate starts at 0 + (row1 is category row), so it starts at 2. therefore ypos + 2. ugly.
-                row_alias = getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos))
+                row_alias = getattr(self.board, "label_board_col" + str(xpos) + "_row" + str(ypos))
                 if str(score) in each['questions']:
-                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(True)
-                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(score))
+                    getattr(self.board, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(score))
                 else:
-                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(False)
-                    getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText("")
+                    getattr(self.board, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText("")
 
     @pyqtSlot(str)
     def displayWinner(self, playername):
-        self.labelWinner.setEnabled(True)
-        self.winnerName.setText(playername)
-        self.doSpin.setDisabled(True)
+        for i in reversed(range(self.bodyLayout.count())):
+            self.bodyLayout.itemAt(i).widget().hide()
+        self.winnerLayout = QtWidgets.QVBoxLayout()
+        self.winnerLayout.setObjectName("winnerLayout")
+        self.bodyLayout.addLayout(self.winnerLayout)
+        self.winnerTitle= QLabel(self)
+        self.winnerTitle.setAlignment(Qt.AlignCenter)
+        self.winnerTitle.setText("WINNER IS")
+        self.winnerTitle.setStyleSheet('''
+                            font-family: Arial, Helvetica, sans-serif;
+                            background-color: rgb(6,12,233);
+                            font-size: 45px;
+                            color: #FFFFFF;
+                            font-weight: 700;
+                            text-decoration: none;
+                            font-style: normal;
+                            font-variant: normal;
+                            text-transform: uppercase;
+                            ''')
+        self.winnerLabel = QLabel(self)
+        self.winnerLabel.setAlignment(Qt.AlignCenter)
+        self.winnerLabel.setText(playername)
+        self.winnerLabel.setWordWrap(True)
+        self.winnerLabel.setStyleSheet('''
+                            font-family: Arial, Helvetica, sans-serif;
+                            background-color: rgb(6,12,233);
+                            font-size: 120px;
+                            color: #FFFFFF;
+                            font-weight: 700;
+                            text-decoration: none;
+                            font-style: normal;
+                            font-variant: normal;
+                            text-transform: uppercase;
+                            ''')
+        self.winnerLayout.setStretchFactor(self.winnerTitle,1)
+        self.winnerLayout.setStretchFactor(self.winnerLabel,5)
+        self.winnerLayout.addWidget(self.winnerTitle)
+        self.winnerLayout.addWidget(self.winnerLabel)
+
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
+        self.exitButton = HoverButton(self)
+        self.exitButton.setText("Quit")
+        self.exitButton.setAlignment(Qt.AlignCenter)
+        self.exitButton.clicked.connect(self.close)
+        self.controlLayout.addWidget(self.exitButton)
 
     @pyqtSlot(dict)
     def setUIState(self, state):

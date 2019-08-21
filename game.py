@@ -293,14 +293,20 @@ class Game(QThread):
             raise Exception("Queue was emptied prior to being serviced")
 
     def calculateWinner(self):
-        winner = self.players[0].getName()
-        winnerScore = 0
+        scores = [x.getGameScore() for x in self.players]
+        score_set = list(set(scores))
+        score_set.sort()
+        high_score = score_set[-1]
+
+        winners = []
         for each in self.players:
-            self.logger.debug("each.getGameScore()=" + str(each.getGameScore()))
-            if each.getGameScore() > winnerScore:
-                winner = each.getName()
-                winnerScore = each.getGameScore()
-        return winner
+            if each.getGameScore() == high_score:
+                winners.append(each)
+
+        if len(winners) > 1:
+            return " & ".join([x.getName() for x in self.players])
+        else:
+            return winners[0].getName()
 
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""

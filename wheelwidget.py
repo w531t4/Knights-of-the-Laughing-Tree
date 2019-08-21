@@ -1,16 +1,80 @@
-from PyQt5.QtWidgets import QLabel, QGraphicsScene, QGraphicsItemGroup, QApplication, QGraphicsView, QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsProxyWidget
+from PyQt5.QtWidgets import QLabel, QGraphicsScene, QGraphicsItemGroup, QApplication, QGraphicsView, QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsProxyWidget, QWidget
 from PyQt5.Qt import QColor, QFont, QPointF, QTransform
-from PyQt5 import QtTest, QtGui
-from PyQt5.QtCore import QRectF, Qt
+from PyQt5 import QtTest, QtGui, QtWidgets, uic
+from PyQt5.QtCore import QRectF, QRect, Qt
 import math
-
-import sys, random
+import sys
+import random
 import textwrap
+import logging
+import logs
 
+
+class WheelPhoto(QLabel):
+    def __init__(self, parent=None, imageName: str="Wheel_12.png", loglevel=logging.DEBUG):
+        super(WheelPhoto, self).__init__(parent)
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
+
+        self.setEnabled(True)
+        self.setGeometry(QRect(100, 20, 375, 375))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
+        self.setText("")
+        self.setAlignment(Qt.AlignCenter)
+        self.wheel_resting_place = None
+        self.rotation_angle = 0
+        self.image = None
+        self.imageName = imageName
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+
+        with open(self.imageName, 'rb') as f:
+            image_data = f.read()
+            self.image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
+        self.setPixmap(QtGui.QPixmap(self.image))
+
+        #This is needed to prevent box resizing when the image is rotated between anywhere
+        #inbetween 0,90,180,270. It takes too much space!
+        diag = self.getDiagonal(self.image)
+        self.setMinimumSize(diag, diag)
+
+    def rotate(self, angle: float, offset: int = 0) -> None:
+        new_pixel_map = QtGui.QPixmap(self.image)
+
+        rot_angle = ((self.rotation_angle + angle + offset) % 360)
+        self.logger.debug("angle=%s offset=%s rot_angle=%s" % (angle, offset, rot_angle))
+        transform = QtGui.QTransform().rotate(rot_angle)
+        self.transformed_new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
+        self.setPixmap(self.transformed_new_pixel_map)
+        self.rotation_angle = rot_angle
+
+    def getAngle(self):
+        return self.rotation_angle
+
+    def getDiagonal(self, image: QtGui.QPixmap) -> float:
+        #help from https://stackoverflow.com/questions/31892557/rotating-a-pixmap-in-pyqt4-gives-undesired-translation
+        return (image.width() ** 2 + image.height() ** 2) ** 0.5
+
+class WheelLabel(QLabel):
+    def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
+        super(WheelLabel, self).__init__(parent)
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
+        #super(TestWheelScene, self).__init__(parent)
+        # self.wheel_gui = QtWidgets.QLabel(self.centralwidget)
+        self.setEnabled(True)
+        self.setGeometry(QRect(120, 200, 121, 16))
+        self.setText("")
+        self.setObjectName("wheel_label_1")
 
 class WheelScene(QGraphicsScene):
-    def __init__(self, radius=200, parent=None, categories=[]):
-        QGraphicsScene.__init__(self)
+    def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
+        super(WheelScene, self).__init__(parent)
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
         #super(TestWheelScene, self).__init__(parent)
         families = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         if len(categories) == 0:
@@ -133,7 +197,7 @@ class WheelScene(QGraphicsScene):
                 else:
                     text.setPos(ellipse.rect().center())
             text.setPos(ellipse.rect().center())
-            print("ellipse rect: %s" % ellipse.rect())
+            self.logger.debug("ellipse rect: %s" % ellipse.rect())
 
             text.setRotation((((set_angle + subangle)/5760)*360))
             #text.setRotation(30)
@@ -143,7 +207,7 @@ class WheelScene(QGraphicsScene):
             self.addItem(ellipse)
             self.addItem(text)
         self.setSceneRect(0, 0, self.radius*2, self.radius*2)
-        print("scenesize= %s" % self.sceneRect())
+        self.logger.debug("scenesize= %s" % self.sceneRect())
 
 
 if __name__ == "__main__":
@@ -151,7 +215,11 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     radius=200
     scene = WheelScene(radius=radius)
-
+    wheel = WheelPhoto()
+    wheel.show()
+    wheel.spinWheel(7)
+    wheel_label = WheelLabel()
+    wheel_label.show()
     view = QGraphicsView(scene)
     view.setStyleSheet("background: transparent")
     view.setSceneRect(0,0,radius*2,radius*2)
@@ -160,21 +228,15 @@ if __name__ == "__main__":
     #print("view: rect=%s" %view.cen)
     view.show()
 
-
     i = 0
     while True:
         transform = QTransform()
         offset = group.boundingRect().center()
-        # print("group.sceneBoundingRect()=%s" % group.sceneBoundingRect())
-        # print("offset=%s" % offset)
         transform.translate(offset.x(), offset.y())
         transform.rotate(i)
         transform.translate(-offset.x(), -offset.y())
         group.setTransform(transform)
-        #scene.destroyItemGroup(group)
-        #scene.update()
         view.transform()
         QtTest.QTest.qWait(50)
         i += 1
     app.exec_()
-

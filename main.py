@@ -25,7 +25,7 @@ def build_args(loglevel, initial_port, target_scenario):
     hmi_args['game_port'] = GAME_PORT
     game_args['game_port'] = GAME_PORT
 
-    hmi_args['ui_file'] = "ui.ui"
+    hmi_args['ui_file'] = "newui.ui"
 
     if target_scenario is not None:
         try:
