@@ -14,7 +14,7 @@ from functools import partial
 from ScoreBar import ScoreBar
 from HoverButton import HoverButton
 from wheelwidget import WheelScene
-
+from board import Board
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.Qt import QTransform
@@ -409,6 +409,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.wheel_view.show()
         self.bodyLayout.addWidget(self.wheel_view)
 
+        self.board = Board(self)
+        self.bodyLayout.addWidget(self.board)
+        self.bodyLayout.setStretchFactor(self.board,5)
+        self.bodyLayout.setStretchFactor(self.wheel_view,2)
 
 
 
@@ -651,27 +655,23 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(list)
     def updateBoard(self, category_list):
-        skip = True
-        if not skip:
-            for xpos, each in enumerate(category_list, 1):
-                valid_prices = each['valid_prices']
-                getattr(self, "label_board_col" + str(xpos) + "_row1").setText(str(each['name']))
-                #self.logger.debug("category_list=%s" % (category_list))
-                for ypos, score in enumerate(valid_prices, 2):
-                    #ypos == enumerate starts at 0 + (row1 is category row), so it starts at 2. therefore ypos + 2. ugly.
-                    row_alias = getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos))
-                    if str(score) in each['questions']:
-                        getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(True)
-                        getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(score))
-                    else:
-                        getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setEnabled(False)
-                        getattr(self, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText("")
+        for xpos, each in enumerate(category_list, 1):
+            valid_prices = each['valid_prices']
+            getattr(self.board, "label_board_col" + str(xpos) + "_row1").setText(str(each['name']))
+            #self.logger.debug("category_list=%s" % (category_list))
+            for ypos, score in enumerate(valid_prices, 2):
+                #ypos == enumerate starts at 0 + (row1 is category row), so it starts at 2. therefore ypos + 2. ugly.
+                row_alias = getattr(self.board, "label_board_col" + str(xpos) + "_row" + str(ypos))
+                if str(score) in each['questions']:
+                    getattr(self.board, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText(str(score))
+                else:
+                    getattr(self.board, "label_board_col" + str(xpos) + "_row" + str(ypos)).setText("")
 
     @pyqtSlot(str)
     def displayWinner(self, playername):
         for i in reversed(range(self.bodyLayout.count())):
             self.bodyLayout.itemAt(i).widget().hide()
-        self.winnerLayout = QtWidgets.QVBoxLayout(self)
+        self.winnerLayout = QtWidgets.QVBoxLayout()
         self.winnerLayout.setObjectName("winnerLayout")
         self.bodyLayout.addLayout(self.winnerLayout)
         self.winnerTitle= QLabel(self)
