@@ -102,7 +102,7 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
 
         self.contextLayout.addLayout(self.qvalueLayout)
         self.contextLayout.setStretchFactor(self.scorebar, 5)
-        self.contextLayout.setStretchFactor(self.timer, 1)
+        self.contextLayout.setStretchFactor(self.timer, 2)
         self.contextLayout.setStretchFactor(self.qvalueLayout, 1)
 
     def set_value(self, value: str) -> None:
