@@ -108,8 +108,9 @@ class PlayerFrame(QtWidgets.QFrame, Ui_PlayerFrame):
 
     def mousePressEvent(self, event):
         self.logger.debug("mousepressevent occurred, i am %s" % (self.objectName()))
-        self.clicked.emit(self.text())
-        QtWidgets.QLabel.mousePressEvent(self, event)
+        if hasattr(self, "text"):
+            self.clicked.emit(self.text())
+            QtWidgets.QLabel.mousePressEvent(self, event)
 
     def hide(self) -> None:
         self.logger.debug("actioning hide")
