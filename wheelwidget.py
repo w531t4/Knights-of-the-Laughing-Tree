@@ -45,7 +45,7 @@ class WheelPhoto(QLabel):
         new_pixel_map = QtGui.QPixmap(self.image)
 
         rot_angle = ((self.rotation_angle + angle + offset) % 360)
-        self.logger.debug("angle=%s offset=%s rot_angle=%s" % (angle, offset, rot_angle))
+        #self.logger.debug("angle=%s offset=%s rot_angle=%s" % (angle, offset, rot_angle))
         transform = QtGui.QTransform().rotate(rot_angle)
         self.transformed_new_pixel_map = new_pixel_map.transformed(transform, Qt.SmoothTransformation)
         self.setPixmap(self.transformed_new_pixel_map)
