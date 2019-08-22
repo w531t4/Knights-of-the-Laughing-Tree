@@ -20,7 +20,7 @@ from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.Qt import QTransform
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QPushButton
 from RoundSpinFrame import RoundSpinFrame
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
@@ -426,16 +426,22 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.bodyLayout.addWidget(self.wheel_gui)
             self.bodyLayout.setStretchFactor(self.wheel_gui, 6)
 
-
+        use_this = False
+        if use_this:
+            self.selectionTitle = QLabel(self)
+            self.selectionTitle.setText("hello world")
+            self.selectionTitle.raise_()
+            self.bodyLayout.addWidget(self.selectionTitle)
+        self.tempButton = QPushButton(self)
+        self.tempButton.setText("tempspin")
+        self.tempButton.clicked.connect(self.tempSpinWheel)
+        self.bodyLayout.addWidget(self.tempButton)
         self.arrowPointer = ArrowPointer(self)
         self.bodyLayout.addWidget(self.arrowPointer)
         self.bodyLayout.setStretchFactor(self.arrowPointer, 1)
         self.board = Board(self)
         self.bodyLayout.addWidget(self.board)
         self.bodyLayout.setStretchFactor(self.board, 16)
-
-
-
 
         self.timer_obj = MyTimer(loglevel=self.loglevel)
 
@@ -449,7 +455,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logger.debug("building connection to stop timer")
         self.logic_controller.signal_stop_timer.connect(self.stopTimer)
 
-
         self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
         self.logic_controller.signal_retain_player_data.connect(self.retainPlayerData)
 
@@ -459,8 +464,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.wheel_resting_place = None
 
         self.registration_wizard.signal_close.connect(self.close)
-
-
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -543,6 +546,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
 
 
+    @pyqtSlot()
+    def tempSpinWheel(self):
+        self.wheel_gui.setRotateCropHalve(360/12)
 
     @pyqtSlot(int)
     def spinWheel(self, destination):
@@ -552,7 +558,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_transform = QTransform()
             self.wheel_offset = self.wheel_group.boundingRect().center()
             self.wheel_transform.translate(self.wheel_offset.x(), self.wheel_offset.y())
-            self.wheel_transform.rotate(i)
+            self.wheel_transform.setRotateCropHalve(i)
             self.wheel_transform.translate(-self.wheel_offset.x(), -self.wheel_offset.y())
             self.wheel_group.setTransform(self.wheel_transform)
             self.wheel_view.transform()
@@ -592,7 +598,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                     # https://freesound.org/people/door15studio/sounds/244774/
                     QSound.play("betterspin.wav")
                     rot_angle=15
-                    self.wheel_gui.rotate(rot_angle)
+                    self.wheel_gui.setRotateCropHalve(rot_angle)
 
                     if self.use_textwheel:
                         if last is not None:

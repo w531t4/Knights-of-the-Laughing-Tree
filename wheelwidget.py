@@ -25,6 +25,7 @@ class ArrowPointer(QLabel):
         self.maximumWidth = self.image.width()
         self.setPixmap(QtGui.QPixmap(self.image))
 
+
 class WheelPhoto(QLabel):
     def __init__(self, parent=None, imageName: str="Wheel_12.png", loglevel=logging.DEBUG):
         super(WheelPhoto, self).__init__(parent)
@@ -48,42 +49,49 @@ class WheelPhoto(QLabel):
 
         with open(self.imageName, 'rb') as f:
             image_data = f.read()
-            self.image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
-        self.image = self.image.scaledToHeight(self.height())
-        self.use_image = self.getRightHalfImage(QtGui.QPixmap(self.image))
-        #self.setPixmap(self.use_image)
-        # self.setPixmap(QtGui.QPixmap(self.image))
-        # self.setPixmap(QtGui.QPixmap(self.image))
+            image = QtGui.QImage.fromData(image_data, self.imageName.split(".")[1].lower())
+        self.image = QtGui.QPixmap(image.scaledToHeight(self.height()))
 
-        self.setMinimumWidth(self.use_image.width()*1.1)
-        self.rotate(360/12/2)
+        half_image = self.getRightHalfImage(self.image)
+        self.setMinimumWidth(half_image.width()*1.1)
 
-    def getRightHalfImage(self, image: QtGui.QImage) -> QtGui.QImage:
-        current = QtGui.QPixmap(image)
-        return current.copy(current.width()/2, 0, current.width()/2, current.height())
+        self.setRotateCropHalve(360/12)
 
-    def rotate(self, angle: float, offset: int = 0) -> None:
-        current_pixel_map = QtGui.QPixmap(self.image)
+    @staticmethod
+    def getRightHalfImage(image: QtGui.QPixmap) -> QtGui.QPixmap:
+        return image.copy(image.width()/2, 0, image.width()/2, image.height())
 
-        rot_angle = ((self.rotation_angle + angle + offset) % 360)
-        transform = QtGui.QTransform().rotate(rot_angle)
-
-        transformed_new_pixel_map = current_pixel_map.transformed(transform, Qt.SmoothTransformation)
-        xoffset = (transformed_new_pixel_map.width() - current_pixel_map.width())/2
-        yoffset = (transformed_new_pixel_map.height() - current_pixel_map.height()) / 2
-
+    @staticmethod
+    def cropToReference(to_be_cropped_pixmap: QtGui.QPixmap, reference_pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         #help by goetz from https://forum.qt.io/topic/13421/how-to-rotate-a-content-of-qpixmap-without-changing-size/3
-        cropped_obj = transformed_new_pixel_map.copy(xoffset,
-                                                     yoffset,
-                                                     current_pixel_map.width(),
-                                                     current_pixel_map.height()
-                                                     )
+        reference_width = reference_pixmap.width()
+        reference_height = reference_pixmap.height()
+        xoffset = (to_be_cropped_pixmap.width() - reference_width)/2
+        yoffset = (to_be_cropped_pixmap.height() - reference_height)/2
+        return to_be_cropped_pixmap.copy(xoffset, yoffset, reference_width, reference_height)
 
-        self.setPixmap(self.getRightHalfImage(cropped_obj))
-        self.rotation_angle = rot_angle
+    @staticmethod
+    def rotate(image: QtGui.QPixmap, angle: float, offset: int = 0) -> QtGui.QPixmap:
+        rot_angle = (angle % 360)
+        transform = QtGui.QTransform().rotate(rot_angle)
+        return image.transformed(transform, Qt.SmoothTransformation)
+
+    def setRotateCropHalve(self,  angle: float, image: QtGui.QImage = None, offset: float = 0) -> None:
+        if image is None:
+            image = self.image
+        pixel_map = QtGui.QPixmap(image)
+        rot_angle = self.rotation_angle + angle + offset
+        full_image = self.rotate(pixel_map, rot_angle)
+        cropped_image = self.cropToReference(full_image, pixel_map)
+        self.setAngle(rot_angle)
+        self.setPixmap(self.getRightHalfImage(cropped_image))
 
     def getAngle(self):
         return self.rotation_angle
+
+    def setAngle(self, angle: float) -> None:
+        self.rotation_angle = angle
+
 
 class WheelLabel(QLabel):
     def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
@@ -96,6 +104,7 @@ class WheelLabel(QLabel):
         self.setGeometry(QRect(120, 200, 121, 16))
         self.setText("")
         self.setObjectName("wheel_label_1")
+
 
 class WheelScene(QGraphicsScene):
     def __init__(self, radius=200, parent=None, categories=[], loglevel=logging.DEBUG):
@@ -237,7 +246,7 @@ class WheelScene(QGraphicsScene):
         self.logger.debug("scenesize= %s" % self.sceneRect())
 
 
-if __name__ == "__main__":
+def main():
     # written/taken from  https://www.codesd.com/item/how-to-create-a-pie-chart-with-pyqt-in-python.html
     app = QApplication(sys.argv)
     radius=200
@@ -267,3 +276,6 @@ if __name__ == "__main__":
         QtTest.QTest.qWait(50)
         i += 1
     app.exec_()
+
+if __name__ == "__main__":
+    main()
