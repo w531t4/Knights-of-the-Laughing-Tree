@@ -13,14 +13,14 @@ import questionanswer
 from functools import partial
 from ScoreBar import ScoreBar
 from HoverButton import HoverButton
-from wheelwidget import WheelScene, WheelPhoto
+from wheelwidget import WheelScene, WheelPhoto, ArrowPointer
 from board import Board
 from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.Qt import QTransform
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QSizePolicy
 from RoundSpinFrame import RoundSpinFrame
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
@@ -407,7 +407,10 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.use_textwheel = False
         self.use_qgraphics_wheel = False
-
+        self.wheelinfo = dict()
+        for each in range(0,13):
+            setattr(self, "label_wheel_%s" % str(each), QLabel())
+            getattr(self, "label_wheel_%s" % str(each)).setDisabled(True)
         if self.use_qgraphics_wheel:
             self.wheel_radius = 125
             self.wheel_scene = WheelScene(parent=self, radius=self.wheel_radius)
@@ -420,19 +423,26 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_group = self.wheel_scene.createItemGroup(self.wheel_scene.items())
             self.wheel_view.show()
             self.bodyLayout.addWidget(self.wheel_view)
-            self.bodyLayout.setStretchFactor(self.wheel_view, 2)
+            self.bodyLayout.setStretchFactor(self.wheel_view, 6)
         else:
             self.wheel_gui = WheelPhoto(self)
             self.bodyLayout.addWidget(self.wheel_gui)
-            self.bodyLayout.setStretchFactor(self.wheel_gui, 2)
+            self.bodyLayout.setContentsMargins(0,0,0,0)
+            self.bodyLayout.setStretchFactor(self.wheel_gui, 6)
+            self.selectionTitle = QLabel(self.wheel_gui)
+            self.selectionTitle.setText("")
+            self.selectionTitle.setAlignment(Qt.AlignRight)
+            self.selectionTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.selectionTitle.move(self.wheel_gui.frameRect().width()/2 - self.selectionTitle.width()*1.5, self.wheel_gui.geometry().height()/2.1)
+            self.selectionTitle.setFixedWidth(self.wheel_gui.rect().width()/2.5)
 
-
+        #self.bodyLayout.addWidget(self.tempButton)
+        self.arrowPointer = ArrowPointer(self)
+        self.bodyLayout.addWidget(self.arrowPointer)
+        self.bodyLayout.setStretchFactor(self.arrowPointer, 1)
         self.board = Board(self)
         self.bodyLayout.addWidget(self.board)
-        self.bodyLayout.setStretchFactor(self.board,5)
-
-
-
+        self.bodyLayout.setStretchFactor(self.board, 16)
 
         self.timer_obj = MyTimer(loglevel=self.loglevel)
 
@@ -446,7 +456,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logger.debug("building connection to stop timer")
         self.logic_controller.signal_stop_timer.connect(self.stopTimer)
 
-
         self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
         self.logic_controller.signal_retain_player_data.connect(self.retainPlayerData)
 
@@ -456,8 +465,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.wheel_resting_place = None
 
         self.registration_wizard.signal_close.connect(self.close)
-
-
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
@@ -540,6 +547,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
 
 
+    @pyqtSlot()
+    def tempSpinWheel(self):
+        self.wheel_gui.setRotateCropHalve(360/12)
 
     @pyqtSlot(int)
     def spinWheel(self, destination):
@@ -549,7 +559,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             self.wheel_transform = QTransform()
             self.wheel_offset = self.wheel_group.boundingRect().center()
             self.wheel_transform.translate(self.wheel_offset.x(), self.wheel_offset.y())
-            self.wheel_transform.rotate(i)
+            self.wheel_transform.setRotateCropHalve(i)
             self.wheel_transform.translate(-self.wheel_offset.x(), -self.wheel_offset.y())
             self.wheel_group.setTransform(self.wheel_transform)
             self.wheel_view.transform()
@@ -588,8 +598,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                     # betterspin.wav from
                     # https://freesound.org/people/door15studio/sounds/244774/
                     QSound.play("betterspin.wav")
-                    rot_angle=15
-                    self.wheel_gui.rotate(rot_angle)
+                    rot_angle=360/12
+                    self.wheel_gui.setRotateCropHalve(rot_angle)
+                    self.selectionTitle.setText(getattr(self, "label_wheel_%s" % each).text())
 
                     if self.use_textwheel:
                         if last is not None:
@@ -647,29 +658,28 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(list)
     def updateWheel(self, sector_list):
-        skip = True
-        if not skip:
-            for i, each in enumerate(sector_list):
-                sector_alias = getattr(self, "label_wheel_" + str(i))
-                # TODO: This breaks the rules. hmi shouldn't know anything about the protocol
-                if each == "bankrupt":
-                    sector_alias.setStyleSheet('background-color: black; color: white')
-                elif each == "loseturn":
-                    sector_alias.setStyleSheet("")
-                elif each == "accumulatefreeturn":
-                    sector_alias.setStyleSheet("")
-                elif each == 'playerschoice':
-                    sector_alias.setStyleSheet("")
-                elif each == "opponentschoice":
-                    sector_alias.setStyleSheet("")
-                elif each == "doublescore":
-                    sector_alias.setStyleSheet("")
-                    #sector_alias.setStylesheet("background-color:#ff0000;")
-                sector_alias.setText(each)
-            num_sectors = len(sector_list)
-            if num_sectors != 12:
-                for each in range(num_sectors, 12):
-                    getattr(self, "label_wheel_" + str(each)).setDisabled(True)
+        for i, each in enumerate(sector_list):
+            sector_alias = getattr(self, "label_wheel_" + str(i))
+            # TODO: This breaks the rules. hmi shouldn't know anything about the protocol
+            if each == "bankrupt":
+                sector_alias.setStyleSheet('background-color: black; color: white')
+            elif each == "loseturn":
+                sector_alias.setStyleSheet("")
+            elif each == "accumulatefreeturn":
+                sector_alias.setStyleSheet("")
+            elif each == 'playerschoice':
+                sector_alias.setStyleSheet("")
+            elif each == "opponentschoice":
+                sector_alias.setStyleSheet("")
+            elif each == "doublescore":
+                sector_alias.setStyleSheet("")
+                #sector_alias.setStylesheet("background-color:#ff0000;")
+            sector_alias.setText(each)
+        num_sectors = len(sector_list)
+
+        if num_sectors != 12:
+            for each in range(num_sectors, 12):
+                getattr(self, "label_wheel_" + str(each)).setDisabled(True)
 
     @pyqtSlot(list)
     def updateBoard(self, category_list):
