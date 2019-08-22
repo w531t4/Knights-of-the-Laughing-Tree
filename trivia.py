@@ -19,8 +19,6 @@ class Trivia:
         self.db = {}
         self.db = self.assemble_db()
 
-        pass
-
     def __len__(self):
         return len(self.raw)
 
@@ -29,7 +27,6 @@ class Trivia:
             a = "".join(fr.readlines())
             if self.debug: print(a)
             return list(json.loads(a))
-            #return list(json.loads("".join(fr.readlines())))
 
     def assemble_db(self, removeDisqualifyingCategories=True):
         """Consolidate JSON-oriented Quester/Answer File into a Dictionary"""
@@ -103,7 +100,6 @@ class TriviaDB:
                     self.data[catobj['category']][str(price)] = topic
                     self.price_list.append(price)
                     price += self.starting_price
-
 
     def getCategories(self):
         return self.data.keys()

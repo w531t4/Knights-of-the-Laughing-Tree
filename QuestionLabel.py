@@ -27,7 +27,6 @@ class QuestionLabel(QtWidgets.QLabel):
                             ''')
         self.setWordWrap(True)
 
-
     def mousePressEvent(self, event):
         self.logger.debug("mousepressevent occurred, i am %s" % (self.objectName()))
         self.clicked.emit(self.text())

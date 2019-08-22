@@ -13,12 +13,8 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
         super(ScoreBar, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
-        #self.horizontalLayout = QtWidgets.QHBoxLayout(self)
-        #self.horizontalLayout.setObjectName("horizontalLayout")
         self.baseLayout = QtWidgets.QHBoxLayout(self)
         self.baseLayout.setObjectName("baseLayout")
-
-
         self.show()
 
     def getplayer(self, index: int) -> PlayerFrame:
@@ -44,7 +40,6 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
 
         for i, each in enumerate(playerList):
             #update widgets
-            #self.player0.setName(each['name'])
             self.logger.debug("set playername = %s" % each['name'])
             getattr(self, "player%s" % (i)).setName(each['name'])
             getattr(self, "player%s" % (i)).setScore(each['gameScore'] + each['roundScore'])
@@ -55,7 +50,6 @@ class ScoreBar(QtWidgets.QFrame, QtWidgets.QMainWindow):
             else:
                 self.logger.debug("setting %s inactive" % each['name'])
                 getattr(self, "player%s" % (i)).setInactive()
-
 
     def resizeEvent(self, event):
         self.resized.emit(self.height())

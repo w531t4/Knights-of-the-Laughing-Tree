@@ -52,8 +52,6 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
         self.roundLayout.setStretchFactor(self.labelRoundNumber, 2)
         self.roundLayout.setStretchFactor(self.labelRoundTotal, 1)
 
-
-
         self.spinsLayout.addWidget(self.labelSpinsCaption)
         self.spinsLayout.addWidget(self.labelSpinsOccurred)
         self.spinsLayout.addWidget(self.labelSpinsMax)

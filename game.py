@@ -92,8 +92,6 @@ class Game(QThread):
         else:
             self.currentPlayerIndex = self.use_predetermined_startingplayer
         self.players[self.currentPlayerIndex].setActive()
-        # Once players are registered, agree upon game terms
-        self.configureGame()
 
         # Once all setup is completed, start the show
         self.gameLoop()
@@ -159,13 +157,6 @@ class Game(QThread):
                     message['arguments'] = "ACK"
                     self.MSG_controller.send_message(json.dumps(message))
                     done = True
-
-    def configureGame(self):
-        # TODO: Adjustable Number of Rounds in Game (self.totalRounds)
-        # TODO: Adjustable Difficulty
-        # TODO: Adjustable Timeout for User Decisions
-        # TODO: Adjustable Bankruptsy Behavior
-        pass
 
     def checkSanityPlayerList(self, playerList):
         if not isinstance(playerList, list):
@@ -243,13 +234,9 @@ class Game(QThread):
             self.changeRound()
             # ready player 1
             self.logger.info("Begin Round" + str(self.round))
-            while self.spins < self.maxSpins: # TODO: detect if any Q/A remain on board
+            while self.spins < self.maxSpins:
                 self.logger.debug("stats: totalSpins=" + str(self.spins) +
                                                     " round=" + str(self.round))
-                if self.round == (self.totalRounds - 1):
-                    # TODO: Set point totals on all Q/A to double what they were in the first round
-                    pass
-                #if self.debug: print("Game: Sending message to wheel")
                 spinResult = self.doSpin()
 
                 self.logger.debug("Spin Result=" + str(spinResult))
@@ -266,7 +253,6 @@ class Game(QThread):
                 self.MSG_controller.send_message(json.dumps(message))
                 self.receive_ack("endSpin")
 
-        # TODO: Compare Points, Declare Victor
         for play in self.players:
             play.archivePoints()
         message = dict()
@@ -402,12 +388,6 @@ class Game(QThread):
         return sorted(r, key = lambda i: i['index'])
 
     def pickCategoryHelper(self, category):
-        # TODO: Resolve Question/Answer from dictionary
-        # TODO: Display Question to Player
-        # TODO: Prompt Players to determine if they're ready for the answer to be displayed
-        # TODO: Display answer when prompted.
-        # TODO: After displaying answer, display mechanism to indicate if the question was answered successfully
-        # TODO: Alter Player Score according to whether the question was answered successfully or not
         self.logger.debug("Start")
         ANSWER_TIMEOUT = 30
 
@@ -431,7 +411,6 @@ class Game(QThread):
             QtTest.QTest.qWait(100)
         if not self.MSG_controller.clientqueue.empty():
             response = self.MSG_controller.clientqueue.get()
-            # TODO: Needs message['action'] sanity check
             if json.loads(response)['action'] != "revealAnswer":
                 raise Exception("Expecting action type 'revealAnswer'")
 
@@ -450,7 +429,6 @@ class Game(QThread):
             while self.MSG_controller.clientqueue.empty():
                 QtTest.QTest.qWait(100)
             response = self.MSG_controller.clientqueue.get()
-            # TODO: Needs message['action'] sanity check
             if json.loads(response)['action'] != "responseQuestion":
                 raise Exception("Expecting action type 'responseQuestion' for ACK")
             if json.loads(response)['arguments'] is not False and json.loads(response)['arguments'] is not True:
@@ -593,14 +571,8 @@ class Game(QThread):
         self.changeTurn()
 
     def pickPlayersChoice(self):
-        # TODO: Facilitate Explicit Selection (by Current Player) of Category from those available as 'category'
-        # if (
-        # TODO: Check number of remaining questions for category
-        # ) == 0:
-        #           request selection of new category (by Current Player)
         self.logger.debug("Start")
         QtTest.QTest.qWait(self.delay_before_question)
-        # TODO: Resolve Categories
         categorylist = self.current_triviaDB.getPlayableCategories()
 
         message = dict()
@@ -610,21 +582,14 @@ class Game(QThread):
         while self.MSG_controller.clientqueue.empty():
             QtTest.QTest.qWait(100)
         response = self.MSG_controller.clientqueue.get()
-        # TODO: Needs message['action'] sanity check
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:
             raise Exception("Response Category not from the allowed list")
 
     def pickOpponentsChoice(self):
-        # TODO: Facilitate Explicit Selection (by Opponents) of Category from those available as 'category'
-        # if (
-        # TODO: Check number of remaining questions for category
-        # ) == 0:
-        #           request selection of new category (by Opponents)
         self.logger.debug("Start")
         QtTest.QTest.qWait(self.delay_before_question)
-        # TODO: Resolve Categories
         categorylist = self.current_triviaDB.getPlayableCategories()
 
         message = dict()
@@ -634,7 +599,6 @@ class Game(QThread):
         while self.MSG_controller.clientqueue.empty():
             QtTest.QTest.qWait(100)
         response = self.MSG_controller.clientqueue.get()
-        # TODO: Needs message['action'] sanity check
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:

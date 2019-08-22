@@ -5,7 +5,6 @@ import logging
 import logs
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from PyQt5 import QtTest
-import time
 import socket
 import commsettings
 import queue

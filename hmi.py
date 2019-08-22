@@ -1,6 +1,5 @@
 #!/bin/env python3
 
-import commsettings
 import messaging
 import json
 import random
@@ -19,7 +18,6 @@ from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.Qt import QTransform
 from PyQt5.QtMultimedia import QSound
-from PyQt5.QtGui import QImage, QBrush, QPainter, QPixmap, QWindow
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QSizePolicy
 from RoundSpinFrame import RoundSpinFrame
 
@@ -89,7 +87,6 @@ class HMILogicController(QObject):
         if "arguments" not in message.keys():
             raise Exception("Message does not possess arguments key")
 
-        #TODO: Break out into function
         perform_ack_at_end = True
         # Proceed with performing actioning a message
         if message['action'] == "promptCategorySelectByUser":
@@ -106,8 +103,6 @@ class HMILogicController(QObject):
             self.signal_display_question.emit(message['arguments'])
             self.signal_update_question_score_bar_player.emit(self.playerData)
             self.signal_update_main_score_bar_player.emit(self.playerData)
-            # TODO: static value set here, needs to be sent in message
-            #self.signal_scene_change_to_main
             self.logger.debug("triggering start_timer")
             self.signal_start_timer.emit(30)
         elif message['action'] == "responsePlayerRegistration":
@@ -148,13 +143,6 @@ class HMILogicController(QObject):
                 raise Exception("Player entry in update data is empty")
 
             self.playerData = message['arguments']['players']
-
-            # for person in message['arguments']['players']:
-            #     self.signal_update_player_data.emit(str(person['id']),
-            #                                         str(person['name']),
-            #                                         str((person['gameScore'] + person['roundScore'])),
-            #                                         str(person['freeTurnTokens']),
-            #                                         str(message['arguments']['currentPlayer']))
             self.signal_update_question_score_bar_player.emit(message['arguments']['players'])
             self.signal_retain_player_data.emit(message['arguments']['players'])
             self.signal_update_main_score_bar_player.emit(message['arguments']['players'])
@@ -212,14 +200,6 @@ class HMILogicController(QObject):
         response['action'] = "responseCategorySelect"
         response['arguments'] = string
         self.signal_send_message.emit(json.dumps(response))
-
-    def registerPlayer(self):
-        """Ask Player what their name is"""
-        # TODO: Prompt Players for their Names at the start of a game
-        test_names = ["Aaron", "James", "Glenn", "Lorraine", "Markham"]
-
-        r = random.randrange(0, len(test_names))
-        return test_names[r]
 
     def issueAck(self, action: str) -> None:
         response = dict()
@@ -285,7 +265,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                  skip_userreg=False,
                  skip_spinanimation=False):
         super(HMI, self).__init__(parent)
-        #QtWidgets.QMainWindow.__init__(self)
         if not IMPORT_UI_ONTHEFLY:
             self.setupUi(self)
         else:
@@ -474,8 +453,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.setCentralWidget(self.main)
 
-        #self.rotation_angle = 0;
-
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
         self.logger.debug("Shifting focus to combo-wheel-board-score panel")
@@ -507,8 +484,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(dict)
     def displayQuestion(self, question_dict):
         """Render provided question to display"""
-
-
         self.scene_question = questionanswer.MyQuestionScene(
                                                             parent=self,
                                                             ui_file="scene_question.ui",
@@ -529,9 +504,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
         self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
-
-        #self.logic_controller.signal_update_question_score_bar_player.connect(
-         #                                           self.scene_question.updatePlayers)
 
         self.main = self.takeCentralWidget()
         self.setCentralWidget(self.scene_question)
@@ -623,8 +595,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.wheel_resting_place = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors)
                 self.wheel_resting_place = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors)
                 self.wheel_resting_place = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, target=int(destination))
-        #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
+
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
         self.logger.debug("enter updateGameStats")
@@ -766,7 +738,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @pyqtSlot()
     def stopTimer(self):
-        #self.timer.setDisabled(True)
         self.timer_obj.stop()
 
     @pyqtSlot()
@@ -794,6 +765,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.render_controls_freeturn()
         self.scene_question.signal_skipfreeturn.connect(self.logic_controller.notifyFreeTurnSkip)
         self.scene_question.signal_spendfreeturn.connect(self.logic_controller.notifyFreeTurnSpend)
+
     def close(self):
         self.logger.debug("closing")
         self.MSG_controller.quit()
@@ -802,7 +774,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(list)
     def retainPlayerData(self, playerData):
         self.playerData = playerData
-
 
 
 class MyTimer(QObject):

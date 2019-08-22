@@ -38,7 +38,6 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
     signal_spendfreeturn = pyqtSignal()
     signal_skipfreeturn = pyqtSignal()
     signal_shift_scene = pyqtSignal()
-    #signal_start_timer = pyqtSignal(int)
 
     def __init__(self, parent=None, ui_file=None, loglevel=logging.INFO):
         super(MyQuestionScene, self).__init__(parent)
@@ -52,13 +51,6 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
 
-        #a = self.verticalLayout_2.takeAt(0)
-        #sizePolicy_Control = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        #sizePolicy_Control.setVerticalStretch(1)
-        #self.frameControls.setSizePolicy(sizePolicy_Control)
-        #sizePolicy_Question = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        #sizePolicy_Question.setVerticalStretch(2)
-        #self.frameQuestion.setSizePolicy(sizePolicy_Question)
         self.vstackLayout.setStretchFactor(self.contextLayout, 1)
         self.vstackLayout.setStretchFactor(self.headerLayout, 1)
         self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
@@ -70,7 +62,6 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.scorebar.updatePlayers(data)
         self.contextLayout.addWidget(self.scorebar)
         self.logger.debug("at set_context")
-        #self.contextLayout.replaceWidget(self.labelCurrentPlayer, self.scorebar)
         self.labelCurrentPlayer.hide()
 
         self.timer.setGeometry(QtCore.QRect(130, 387, 64, 23))
@@ -125,8 +116,6 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
     def set_answer(self, answer: str) -> None:
         self.labelQuestionNameNew.setText(answer)
 
-        #self.labelQuestionName.setText(answer)
-
     def render_controls_reveal(self) -> None:
         self.buttonReveal = HoverButton()
         self.buttonReveal.clicked.connect(self.somethingClicked)
@@ -155,8 +144,6 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.controlLayout.setStretchFactor(self.buttonIncorrect, 2)
 
     def render_controls_freeturn(self) -> None:
-        # self.buttonReveal.setParent(None)
-        # self.buttonReveal.hide()
         for i in reversed(range(self.controlLayout.count())):
             self.controlLayout.itemAt(i).widget().hide()
 

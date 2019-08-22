@@ -1,7 +1,5 @@
 #!/bin/env python3
 
-import socket
-
 
 class Player:
     def __init__(self, id=None, name=""):
