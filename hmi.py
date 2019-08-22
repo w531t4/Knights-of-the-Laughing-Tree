@@ -546,11 +546,6 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
 
-
-    @pyqtSlot()
-    def tempSpinWheel(self):
-        self.wheel_gui.setRotateCropHalve(360/12)
-
     @pyqtSlot(int)
     def spinWheel(self, destination):
         """ Make the Wheel Spin. Ensure it lands on Destination"""
@@ -628,10 +623,8 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.wheel_resting_place = cycle(self.wheel_resting_place, 210, num_sectors, num_sectors)
                 self.wheel_resting_place = cycle(self.wheel_resting_place, 250, num_sectors*2, num_sectors)
                 self.wheel_resting_place = cycle(self.wheel_resting_place, 350, num_sectors*2, num_sectors, target=int(destination))
-
         #TODO: The HMI interface shouldn't directly trigger ACK's
         self.logic_controller.issueAck("spinWheel")
-
     @pyqtSlot(str, str, str, str)
     def updateGameStats(self, spinsExecuted, maxSpins, currentRound, totalRounds):
         self.logger.debug("enter updateGameStats")
