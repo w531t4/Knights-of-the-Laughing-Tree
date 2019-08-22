@@ -15,6 +15,8 @@ app = QApplication(sys.argv)
 global h
 h = list()
 
+
+
 class WOJTest(unittest.TestCase):
     def __init__(self, *args, loglevel=logging.DEBUG, **kwargs):
         super(WOJTest, self).__init__(*args, **kwargs)
@@ -224,33 +226,36 @@ class WOJTest(unittest.TestCase):
         spinWidget = self.hmi.buttonSpin
 
         self.assertEqual(self.hmi.main_scorebar.player0.getFreeTurnTokens(), str(0))
-        self.logger.debug("starting spin 1")
+        self.logger.debug("==============starting spin 1================")
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(5000)
 
-        self.logger.debug("starting spin 2")
+        self.logger.debug("==============starting spin 2================")
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(3000)
-        self.logger.debug("starting spin 3")
+        self.logger.debug("==============starting spin 3================")
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(3000)
         self.assertEqual(self.hmi.main_scorebar.player0.getFreeTurnTokens(), str(1))
         self.assertEqual(self.hmi.main_scorebar.player0.getScore(), str(0))
 
-        self.logger.debug("starting spin 4")
+        self.logger.debug("==============starting spin 4================")
         QTest.mouseClick(spinWidget, Qt.LeftButton)
-        QTest.qWait(2000)
+        QTest.qWait(4000)
         self.logger.debug("right before thought about issue")
         while not hasattr(self.hmi, "scene_question"):
             QTest.qWait(50)
+
+        self.logger.debug("==============starting spin 5================")
         QTest.mouseClick(self.hmi.scene_question.buttonReveal, Qt.LeftButton)
         QTest.qWait(1000)
         QTest.mouseClick(self.hmi.scene_question.buttonIncorrect, Qt.LeftButton)
         QTest.qWait(1000)
         QTest.mouseClick(self.hmi.scene_question.buttonFreeTurnSpend, Qt.LeftButton)
-        QTest.qWait(2000)
+        QTest.qWait(3000)
         self.assertEqual(self.hmi.main_scorebar.player0.getScore(), "-100")
         self.assertEqual(self.hmi.main_scorebar.player0.getFreeTurnTokens(), str(0))
+
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)

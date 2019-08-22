@@ -154,6 +154,8 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.labelQuestionNameNew.show()
 
     def render_controls_reveal(self) -> None:
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
         self.buttonReveal.show()
         self.controlLayout.addWidget(self.buttonReveal)
 
