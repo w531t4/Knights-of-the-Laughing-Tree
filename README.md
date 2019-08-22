@@ -13,9 +13,21 @@ The famous Wheel of Jeopardy
 * Glenn Andal
 * Markham Shofner
 
-###### Dependencies
-* Docker
-* Python3
+#### Dependency Installation Instructions
+
+- A computer running a unix operating system
+  - Run application on either a Mac or Linux distro
+- Python3
+  - Installed by default on Linux, download on Mac at https://www.python.org/downloads/mac-osx/
+- Python3 Pyqt5
+  - pip3 install --user pyqt5
+  - sudo apt-get install python3-pyqt5
+  - sudo apt-get install pyqt5-dev-tools
+  - sudo apt-get install qttools5-dev-tools
+- Python3 UI
+  - pip3 install ui
+- The Wheel of Jeopardy project files
+  - Submitted in the deliverable
 
 ###### How To Run It
 Normal Mode:
