@@ -89,6 +89,9 @@ class PlayerFrame(QtWidgets.QFrame, Ui_PlayerFrame):
                                         text-transform: capitalize;
                                         ''')
 
+    def getScore(self) -> int:
+        return self.label_gamescore.text()
+
     def setScore(self, score: int):
         self.label_gamescore.setText(str(score))
         self.label_gamescore.setAlignment(Qt.AlignLeft)
