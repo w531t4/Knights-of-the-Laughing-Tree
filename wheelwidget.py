@@ -27,7 +27,7 @@ class ArrowPointer(QLabel):
 
 
 class WheelPhoto(QLabel):
-    def __init__(self, parent=None, imageName: str="Wheel_12.png", loglevel=logging.DEBUG):
+    def __init__(self, parent=None, imageName: str="Wheel_Higher_Res.png", loglevel=logging.DEBUG):
         super(WheelPhoto, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
