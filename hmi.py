@@ -18,7 +18,7 @@ from PyQt5.QtCore import QThread, QRect, pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5 import uic, QtGui, QtTest, QtWidgets
 from PyQt5.Qt import QTransform
 from PyQt5.QtMultimedia import QSound
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QSizePolicy
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget
 from RoundSpinFrame import RoundSpinFrame
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
@@ -289,9 +289,27 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
             "Bankrupt" : QSound("Bankrupt.wav"),
             "Double" : QSound("Double.wav")
         }
-        self.baseLayout.setStretchFactor(self.contextLayout, 1)
-        self.baseLayout.setStretchFactor(self.bodyLayout, 5)
-        self.baseLayout.setStretchFactor(self.controlLayout, 1)
+        self.stack = QStackedWidget()
+        for i in reversed(range(self.baseLayout.count())):
+            self.baseLayout.takeAt(0)
+        for i in reversed(range(self.verticalLayout.count())):
+            self.verticalLayout.takeAt(0)
+        self.verticalLayout.addWidget(self.stack)
+        self.setCentralWidget(self.stack)
+        self.mw = QVBoxLayout()
+        self.mw.addLayout(self.contextLayout)
+        self.mw.addLayout(self.bodyLayout)
+        self.mw.addLayout(self.controlLayout)
+        self.qw = QWidget()
+        self.qw.setLayout(self.mw)
+
+        self.mw.setStretchFactor(self.contextLayout, 1)
+        self.mw.setStretchFactor(self.bodyLayout, 5)
+        self.mw.setStretchFactor(self.controlLayout, 1)
+
+        self.stack.raise_()
+        self.stack.addWidget(self.qw)
+
 
         self.MSG_controller = messaging.HMIMessageController(loglevel=loglevel,
                                                           msg_controller_name="HMILogic",
@@ -299,6 +317,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                           target_port=self.game_port)
 
         self.registration_wizard = wizard.MyWizard(ui_file="register_user_wizard.ui", loglevel=self.loglevel)
+        self.stack.addWidget(self.registration_wizard)
 
         self.logic_controller = HMILogicController(loglevel=loglevel)
         self.logic_controller_thread = QThread(self)
@@ -422,7 +441,18 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.board = Board(self)
         self.bodyLayout.addWidget(self.board)
         self.bodyLayout.setStretchFactor(self.board, 16)
-
+        self.scene_question = questionanswer.MyQuestionScene(
+            parent=self,
+            ui_file="scene_question.ui",
+            loglevel=self.loglevel,
+        )
+        self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
+        self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
+        self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
+        self.scene_question.signal_skipfreeturn.connect(self.logic_controller.notifyFreeTurnSkip)
+        self.scene_question.signal_spendfreeturn.connect(self.logic_controller.notifyFreeTurnSpend)
+        self.scene_question.show()
+        self.stack.addWidget(self.scene_question)
 
         self.timer_obj = MyTimer(loglevel=self.loglevel)
 
@@ -430,6 +460,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer_thread.start()
         self.timer_obj.moveToThread(self.timer_thread)
         self.signal_start_timer.connect(self.timer_obj.count_down)
+        self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
 
         self.logger.debug("building connection to start timer")
         self.logic_controller.signal_start_timer.connect(self.startTimer)
@@ -451,16 +482,19 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logic_controller_thread.start()
         self.MSG_controller.start()
-        self.main = self.takeCentralWidget()
+        #self.main = self.takeCentralWidget()
         if not skip_userreg:
-            self.setCentralWidget(self.registration_wizard)
+            self.stack.setCurrentWidget(self.registration_wizard)
+            #self.setCentralWidget(self.registration_wizard)
         else:
-            self.setCentralWidget(self.main)
+            self.stack.setCurrentWidget(self.qw)
+            #self.setCentralWidget(self.main)
 
     @pyqtSlot()
     def shiftToComboWheelBoardScore(self):
         self.logger.debug("Shifting focus to combo-wheel-board-score panel")
-        self.setCentralWidget(self.main)
+        self.stack.setCurrentWidget(self.qw)
+        #self.setCentralWidget(self.main)
         self.setStyleSheet("background-color: gray;")
 
     @pyqtSlot(list)
@@ -474,10 +508,12 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
                                                         loglevel=self.loglevel,
                                                         categories=categories,
                                                         audience=target)
+                self.stack.addWidget(self.cat_select)
+                self.stack.setCurrentWidget(self.cat_select)
                 self.cat_select.signal_submit_category.connect(self.logic_controller.returnCategory)
                 self.cat_select.signal_shift_scene.connect(self.shiftToComboWheelBoardScore)
-                self.main = self.takeCentralWidget()
-                self.setCentralWidget(self.cat_select)
+                #self.main = self.takeCentralWidget()
+                #self.setCentralWidget(self.cat_select)
                 #self.cat_select.show()
 
     @pyqtSlot()
@@ -489,22 +525,17 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def displayQuestion(self, question_dict):
         """Render provided question to display"""
 
-        self.scene_question = questionanswer.MyQuestionScene(
-            parent=self,
-            ui_file="scene_question.ui",
-            loglevel=self.loglevel,
-        )
-        self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
+        self.stack.setCurrentWidget(self.scene_question)
         self.scene_question.set_context(self.playerData)
         self.scene_question.set_category(question_dict['category'])
         self.scene_question.set_value(question_dict['score'])
 
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
-        self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
 
-        self.main = self.takeCentralWidget()
-        self.setCentralWidget(self.scene_question)
+
+        #self.main = self.takeCentralWidget()
+        #self.setCentralWidget(self.scene_question)
         self.logger.debug("shift scene to question/answer")
         self.logic_controller.issueAck("displayQuestion")
 
@@ -513,8 +544,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         """Render provided question to display"""
         self.scene_question.set_answer(question_dict['answer'])
         self.scene_question.render_controls_correct_incorrect()
-        self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
-        self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
+
 
     @pyqtSlot(int)
     def spinWheel(self, destination):
@@ -761,8 +791,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def determineFreeTurnSpend(self):
         self.scene_question.render_controls_freeturn()
-        self.scene_question.signal_skipfreeturn.connect(self.logic_controller.notifyFreeTurnSkip)
-        self.scene_question.signal_spendfreeturn.connect(self.logic_controller.notifyFreeTurnSpend)
+
 
     def close(self):
         self.logger.debug("closing")

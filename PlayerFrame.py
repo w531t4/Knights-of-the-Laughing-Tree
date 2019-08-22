@@ -109,6 +109,13 @@ class PlayerFrame(QtWidgets.QFrame, Ui_PlayerFrame):
     def setFreeTurnTokens(self, num_tokens: int):
         self.label_freeturns.setText(str(num_tokens))
 
+    def getFreeTurnTokens(self):
+        val = self.label_freeturns.text()
+        if "FreeTurns: " in val:
+            return val.split("FreeTurns: ")[1]
+        else:
+            return self.label_freeturns.text()
+
     def mousePressEvent(self, event):
         self.logger.debug("mousepressevent occurred, i am %s" % (self.objectName()))
         if hasattr(self, "text"):
