@@ -94,7 +94,7 @@ class PlayerFrame(QtWidgets.QFrame, Ui_PlayerFrame):
         self.label_gamescore.setAlignment(Qt.AlignLeft)
         self.label_gamescore.setStyleSheet('''
                                     font-family: Verdana, Geneva, sans-serif;
-                                    font-size: 100px;
+                                    font-size: 75px;
                                     color: black;
                                     font-weight: 700;
                                     text-decoration: none;

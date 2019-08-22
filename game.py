@@ -52,14 +52,14 @@ class Game(QThread):
     def run(self):
         self.maxPlayers = 3
         self.minPlayers = 2
-        self.totalRounds = 2 # TODO: Review self.totalRounds
+        self.totalRounds = 2
         self.round = 0
         self.spins = 0
-        self.delay_before_question = 4000
+        self.delay_before_question = 2000
 
-        self.maxSpins = 8 # TODO: Change back to 50
+        self.maxSpins = 50
+
         # game config
-        # TODO: Alter Geometry
         self.geometry_width = 6
         self.geometry_height = 5
         self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
