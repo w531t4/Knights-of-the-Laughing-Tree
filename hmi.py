@@ -423,6 +423,7 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.bodyLayout.addWidget(self.board)
         self.bodyLayout.setStretchFactor(self.board, 16)
 
+
         self.timer_obj = MyTimer(loglevel=self.loglevel)
 
         self.timer_thread = QThread()
@@ -434,6 +435,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logic_controller.signal_start_timer.connect(self.startTimer)
         self.logger.debug("building connection to stop timer")
         self.logic_controller.signal_stop_timer.connect(self.stopTimer)
+
+
+
 
         self.logic_controller.signal_update_main_score_bar_player.connect(self.main_scorebar.updatePlayers)
         self.logic_controller.signal_retain_player_data.connect(self.retainPlayerData)
@@ -484,23 +488,17 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot(dict)
     def displayQuestion(self, question_dict):
         """Render provided question to display"""
+
         self.scene_question = questionanswer.MyQuestionScene(
-                                                            parent=self,
-                                                            ui_file="scene_question.ui",
-                                                            loglevel=self.loglevel,
-                                                             )
+            parent=self,
+            ui_file="scene_question.ui",
+            loglevel=self.loglevel,
+        )
+        self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
         self.scene_question.set_context(self.playerData)
-        if not self.timer_obj._running:
-            self.signal_start_timer.connect(self.timer_obj.count_down)
-
-            self.logger.debug("building connection to start timer")
-            self.logic_controller.signal_start_timer.connect(self.startTimer)
-            self.logger.debug("building connection to stop timer")
-            self.logic_controller.signal_stop_timer.connect(self.stopTimer)
-
         self.scene_question.set_category(question_dict['category'])
         self.scene_question.set_value(question_dict['score'])
-        self.timer_obj.signal_update_timer.connect(self.scene_question.updateTimer)
+
         self.scene_question.set_question(question_dict['question'])
         self.scene_question.render_controls_reveal()
         self.scene_question.signal_reveal.connect(self.logic_controller.notifyNeedAnswer)
