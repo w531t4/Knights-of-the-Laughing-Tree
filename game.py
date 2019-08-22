@@ -55,6 +55,7 @@ class Game(QThread):
         self.totalRounds = 2 # TODO: Review self.totalRounds
         self.round = 0
         self.spins = 0
+        self.delay_before_question = 4000
 
         self.maxSpins = 8 # TODO: Change back to 50
         # game config
@@ -515,6 +516,7 @@ class Game(QThread):
 
     def pickRandomCategory(self, index):
         self.logger.debug("Start")
+        QtTest.QTest.qWait(self.delay_before_question)
         self.logger.debug("index=" + str(index))
         category = self.current_trivia[index-6]['category']
         self.logger.debug("category=" + str(category))
@@ -597,7 +599,7 @@ class Game(QThread):
         # ) == 0:
         #           request selection of new category (by Current Player)
         self.logger.debug("Start")
-
+        QtTest.QTest.qWait(self.delay_before_question)
         # TODO: Resolve Categories
         categorylist = self.current_triviaDB.getPlayableCategories()
 
@@ -621,7 +623,7 @@ class Game(QThread):
         # ) == 0:
         #           request selection of new category (by Opponents)
         self.logger.debug("Start")
-
+        QtTest.QTest.qWait(self.delay_before_question)
         # TODO: Resolve Categories
         categorylist = self.current_triviaDB.getPlayableCategories()
 
