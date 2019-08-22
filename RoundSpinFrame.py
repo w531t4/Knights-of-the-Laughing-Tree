@@ -44,31 +44,22 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
         self.labelSpinsOccurred = QLabel(self)
         self.labelSpinsMax = QLabel(self)
 
-        self.roundValueLayout = QtWidgets.QVBoxLayout(self)
-        self.spinsValueLayout = QtWidgets.QVBoxLayout(self)
-
-
         self.baseLayout.setObjectName("baseLayout")
         self.roundLayout.addWidget(self.labelRoundCaption)
-        self.roundLayout.addLayout(self.roundValueLayout)
+        self.roundLayout.addWidget(self.labelRoundNumber)
+        self.roundLayout.addWidget(self.labelRoundTotal)
         self.roundLayout.setStretchFactor(self.labelRoundCaption, 5)
-        self.roundLayout.setStretchFactor(self.roundValueLayout, 5)
+        self.roundLayout.setStretchFactor(self.labelRoundNumber, 2)
+        self.roundLayout.setStretchFactor(self.labelRoundTotal, 1)
 
-        self.roundValueLayout.addWidget(self.labelRoundNumber)
-        self.roundValueLayout.addWidget(self.labelRoundTotal)
-        self.roundValueLayout.setStretchFactor(self.labelRoundNumber, 2)
-        self.roundValueLayout.setStretchFactor(self.labelRoundTotal, 1)
 
 
         self.spinsLayout.addWidget(self.labelSpinsCaption)
-        self.spinsLayout.addLayout(self.spinsValueLayout)
+        self.spinsLayout.addWidget(self.labelSpinsOccurred)
+        self.spinsLayout.addWidget(self.labelSpinsMax)
         self.spinsLayout.setStretchFactor(self.labelSpinsCaption, 5)
-        self.spinsLayout.setStretchFactor(self.spinsValueLayout, 5)
-
-        self.spinsValueLayout.addWidget(self.labelSpinsOccurred)
-        self.spinsValueLayout.addWidget(self.labelSpinsMax)
-        self.spinsValueLayout.setStretchFactor(self.labelSpinsOccurred, 2)
-        self.spinsValueLayout.setStretchFactor(self.labelSpinsMax, 1)
+        self.spinsLayout.setStretchFactor(self.labelSpinsOccurred, 2)
+        self.spinsLayout.setStretchFactor(self.labelSpinsMax, 1)
 
         self.setRound()
         self.setRoundTotal()
@@ -83,6 +74,7 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
 
     def setRound(self, roundNumber: int = 0) -> None:
         self.labelRoundCaption.setText("Round")
+        self.labelRoundCaption.setAlignment(Qt.AlignBottom | Qt.AlignCenter)
         self.labelRoundCaption.setStyleSheet('''
                                     font-family: Verdana, Geneva, sans-serif;
                                     font-size: 15px;
@@ -94,7 +86,7 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
                                     text-transform: capitalize;
                                     ''')
         self.labelRoundNumber.setText(str(roundNumber))
-        self.labelRoundNumber.setAlignment(Qt.AlignCenter)
+        self.labelRoundNumber.setAlignment(Qt.AlignBottom | Qt.AlignCenter)
         self.labelRoundNumber.setStyleSheet('''
                                     font-family: Verdana, Geneva, sans-serif;
                                     font-size: 15px;
@@ -108,7 +100,7 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
 
     def setRoundTotal(self, maxRounds: int = 2) -> None:
         self.labelRoundTotal.setText("of %s" % str(maxRounds))
-        self.labelRoundTotal.setAlignment(Qt.AlignCenter)
+        self.labelRoundTotal.setAlignment(Qt.AlignBottom | Qt.AlignCenter)
         self.labelRoundTotal.setStyleSheet('''
                                     font-family: Verdana, Geneva, sans-serif;
                                     font-size: 15px;
@@ -123,7 +115,7 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
 
     def setSpinsMax(self, max: int = 50) -> None:
         self.labelSpinsMax.setText("of %s" % str(max))
-        self.labelSpinsMax.setAlignment(Qt.AlignCenter)
+        self.labelSpinsMax.setAlignment(Qt.AlignCenter | Qt.AlignTop)
         self.labelSpinsMax.setStyleSheet('''
                                     font-family: Verdana, Geneva, sans-serif;
                                     font-size: 15px;
@@ -147,8 +139,8 @@ class RoundSpinFrame(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_RSFrame):
                                     text-transform: capitalize;
                                     '''
         self.labelSpinsCaption.setText("Spins")
-        self.labelSpinsCaption.setAlignment(Qt.AlignCenter)
+        self.labelSpinsCaption.setAlignment(Qt.AlignCenter | Qt.AlignTop)
         self.labelSpinsCaption.setStyleSheet(stylesheet)
         self.labelSpinsOccurred.setText(str(spinsOccurred))
-        self.labelSpinsOccurred.setAlignment(Qt.AlignCenter)
+        self.labelSpinsOccurred.setAlignment(Qt.AlignCenter | Qt.AlignTop)
         self.labelSpinsOccurred.setStyleSheet(stylesheet)
