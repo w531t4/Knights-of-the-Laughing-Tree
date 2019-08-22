@@ -458,6 +458,7 @@ class Game(QThread):
                         if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
                             self.logger.debug("user indicated to spend ft token")
                             self.getCurrentPlayer().spendFreeTurnToken()
+                            self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
                             # user indicated to spend free turn token
                             correctResponseReceived = True
                             doChangeTurn = False
