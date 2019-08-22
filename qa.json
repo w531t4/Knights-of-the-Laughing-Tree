@@ -38,7 +38,7 @@
     "question": "What is cos(2pi)?"},
   {
     "category": "Trig",
-    "answer": "1",
+    "answer": "0",
     "question": "What is sin(0)?"
   },
   {
@@ -264,7 +264,7 @@
     "category": "Animals",
     "answer": "Bullfrog ",
     "question": "What animal never sleeps? "},
-  
+
   {
     "category": "Movies",
     "answer": "Bride of Frankenstein",
@@ -298,7 +298,7 @@
     "category": "Movies",
     "answer": "Police getting beaten",
     "question": "In South Dakota what is illegal to show in movies? "},
-  
+
   {
     "category": "Beatles Lyrics",
     "answer": "So far away",
