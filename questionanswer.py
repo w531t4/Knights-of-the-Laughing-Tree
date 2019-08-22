@@ -56,32 +56,19 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.vstackLayout.setStretchFactor(self.bodyLayout, 4)
         self.vstackLayout.setStretchFactor(self.controlLayout, 1)
         self.timer = QtWidgets.QLCDNumber(self)
+
         self.scorebar = ScoreBar(self)
-
-    def set_context(self, data) -> None:
-        self.scorebar.updatePlayers(data)
         self.contextLayout.addWidget(self.scorebar)
-        self.logger.debug("at set_context")
-        self.labelCurrentPlayer.hide()
-
-        self.timer.setGeometry(QtCore.QRect(130, 387, 64, 23))
-        self.timer.setObjectName("timer")
-        self.timer.setEnabled(True)
-        self.timer.setDigitCount(len(str(float("1"))))
-        self.timer.display("1")
-        self.timer.setDigitCount(2)
         self.contextLayout.addWidget(self.timer)
 
         self.qvalueLayout = QtWidgets.QVBoxLayout()
         self.qvalueLayout.setObjectName("qvalueLayout")
-
         self.labelValueUpper = QtWidgets.QLabel(self)
         self.labelValueUpper.setText("For")
         self.labelValueUpper.setAlignment(Qt.AlignCenter)
         self.labelValueLower = QtWidgets.QLabel(self)
         self.labelValueLower.setText("Points")
         self.labelValueLower.setAlignment(Qt.AlignCenter)
-
         self.labelValueName = ValueLabel(self)
         self.labelValueName.setAlignment(Qt.AlignCenter)
         self.qvalueLayout.addWidget(self.labelValueUpper)
@@ -96,48 +83,86 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
         self.contextLayout.setStretchFactor(self.timer, 2)
         self.contextLayout.setStretchFactor(self.qvalueLayout, 1)
 
-    def set_value(self, value: str) -> None:
-        self.labelValueName.setText(value)
-
-    def set_question(self, question: str) -> None:
         self.labelQuestionNameNew = QuestionLabel(self)
-        self.labelQuestionNameNew.setText(question)
         self.labelQuestionNameNew.setAlignment(Qt.AlignCenter)
         self.bodyLayout.replaceWidget(self.labelQuestionName, self.labelQuestionNameNew)
         self.labelQuestionName.hide()
 
-    def set_category(self, category: str) -> None:
         self.labelCategoryNameNew = CategoryLabel(self)
-        self.labelCategoryNameNew.setText(category)
         self.labelCategoryNameNew.setAlignment(Qt.AlignCenter)
         self.headerLayout.replaceWidget(self.labelCategoryName, self.labelCategoryNameNew)
         self.labelCategoryName.hide()
 
-    def set_answer(self, answer: str) -> None:
-        self.labelQuestionNameNew.setText(answer)
 
-    def render_controls_reveal(self) -> None:
         self.buttonReveal = HoverButton()
-        self.buttonReveal.clicked.connect(self.somethingClicked)
         self.buttonReveal.setText("Reveal Answer")
         self.buttonReveal.setAlignment(Qt.AlignCenter)
-        self.controlLayout.addWidget(self.buttonReveal)
-
-    def render_controls_correct_incorrect(self) -> None:
-        for i in reversed(range(self.controlLayout.count())):
-            self.controlLayout.itemAt(i).widget().hide()
+        self.buttonReveal.clicked.connect(self.somethingClicked)
+        self.buttonReveal.hide()
 
         self.buttonCorrect = HoverButton(self)
         self.buttonCorrect.setText("Correct")
         self.buttonCorrect.setAlignment(Qt.AlignCenter)
         self.buttonCorrect.clicked.connect(self.action_correct)
-        self.controlLayout.addWidget(self.buttonCorrect)
-
+        self.buttonCorrect.hide()
 
         self.buttonIncorrect = HoverButton(self)
         self.buttonIncorrect.setText("Incorrect")
         self.buttonIncorrect.setAlignment(Qt.AlignCenter)
         self.buttonIncorrect.clicked.connect(self.action_incorrect)
+        self.buttonIncorrect.hide()
+
+        self.buttonFreeTurnSpend = HoverButton(self)
+        self.buttonFreeTurnSpend.setText("Spend FreeTurn Token")
+        self.buttonFreeTurnSpend.setAlignment(Qt.AlignCenter)
+        self.buttonFreeTurnSpend.clicked.connect(self.action_spendfreeturn)
+        self.buttonFreeTurnSpend.hide()
+
+        self.buttonFreeTurnSkip = HoverButton(self)
+        self.buttonFreeTurnSkip.setText("Skip")
+        self.buttonFreeTurnSkip.setAlignment(Qt.AlignCenter)
+        self.buttonFreeTurnSkip.clicked.connect(self.action_skipfreeturn)
+        self.buttonFreeTurnSkip.hide()
+
+    def set_context(self, data) -> None:
+        self.scorebar.updatePlayers(data)
+
+        self.logger.debug("at set_context")
+        self.labelCurrentPlayer.hide()
+
+        self.timer.setGeometry(QtCore.QRect(130, 387, 64, 23))
+        self.timer.setObjectName("timer")
+        self.timer.setEnabled(True)
+        self.timer.setDigitCount(len(str(float("1"))))
+        self.timer.display("1")
+        self.timer.setDigitCount(2)
+
+    def set_value(self, value: str) -> None:
+        self.labelValueName.setText(value)
+        self.labelValueName.show()
+
+    def set_question(self, question: str) -> None:
+        self.labelQuestionNameNew.setText(question)
+        self.labelQuestionNameNew.show()
+
+    def set_category(self, category: str) -> None:
+        self.labelCategoryNameNew.setText(category)
+        self.labelCategoryNameNew.show()
+
+    def set_answer(self, answer: str) -> None:
+        self.labelQuestionNameNew.setText(answer)
+        self.labelQuestionNameNew.show()
+
+    def render_controls_reveal(self) -> None:
+        self.buttonReveal.show()
+        self.controlLayout.addWidget(self.buttonReveal)
+
+    def render_controls_correct_incorrect(self) -> None:
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
+        self.buttonIncorrect.show()
+        self.buttonCorrect.show()
+        self.controlLayout.addWidget(self.buttonCorrect)
         self.controlLayout.addWidget(self.buttonIncorrect)
 
         self.controlLayout.setStretchFactor(self.buttonCorrect, 2)
@@ -146,17 +171,9 @@ class MyQuestionScene(QtWidgets.QFrame, QtWidgets.QMainWindow, Ui_QuestionScene
     def render_controls_freeturn(self) -> None:
         for i in reversed(range(self.controlLayout.count())):
             self.controlLayout.itemAt(i).widget().hide()
-
-        self.buttonFreeTurnSpend = HoverButton(self)
-        self.buttonFreeTurnSpend.setText("Spend FreeTurn Token")
-        self.buttonFreeTurnSpend.setAlignment(Qt.AlignCenter)
-        self.buttonFreeTurnSpend.clicked.connect(self.action_spendfreeturn)
+        self.buttonFreeTurnSkip.show()
+        self.buttonFreeTurnSpend.show()
         self.controlLayout.addWidget(self.buttonFreeTurnSpend)
-
-        self.buttonFreeTurnSkip = HoverButton(self)
-        self.buttonFreeTurnSkip.setText("Skip")
-        self.buttonFreeTurnSkip.setAlignment(Qt.AlignCenter)
-        self.buttonFreeTurnSkip.clicked.connect(self.action_skipfreeturn)
         self.controlLayout.addWidget(self.buttonFreeTurnSkip)
 
     @pyqtSlot(str)
