@@ -1,12 +1,8 @@
-
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
-
 from PyQt5 import uic, QtWidgets
-
 import logging
 import logs
 from HoverButton import HoverButton
-
 
 # We'll keep this during development as turning this off and ingesting the raw py allows for things like autocomplete
 global IMPORT_UI_ONTHEFLY

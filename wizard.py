@@ -40,7 +40,6 @@ class MyWizard(QtWidgets.QWizard, QtWidgets.QMainWindow, Ui_Wizard):
         self.pageUserEntry.signal_ask_for_validation.connect(self.submit_players)
         self.buttonClearPlayers.clicked.connect(self.clearPlayers)
 
-
     @pyqtSlot()
     def add_user(self):
         proposedPlayerName = self.inputPlayerName.text()

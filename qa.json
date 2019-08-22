@@ -2,39 +2,70 @@
   {
     "category": "Algebra",
     "answer": "4",
-    "question": "2+2"},
+    "question": "What is 2+2?"
+  },
   {
     "category": "Algebra",
     "answer": "16",
-    "question": "4*4"},
+    "question": "What is 4*4?"
+  },
   {
-    "category": "Trigonometry",
-    "answer": "0",
-    "question": "sin(pi)"},
+    "category": "Algebra",
+    "answer": "49",
+    "question": "What is 7*7?"
+  },
   {
-    "category": "Trigonometry",
-    "answer": "-1",
-    "question": "cos(pi)"},
+    "category": "Algebra",
+    "answer": "10",
+    "question": "What is 40/4?"
+  },
   {
-    "category": "Trigonometry",
+    "category": "Algebra",
     "answer": "1",
-    "question": "cos(2pi)"},
+    "question": "What is 3*1/3?"
+  },
+  {
+    "category": "Trig",
+    "answer": "0",
+    "question": "What is sin(pi)?"},
+  {
+    "category": "Trig",
+    "answer": "-1",
+    "question": "What is cos(pi)?"},
+  {
+    "category": "Trig",
+    "answer": "1",
+    "question": "What is cos(2pi)?"},
+  {
+    "category": "Trig",
+    "answer": "0",
+    "question": "What is sin(0)?"
+  },
+  {
+    "category": "Trig",
+    "answer": "1",
+    "question": "What is cos(0)?"
+  },
   {
     "category": "Calculus",
     "answer": "8x",
-    "question": "4(x^2)"},
+    "question": "What is 4(x^2)?"},
   {
     "category": "Calculus",
     "answer": "1/x",
-    "question": "ln(x)"},
+    "question": "What is the derivative of ln(x)?"},
   {
     "category": "Calculus",
     "answer": "1",
-    "question": "x"},
+    "question": "What is the derivative of x?"},
    {
     "category": "Calculus",
     "answer": "9",
-    "question": "9x"},
+    "question": "What is the derivative of 9x?"},
+    {
+     "category": "Calculus",
+     "answer": "10",
+     "question": "What is the derivative of 10x?"},
   {
     "category": "Portmath",
     "answer": "105",
@@ -51,10 +82,6 @@
     "category": "Portmath",
     "answer": "465",
     "question": "https+ssh"},
-  {
-    "category": "Geography",
-    "answer": "New York",
-    "question": "America's smallest county in area"},
   {
     "category": "Politics",
     "answer": "Calvin Coolidge",
@@ -129,7 +156,7 @@
     "question": "Maryland" },
     {
     "category": "State Capitals",
-    "answer": "New York",
+    "answer": "Albany",
     "question": "New York" },
     {
     "category": "State Capitals",
@@ -237,6 +264,41 @@
     "category": "Animals",
     "answer": "Bullfrog ",
     "question": "What animal never sleeps? "},
+
+  {
+    "category": "Movies",
+    "answer": "Bride of Frankenstein",
+    "question": "Who was the first female monster to appear in a movie? "},
+
+  {
+    "category": "Movies",
+    "answer": "Psycho",
+    "question": "What classic film was called production 9401 during filming? "},
+
+  {
+    "category": "Movies",
+    "answer": "Peter Finch",
+    "question": "Who won an Oscar posthumously for Network?"},
+
+    {
+    "category": "Movies",
+    "answer": "Francois Trudeau",
+    "question": "Who directed the movie of Ray Bradbury's Fahrenheit 451? "},
+    {
+    "category": "Movies",
+    "answer": "Palpatine",
+    "question": "In the movie Star Wars, what is the Emperors last name"},
+
+    {
+    "category": "Movies",
+    "answer": "Silence of the Lambs",
+    "question": "What film was the last sequel to win the best picture award"},
+
+    {
+    "category": "Movies",
+    "answer": "Police getting beaten",
+    "question": "In South Dakota what is illegal to show in movies? "},
+
   {
     "category": "Beatles Lyrics",
     "answer": "So far away",
@@ -394,7 +456,7 @@
   },
   {
     "category": "Harry Potter",
-    "answer": "Nothing",
+    "answer": "Tail hair of a Thestral",
     "question": "What is inside the Elder Wand?"
   },
   {
@@ -409,8 +471,8 @@
   },
   {
     "category": "Harry Potter",
-    "answer": "1",
-    "question": "How many true prophecies did Professor Trelawney have in her life?"
+    "answer": "2",
+    "question": "How many true prophecies did Professor Trelawney make in her life?"
   },
   {
     "category": "Harry Potter",
@@ -421,5 +483,95 @@
     "category": "Harry Potter",
     "answer": "His mouth",
     "question": "What did Harry use to catch his very first golden snitch?"
+  },
+  {
+    "category": "Military",
+    "answer": "Captain",
+    "question": "What the US Navy's rank that is equivalent to an Army Colonel?"
+  },
+  {
+    "category": "Military",
+    "answer": "Battleship",
+    "question": "What the most common type of ship in the US Navy?"
+  },
+  {
+    "category": "Military",
+    "answer": "Zumwalt",
+    "question": "What the class of the US Navy's new 'stealth ship'?"
+  },
+  {
+    "category": "Military",
+    "answer": "O-7 or Rear Admiral",
+    "question": "What is the minimum rank in the US Navy to be considered a flag officer?"
+  },
+  {
+    "category": "Military",
+    "answer": "Russian pipeline",
+    "question": "The largest non-nuclear explosion was caused by US malware. What did they blow up?"
+  },
+  {
+    "category": "Military",
+    "answer": "Air Force",
+    "question": "What branch of the US military has produced the most astronauts?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Subabro",
+    "question": "What is a slang term for a bachelor that drives a Subaru?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Coupe",
+    "question": "What term is used to describe a model of car with only two doors?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Lamborghini",
+    "question": "Out of Ferrari, McLaren, and Lamborghini, which company does not have a Formula 1 team?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Tesla",
+    "question": "What US company makes the fastest production sedan?"
+  },
+  {
+    "category": "Cars",
+    "answer": "Germany",
+    "question": "What country is BMW headquartered?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "140.6 miles",
+    "question": "The longest triathlon is called the Iron Man. How many miles is it?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Swimming",
+    "question": "In a triathlon, what event is first?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "1.5 kilometers",
+    "question": "How long is the swim in an Olympic length triathlon?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Kona, Hawaii",
+    "question": "Where is the Iron Man World Championship held?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Transition",
+    "question": "In a triathlon, what is the time between events called?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "Super Sprint",
+    "question": "What is the shortest triathlon length recognized by USA Triathlon?"
+  },
+  {
+    "category": "Triathlon",
+    "answer": "16 hours 50 minutes",
+    "question": "How long do you have to complete an Iron Man triathlon before you are disqualified?"
   }
 ]

@@ -4,7 +4,6 @@ import sys
 
 
 def build_logger(mod, loglevel):
-    # logging.basicConfig(stream=sys.stdout, level=loglevel)
     # Logging Initialization taken almost verbatim from https://docs.python.org/3.1/library/logging.html
     logger = logging.getLogger(mod)
     if not logger.hasHandlers():

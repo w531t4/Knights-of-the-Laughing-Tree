@@ -1,7 +1,5 @@
 #!/bin/env python3
 
-import socket
-
 
 class Player:
     def __init__(self, id=None, name=""):
@@ -9,6 +7,7 @@ class Player:
         self.gameScore = 0
         self.freeTurnTokens = 0
         self.name = name
+        self.active = False
         if id is None:
             raise Exception("Did not include ID while creating Player object. An ID must be provided.")
         else:
@@ -19,6 +18,15 @@ class Player:
 
     def setScore(self, score):
         self.roundScore = score
+
+    def setActive(self):
+        self.active = True
+
+    def setInactive(self):
+        self.active = False
+
+    def getActive(self) -> bool:
+        return self.active
 
     def getName(self):
         return self.name
@@ -52,4 +60,5 @@ class Player:
         output['roundScore'] = self.getRoundScore()
         output['freeTurnTokens'] = self.freeTurnTokens
         output['id'] = self.id
+        output['active'] = self.active
         return dict(output)

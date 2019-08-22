@@ -14,23 +14,52 @@ import time
 import json
 import logging
 import logs
+from PyQt5.QtCore import QThread
+from PyQt5 import QtTest
 
 
-class Game:
-    def __init__(self, loglevel=logging.INFO):
+class Game(QThread):
+    def __init__(self,
+                 parent=None,
+                 loglevel=logging.INFO,
+                 hmi_port=None,
+                 game_port=None,
+                 predetermined_spins=None,
+                 predetermined_players=None,
+                 predetermined_startingplayer=None):
+        super(Game, self).__init__(parent)
         self.logger = logs.build_logger(__name__, loglevel)
         self.loglevel = loglevel
+        self.hmi_port = hmi_port
+        self.game_port = game_port
+        self.logger.debug("selected hmi_port=%s" % (self.hmi_port))
+        self.logger.debug("selected game_port=%s" % (self.game_port))
 
-        self.players = []
+        self.predetermined_spins = queue.Queue()
+        if predetermined_spins is not None:
+            [self.predetermined_spins.put(x) for x in predetermined_spins]
+        self.players = list()
+        self.use_predetermined_players = False
+        if predetermined_players is not None:
+            self.logger.debug("using predetermined players")
+            self.use_predetermined_players = True
+            for playerName in predetermined_players:
+                playerIndex = len(self.players)
+                self.players.append(Player(id=playerIndex, name=playerName))
+        self.use_predetermined_startingplayer = predetermined_startingplayer
+        self.logger.debug("predetermined_startingplayer = %s" % predetermined_startingplayer)
+
+    def run(self):
         self.maxPlayers = 3
         self.minPlayers = 2
-        self.totalRounds = 2 # TODO: Review self.totalRounds
+        self.totalRounds = 2
         self.round = 0
         self.spins = 0
+        self.delay_before_question = 2000
 
-        self.maxSpins = 8 # TODO: Change back to 50
+        self.maxSpins = 50
+
         # game config
-        # TODO: Alter Geometry
         self.geometry_width = 6
         self.geometry_height = 5
         self.triviadb = Trivia(loglevel=self.loglevel, min_questions=self.geometry_height)
@@ -47,45 +76,25 @@ class Game:
         #   How many players are playing?
         #   Gather information about each player?
 
-        self.hmi_receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Configure Socket to allow reuse of sessions in TIME_WAIT. Otherwise, "Address already in use" is encountered
-        # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
-        # by ForceBru
-        self.hmi_receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.hmi_receiver.bind(("127.0.0.1", commsettings.GAME_HMI_LISTEN))
-        self.hmi_receiver.listen(2)
-        self.hmi_receiver_queue = queue.Queue()
-        self.msg_controller = messaging.Messaging(commsettings.MESSAGE_BREAKER,
-                                                        self.hmi_receiver,
-                                                        self.hmi_receiver_queue,
-                                                        loglevel=self.loglevel,
-                                                        name="HMI_rcv")
-        self.msg_controller.start()
-
-        # Keep trying to create the sender until the correct receiver has been created
-        while True:
-            try:
-                self.logger.info("Building connection to HMI on port " + str(commsettings.HMI_LISTEN))
-                self.hmi_sender = socket.create_connection(("127.0.0.1", commsettings.HMI_LISTEN))
-                break
-            except:
-                self.logger.warning("Failed to open connection to HMI, retrying")
-                time.sleep(.1)
-                continue
+        self.MSG_controller = messaging.MessageController(loglevel=self.loglevel,
+                                               msg_controller_name="GameLogic",
+                                               listen_port=self.game_port,
+                                               target_port=self.hmi_port)
+        self.MSG_controller.start()
 
         self.currentPlayerIndex = None
         self.wheel_map = None
-        self.enrollPlayers()
-        self.currentPlayerIndex = self.selectRandomFirstPlayer()
-
-        # Once players are registered, agree upon game terms
-        self.configureGame()
+        if not self.use_predetermined_players:
+            self.enrollPlayers()
+        #self.logger.debug(self.players)
+        if self.use_predetermined_startingplayer is None:
+            self.currentPlayerIndex = self.selectRandomFirstPlayer()
+        else:
+            self.currentPlayerIndex = self.use_predetermined_startingplayer
+        self.players[self.currentPlayerIndex].setActive()
 
         # Once all setup is completed, start the show
         self.gameLoop()
-
-        self.hmi_receiver.close()
 
     def selectRandomFirstPlayer(self):
         """Return an index representing the position which will take the first turn"""
@@ -103,10 +112,13 @@ class Game:
         """Alter player state """
         numPlayers = len(self.players)
         prev_player = self.currentPlayerIndex
+        self.players[self.currentPlayerIndex].setInactive()
         if self.currentPlayerIndex == numPlayers - 1:
                 self.currentPlayerIndex = 0
         else:
                 self.currentPlayerIndex += 1
+        self.players[self.currentPlayerIndex].setActive()
+
         self.logger.debug("Changed player from %s (%s) to %s (%s)" % (self.players[prev_player].getName(),
                                                                       prev_player,
                                                                       self.players[self.currentPlayerIndex].getName(),
@@ -116,14 +128,14 @@ class Game:
     def enrollPlayers(self):
         """Determine number of users playing"""
         # TODO: find num_players
+        self.logger.debug("got here")
         num_players = 0
         done = False
         while done is False:
             current_player_names = [x.getName() for x in self.players]
-            while self.msg_controller.q.empty():
-                pass
-                time.sleep(.1)
-            response = json.loads(self.msg_controller.q.get())
+            while self.MSG_controller.clientqueue.empty():
+                QtTest.QTest.qWait(100)
+            response = json.loads(self.MSG_controller.clientqueue.get())
             if response['action'] == "responsePlayerRegistration":
                 playerList = json.loads(response['arguments'])
                 try:
@@ -133,7 +145,7 @@ class Game:
                     message['action'] = "responsePlayerRegistration"
                     #TODO: Perhaps a better structure for passing info back with Nack
                     message['arguments'] = ":".join(["NACK", str(e)])
-                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                    self.MSG_controller.send_message(json.dumps(message))
                 else:
                     for playerName in playerList:
                         playerIndex=len(self.players)
@@ -143,15 +155,8 @@ class Game:
                     message = dict()
                     message['action'] = "responsePlayerRegistration"
                     message['arguments'] = "ACK"
-                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                    self.MSG_controller.send_message(json.dumps(message))
                     done = True
-
-    def configureGame(self):
-        # TODO: Adjustable Number of Rounds in Game (self.totalRounds)
-        # TODO: Adjustable Difficulty
-        # TODO: Adjustable Timeout for User Decisions
-        # TODO: Adjustable Bankruptsy Behavior
-        pass
 
     def checkSanityPlayerList(self, playerList):
         if not isinstance(playerList, list):
@@ -178,7 +183,7 @@ class Game:
             raise Exception("The length of the current trivia db is not sufficient")
 
         self.round += 1
-        self.logger.info("Changing round from " + str(self.round-1) + " to " +  str(self.round))
+        self.logger.info("Changing round from " + str(self.round-1) + " to " + str(self.round))
         self.spins = 0
         for each in [x for x in self.current_trivia]:
             self.logger.debug("new category:", each)
@@ -204,6 +209,7 @@ class Game:
 
     def gameLoop(self):
         self.logger.info("Start Game Loop")
+        #self.currentPlayerIndex = self.selectRandomFirstPlayer()
         spinMap = {
 
             # borrowed idea for switch from
@@ -228,13 +234,9 @@ class Game:
             self.changeRound()
             # ready player 1
             self.logger.info("Begin Round" + str(self.round))
-            while self.spins < self.maxSpins: # TODO: detect if any Q/A remain on board
+            while self.spins < self.maxSpins:
                 self.logger.debug("stats: totalSpins=" + str(self.spins) +
                                                     " round=" + str(self.round))
-                if self.round == (self.totalRounds - 1):
-                    # TODO: Set point totals on all Q/A to double what they were in the first round
-                    pass
-                #if self.debug: print("Game: Sending message to wheel")
                 spinResult = self.doSpin()
 
                 self.logger.debug("Spin Result=" + str(spinResult))
@@ -248,23 +250,21 @@ class Game:
                 message = dict()
                 message['action'] = "endSpin"
                 message['arguments'] = None
-                self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                self.MSG_controller.send_message(json.dumps(message))
                 self.receive_ack("endSpin")
 
-        # TODO: Compare Points, Declare Victor
         for play in self.players:
             play.archivePoints()
         message = dict()
         message['action'] = "displayWinner"
         message['arguments'] = self.calculateWinner()
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.MSG_controller.send_message(json.dumps(message))
 
     def receive_ack(self, action, extra_test=True):
-        while self.msg_controller.q.empty() and extra_test is True:
-            pass
-            time.sleep(.1)
-        if not self.msg_controller.q.empty():
-            response = self.msg_controller.q.get()
+        while self.MSG_controller.clientqueue.empty() and extra_test is True:
+            QtTest.QTest.qWait(100)
+        if not self.MSG_controller.clientqueue.empty():
+            response = self.MSG_controller.clientqueue.get()
             if json.loads(response)['action'] != action:
                 raise Exception("Expecting action=%s, received action=%s arguments=%s" %
                             (action,
@@ -280,34 +280,67 @@ class Game:
             raise Exception("Queue was emptied prior to being serviced")
 
     def calculateWinner(self):
-        winner = self.players[0].getName()
-        winnerScore = 0
+        scores = [x.getGameScore() for x in self.players]
+        score_set = list(set(scores))
+        score_set.sort()
+        high_score = score_set[-1]
+
+        winners = []
         for each in self.players:
-            self.logger.debug("each.getGameScore()=" + str(each.getGameScore()))
-            if each.getGameScore() > winnerScore:
-                winner = each.getName()
-                winnerScore = each.getGameScore()
-        return winner
+            if each.getGameScore() == high_score:
+                winners.append(each)
+
+        if len(winners) > 1:
+            return " & ".join([x.getName() for x in self.players])
+        else:
+            return winners[0].getName()
 
     def doSpin(self):
         """Emulate 'Spin' and select a random number between 0-11"""
-        while self.msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.msg_controller.q.get()
+
+        while self.MSG_controller.clientqueue.empty():
+
+            QtTest.QTest.qWait(100)
+        response = self.MSG_controller.clientqueue.get()
         if json.loads(response)['action'] != 'userInitiatedSpin':
             raise Exception("Was expecting user initiated spin, received " + str(json.loads(response)['action']))
         message = dict()
         message['action'] = "userInitiatedSpin"
         message['arguments'] = "ACK"
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.MSG_controller.send_message(json.dumps(message))
 
-        random_int = random.randrange(0, self.geometry_width + 6)
+
+        if self.predetermined_spins.empty():
+            random_int = random.randrange(0, self.geometry_width + 6)
+        else:
+            function_to_index_map = {
+                "pickLoseTurn": 0,
+                "pickAccumulateFreeTurnToken": 1,
+                "pickBecomeBankrupt": 2,
+                "pickPlayersChoice": 3,
+                "pickOpponentsChoice": 4,
+                "pickDoublePlayerRoundScore": 5,
+                "pickRandomCategory1": 6,
+                "pickRandomCategory2": 7,
+                "pickRandomCategory3": 8,
+                "pickRandomCategory4": 9,
+                "pickRandomCategory5": 10,
+                "pickRandomCategory6": 11,
+            }
+            #roll 9
+            #wheel_map = [5, 1, ** 9 **, 7, 0]
+            #spinMap = {... 2: loseturnfunc, ...}
+            desired_function = self.predetermined_spins.get()
+            try:
+                function_index = function_to_index_map[desired_function]
+            except:
+                raise Exception("Provided function call does not exist")
+            random_int = self.wheel_map[function_index]
 
         message = dict()
         message['action'] = "spinWheel"
         message['arguments'] = random_int
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.MSG_controller.send_message(json.dumps(message))
         self.spins += 1
 
         self.receive_ack("spinWheel")
@@ -355,12 +388,6 @@ class Game:
         return sorted(r, key = lambda i: i['index'])
 
     def pickCategoryHelper(self, category):
-        # TODO: Resolve Question/Answer from dictionary
-        # TODO: Display Question to Player
-        # TODO: Prompt Players to determine if they're ready for the answer to be displayed
-        # TODO: Display answer when prompted.
-        # TODO: After displaying answer, display mechanism to indicate if the question was answered successfully
-        # TODO: Alter Player Score according to whether the question was answered successfully or not
         self.logger.debug("Start")
         ANSWER_TIMEOUT = 30
 
@@ -368,10 +395,11 @@ class Game:
         message['action'] = "displayQuestion"
         question_answer = self.current_triviaDB.getQuestion(category)
         question_answer['timeout'] = ANSWER_TIMEOUT
+        question_answer['player'] = self.getCurrentPlayer().getName()
         question_only = dict(question_answer)
         question_only.pop("answer")
         message['arguments'] = question_only
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.MSG_controller.send_message(json.dumps(message))
         # kick off 30s timer
 
         start = timer()
@@ -379,32 +407,28 @@ class Game:
 
         # wait for revealAnswer
         doChangeTurn = True
-        while self.msg_controller.q.empty() and ((timer()-start) < ANSWER_TIMEOUT):
-            pass
-            time.sleep(.1)
-        if not self.msg_controller.q.empty():
-            response = self.msg_controller.q.get()
-            # TODO: Needs message['action'] sanity check
+        while self.MSG_controller.clientqueue.empty() and ((timer()-start) < ANSWER_TIMEOUT):
+            QtTest.QTest.qWait(100)
+        if not self.MSG_controller.clientqueue.empty():
+            response = self.MSG_controller.clientqueue.get()
             if json.loads(response)['action'] != "revealAnswer":
                 raise Exception("Expecting action type 'revealAnswer'")
 
             message = dict()
             message['action'] = "revealAnswer"
             message['arguments'] = "ACK"
-            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            self.MSG_controller.send_message(json.dumps(message))
 
             message = dict()
             message['action'] = "displayAnswer"
             message['arguments'] = question_answer
-            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            self.MSG_controller.send_message(json.dumps(message))
 
             self.receive_ack("displayAnswer")
 
-            while self.msg_controller.q.empty():
-                pass
-                time.sleep(.1)
-            response = self.msg_controller.q.get()
-            # TODO: Needs message['action'] sanity check
+            while self.MSG_controller.clientqueue.empty():
+                QtTest.QTest.qWait(100)
+            response = self.MSG_controller.clientqueue.get()
             if json.loads(response)['action'] != "responseQuestion":
                 raise Exception("Expecting action type 'responseQuestion' for ACK")
             if json.loads(response)['arguments'] is not False and json.loads(response)['arguments'] is not True:
@@ -420,28 +444,28 @@ class Game:
                     message = dict()
                     message['action'] = "promptSpendFreeTurnToken"
                     message['arguments'] = None
-                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                    self.MSG_controller.send_message(json.dumps(message))
 
                     self.receive_ack("promptSpendFreeTurnToken")
 
                     correctResponseReceived = False
                     while not correctResponseReceived:
                         self.logger.debug("entered currectResponseReceived loop")
-                        while self.msg_controller.q.empty():
-                            pass
-                            time.sleep(.1)
+                        while self.MSG_controller.clientqueue.empty():
+                            QtTest.QTest.qWait(100)
                         self.logger.debug("msg_controller queue is no longer empty")
-                        response = self.msg_controller.q.get()
+                        response = self.MSG_controller.clientqueue.get()
                         if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
                             self.logger.debug("user indicated to spend ft token")
                             self.getCurrentPlayer().spendFreeTurnToken()
+                            self.getCurrentPlayer().addToScore(int(int(question_answer['score']) * -1))
                             # user indicated to spend free turn token
                             correctResponseReceived = True
                             doChangeTurn = False
                             message = dict()
                             message['action'] = "userInitiatedFreeTurnTokenSpend"
                             message['arguments'] = "ACK"
-                            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                            self.MSG_controller.send_message(json.dumps(message))
                         elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
                             self.logger.debug("user indicated to skip spending ft token")
                             # user declided to spend token, decrement score since they answered incorrectly
@@ -450,7 +474,7 @@ class Game:
                             message = dict()
                             message['action'] = "userInitiatedFreeTurnTokenSkip"
                             message['arguments'] = "ACK"
-                            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                            self.MSG_controller.send_message(json.dumps(message))
                         else:
                             raise Exception(
                                 "Was expecting a decision on free token spending, received "
@@ -461,7 +485,7 @@ class Game:
             message = dict()
             message['action'] = "responseQuestion"
             message['arguments'] = "ACK"
-            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            self.MSG_controller.send_message(json.dumps(message))
 
         else:
             #timer ran out
@@ -471,6 +495,7 @@ class Game:
 
     def pickRandomCategory(self, index):
         self.logger.debug("Start")
+        QtTest.QTest.qWait(self.delay_before_question)
         self.logger.debug("index=" + str(index))
         category = self.current_trivia[index-6]['category']
         self.logger.debug("category=" + str(category))
@@ -480,6 +505,11 @@ class Game:
             #do nothing, don't change turn - allow player to spin again
             pass
 
+    def quit(self) -> None:
+        self.logger.debug("quitting")
+        self.MSG_controller.quit()
+        super(Game, self).quit()
+
     def pickLoseTurn(self):
         self.logger.debug("Start")
         doChangeTurn = False
@@ -487,18 +517,17 @@ class Game:
             message = dict()
             message['action'] = "promptSpendFreeTurnToken"
             message['arguments'] = None
-            self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+            self.MSG_controller.send_message(json.dumps(message))
 
             self.receive_ack("promptSpendFreeTurnToken")
 
             correctResponseReceived = False
             while not correctResponseReceived:
                 self.logger.debug("entered currectResponseReceived loop")
-                while self.msg_controller.q.empty():
-                    pass
-                    time.sleep(.1)
+                while self.MSG_controller.clientqueue.empty():
+                    QtTest.QTest.qWait(100)
                 self.logger.debug("msg_controller queue is no longer empty")
-                response = self.msg_controller.q.get()
+                response = self.MSG_controller.clientqueue.get()
                 if json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSpend':
                     self.logger.debug("user indicated to spend ft token")
                     self.getCurrentPlayer().spendFreeTurnToken()
@@ -508,7 +537,7 @@ class Game:
                     message = dict()
                     message['action'] = "userInitiatedFreeTurnTokenSpend"
                     message['arguments'] = "ACK"
-                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                    self.MSG_controller.send_message(json.dumps(message))
                 elif json.loads(response)['action'] == 'userInitiatedFreeTurnTokenSkip':
                     self.logger.debug("user indicated to skip spending ft token")
                     # user declided to spend token, decrement score since they answered incorrectly
@@ -517,7 +546,7 @@ class Game:
                     message = dict()
                     message['action'] = "userInitiatedFreeTurnTokenSkip"
                     message['arguments'] = "ACK"
-                    self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+                    self.MSG_controller.send_message(json.dumps(message))
                 else:
                     raise Exception(
                         "Was expecting a decision on free token spending, received "
@@ -538,55 +567,39 @@ class Game:
         message = dict()
         message['action'] = "playerBecomesBankrupt"
         message['arguments'] = None
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.MSG_controller.send_message(json.dumps(message))
         self.receive_ack("playerBecomesBankrupt")
         self.changeTurn()
 
     def pickPlayersChoice(self):
-        # TODO: Facilitate Explicit Selection (by Current Player) of Category from those available as 'category'
-        # if (
-        # TODO: Check number of remaining questions for category
-        # ) == 0:
-        #           request selection of new category (by Current Player)
         self.logger.debug("Start")
-
-        # TODO: Resolve Categories
+        QtTest.QTest.qWait(self.delay_before_question)
         categorylist = self.current_triviaDB.getPlayableCategories()
 
         message = dict()
         message['action'] = "promptCategorySelectByUser"
         message['arguments'] = categorylist
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.msg_controller.q.get()
-        # TODO: Needs message['action'] sanity check
+        self.MSG_controller.send_message(json.dumps(message))
+        while self.MSG_controller.clientqueue.empty():
+            QtTest.QTest.qWait(100)
+        response = self.MSG_controller.clientqueue.get()
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:
             raise Exception("Response Category not from the allowed list")
 
     def pickOpponentsChoice(self):
-        # TODO: Facilitate Explicit Selection (by Opponents) of Category from those available as 'category'
-        # if (
-        # TODO: Check number of remaining questions for category
-        # ) == 0:
-        #           request selection of new category (by Opponents)
         self.logger.debug("Start")
-
-        # TODO: Resolve Categories
+        QtTest.QTest.qWait(self.delay_before_question)
         categorylist = self.current_triviaDB.getPlayableCategories()
 
         message = dict()
         message['action'] = "promptCategorySelectByOpponent"
         message['arguments'] = categorylist
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
-        while self.msg_controller.q.empty():
-            pass
-            time.sleep(.1)
-        response = self.msg_controller.q.get()
-        # TODO: Needs message['action'] sanity check
+        self.MSG_controller.send_message(json.dumps(message))
+        while self.MSG_controller.clientqueue.empty():
+            QtTest.QTest.qWait(100)
+        response = self.MSG_controller.clientqueue.get()
         if json.loads(response)['arguments'] in message['arguments']:
             self.pickCategoryHelper(json.loads(response)['arguments'])
         else:
@@ -616,5 +629,5 @@ class Game:
         message = dict()
         message['action'] = "updateGameState"
         message['arguments'] = self.buildGameState()
-        self.msg_controller.send_string(self.hmi_sender, json.dumps(message))
+        self.MSG_controller.send_message(json.dumps(message))
         response = self.receive_ack("updateGameState")

@@ -60,3 +60,7 @@ class HoverButton(QtWidgets.QLabel):
         self.logger.debug("mousepressevent occurred, i am %s" % (self.objectName()))
         self.clicked.emit(self.text())
         QtWidgets.QLabel.mousePressEvent(self, event)
+
+    def hide(self) -> None:
+        self.logger.debug("actioning hide")
+        super(HoverButton, self).hide()
