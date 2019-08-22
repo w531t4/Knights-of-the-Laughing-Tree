@@ -441,6 +441,22 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.board = Board(self)
         self.bodyLayout.addWidget(self.board)
         self.bodyLayout.setStretchFactor(self.board, 16)
+
+
+        self.buttonFreeTurnSpend = HoverButton(self)
+        self.buttonFreeTurnSpend.setText("Spend FreeTurn Token")
+        self.buttonFreeTurnSpend.setAlignment(Qt.AlignCenter)
+        self.buttonFreeTurnSpend.clicked.connect(self.renderSpinButton)
+        self.controlLayout.addWidget(self.buttonFreeTurnSpend)
+        self.buttonFreeTurnSpend.hide()
+
+        self.buttonFreeTurnSkip = HoverButton(self)
+        self.buttonFreeTurnSkip.setText("Skip")
+        self.buttonFreeTurnSkip.setAlignment(Qt.AlignCenter)
+        self.buttonFreeTurnSkip.clicked.connect(self.renderSpinButton)
+        self.controlLayout.addWidget(self.buttonFreeTurnSkip)
+        self.buttonFreeTurnSkip.hide()
+
         self.scene_question = questionanswer.MyQuestionScene(
             parent=self,
             ui_file="scene_question.ui",
@@ -450,7 +466,9 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scene_question.signal_incorrect.connect(self.logic_controller.notifyUnsuccesfullOutcome)
         self.scene_question.signal_correct.connect(self.logic_controller.notifySuccesfullOutcome)
         self.scene_question.signal_skipfreeturn.connect(self.logic_controller.notifyFreeTurnSkip)
+        self.buttonFreeTurnSkip.clicked.connect(self.logic_controller.notifyFreeTurnSkip)
         self.scene_question.signal_spendfreeturn.connect(self.logic_controller.notifyFreeTurnSpend)
+        self.buttonFreeTurnSpend.clicked.connect(self.logic_controller.notifyFreeTurnSpend)
         self.scene_question.show()
         self.stack.addWidget(self.scene_question)
 
@@ -791,7 +809,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def determineFreeTurnSpend(self):
         self.scene_question.render_controls_freeturn()
-
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
+        self.buttonSpin.hide()
+        self.buttonFreeTurnSkip.show()
+        self.buttonFreeTurnSpend.show()
 
     def close(self):
         self.logger.debug("closing")
@@ -802,6 +824,11 @@ class HMI(QtWidgets.QMainWindow, Ui_MainWindow):
     def retainPlayerData(self, playerData):
         self.playerData = playerData
 
+    @pyqtSlot()
+    def renderSpinButton(self):
+        for i in reversed(range(self.controlLayout.count())):
+            self.controlLayout.itemAt(i).widget().hide()
+        self.buttonSpin.show()
 
 class MyTimer(QObject):
     signal_update_timer = pyqtSignal(str)
