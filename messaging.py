@@ -87,8 +87,14 @@ class MessageController(QThread):
         # Per suggestion on https://stackoverflow.com/questions/29217502/socket-error-address-already-in-use/29217540
         # by ForceBru
         self.receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.receiver.bind(("127.0.0.1", self.listen_port))
-        self.receiver.listen(2)
+        while True:
+            try:
+                self.receiver.bind(("127.0.0.1", self.listen_port))
+            except:
+                continue
+            else:
+                self.receiver.listen(2)
+                break
         self.logger.info("successfully opened port " + str(self.listen_port))
 
     def build_destination(self):

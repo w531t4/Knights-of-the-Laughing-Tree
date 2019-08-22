@@ -8,11 +8,20 @@ import hmi
 import game
 import json
 import logging
-
+import logging
+import logs
 app = QApplication(sys.argv)
 
+global h
+h = list()
 
 class WOJTest(unittest.TestCase):
+    def __init__(self, *args, loglevel=logging.DEBUG, **kwargs):
+        super(WOJTest, self).__init__(*args, **kwargs)
+        self.hints = list()
+        self.logger = logs.build_logger(__name__, loglevel)
+        self.loglevel = loglevel
+
     def setUp(self):
         # help from http://johnnado.com/pyqt-qtest-example/
         # help from https://bitbucket.org/jmcgeheeiv/pyqttestexample/src/default/src/MargaritaMixerTest.py
@@ -42,7 +51,11 @@ class WOJTest(unittest.TestCase):
             "pickBecomeBankrupt",
             "pickDoublePlayerRoundScore",
         ]
-        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario))
+        self.scenario['players'][0] = "doublescore"
+        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario), hints=h)
+        h.append(self.args['hmi']['hmi_port'])
+        h.append(self.args['game']['game_port'])
+        self.logger.debug("hints=%s" % self.hints)
         self.game = None
         self.game = game.Game(**self.args['game'])
         self.game.start()
@@ -51,7 +64,7 @@ class WOJTest(unittest.TestCase):
         self.hmi.show()
         QTest.qWait(3000)
 
-        spinWidget = self.hmi.doSpin
+        spinWidget = self.hmi.buttonSpin
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
@@ -63,9 +76,11 @@ class WOJTest(unittest.TestCase):
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
-        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        while not hasattr(self.hmi, "scene_question"):
+            QTest.qWait(50)
+        QTest.mouseClick(self.hmi.scene_question.buttonReveal, Qt.LeftButton)
         QTest.qWait(1000)
-        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.mouseClick(self.hmi.scene_question.buttonCorrect, Qt.LeftButton)
         QTest.qWait(1000)
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
@@ -74,13 +89,13 @@ class WOJTest(unittest.TestCase):
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
-        self.assertEqual(self.hmi.player0Score.text(), str(200))
+        self.assertEqual(self.hmi.main_scorebar.player0.getScore(), str(200))
         self.game.quit()
         self.hmi.close()
         QTest.qWait(1000)
         app.exit()
 
-    def test_bankruptcy(self):
+    def test_0bankruptcy(self):
         app = QApplication(sys.argv)
         self.scenario['spins'] = [
             "pickRandomCategory1",
@@ -88,7 +103,11 @@ class WOJTest(unittest.TestCase):
             "pickBecomeBankrupt",
             "pickBecomeBankrupt",
         ]
-        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario))
+        self.scenario['players'][0] = "0bankruptcy"
+        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario), hints=h)
+        h.append(self.args['hmi']['hmi_port'])
+        h.append(self.args['game']['game_port'])
+        self.logger.debug("hints=%s" % self.hints)
         self.game = None
         self.game = game.Game(**self.args['game'])
         self.game.start()
@@ -97,40 +116,46 @@ class WOJTest(unittest.TestCase):
         self.hmi.show()
         QTest.qWait(2000)
 
-        spinWidget = self.hmi.doSpin
+        spinWidget = self.hmi.buttonSpin
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
-        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        while not hasattr(self.hmi, "scene_question"):
+            QTest.qWait(50)
+        QTest.mouseClick(self.hmi.scene_question.buttonReveal, Qt.LeftButton)
         QTest.qWait(1000)
-        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.mouseClick(self.hmi.scene_question.buttonCorrect, Qt.LeftButton)
         QTest.qWait(1000)
 
-        self.assertEqual(self.hmi.player0Score.text(), str(100))
-
-        QTest.mouseClick(spinWidget, Qt.LeftButton)
-        QTest.qWait(1000)
-        QTest.mouseClick(spinWidget, Qt.LeftButton)
-        QTest.qWait(1000)
+        self.assertEqual(self.hmi.main_scorebar.player0.getScore(), str(100))
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(1000)
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(1000)
 
-        self.assertEqual(self.hmi.player0Score.text(), str(0))
+        QTest.mouseClick(spinWidget, Qt.LeftButton)
+        QTest.qWait(1000)
+
+        self.assertEqual(self.hmi.main_scorebar.player0.getScore(), str(0))
         self.game.quit()
         self.hmi.close()
         QTest.qWait(1000)
         app.exit()
 
-    def test_0multipledirectcategories(self):
+    def test_multipledirectcategories(self):
         app = QApplication(sys.argv)
         self.scenario['spins'] = [
             "pickRandomCategory1",
             "pickRandomCategory2",
             "pickRandomCategory3",
         ]
+        self.scenario['players'][0] = "multipledirectcategories"
         self.scenario['options']['skipSpinAction'] = False
-        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario))
+        self.args = build_args(logging.DEBUG, 10000, json.dumps(self.scenario), hints=h)
+        h.append(self.args['hmi']['hmi_port'])
+        h.append(self.args['game']['game_port'])
+        self.logger.debug("hints=%s" % self.hints)
         self.game = None
         self.game = game.Game(**self.args['game'])
         self.game.start()
@@ -139,26 +164,26 @@ class WOJTest(unittest.TestCase):
         self.hmi.show()
         QTest.qWait(2000)
 
-        spinWidget = self.hmi.doSpin
+        spinWidget = self.hmi.buttonSpin
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(10000)
-        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        QTest.mouseClick(self.hmi.scene_question.buttonReveal, Qt.LeftButton)
         QTest.qWait(1000)
-        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.mouseClick(self.hmi.scene_question.buttonCorrect, Qt.LeftButton)
         QTest.qWait(1000)
 
-        self.assertEqual(self.hmi.player0Score.text(), str(100))
+        self.assertEqual(self.hmi.main_scorebar.player0.getScore(), str(100))
 
 
         QTest.mouseClick(spinWidget, Qt.LeftButton)
         QTest.qWait(10000)
-        QTest.mouseClick(self.hmi.button_reveal, Qt.LeftButton)
+        QTest.mouseClick(self.hmi.scene_question.buttonReveal, Qt.LeftButton)
         QTest.qWait(1000)
-        QTest.mouseClick(self.hmi.button_correct, Qt.LeftButton)
+        QTest.mouseClick(self.hmi.scene_question.buttonCorrect, Qt.LeftButton)
         QTest.qWait(1000)
 
-        self.assertEqual(self.hmi.player1Score.text(), str(100))
+        self.assertEqual(self.hmi.main_scorebar.player1.getScore(), str(100))
         self.game.quit()
         self.hmi.close()
         QTest.qWait(1000)

@@ -9,10 +9,11 @@ import commsettings
 import json
 import argparse
 
-def build_args(loglevel, initial_port, target_scenario):
+def build_args(loglevel, initial_port, target_scenario, hints: list = list()):
+    #print("build_args: hints=%s" % hints)
     start_port = initial_port
-    HMI_PORT = commsettings.get_port(start_port)
-    GAME_PORT = commsettings.get_port(HMI_PORT)
+    HMI_PORT = commsettings.get_port(start_port, hints=hints)
+    GAME_PORT = commsettings.get_port(HMI_PORT, hints=hints)
     hmi_args = dict()
     game_args = dict()
 
